@@ -9,19 +9,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      - name: Use the Android SDK preinstalled on the runner
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties && ls "$ANDROID_HOME"
 
       - name: Install dependencies
         run: npm ci
@@ -50,12 +51,12 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: il-procuratore-apk-di-prova
           path: android/app/build/outputs/apk/debug/*.apk
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: il-procuratore-aab-play-store
           path: android/app/build/outputs/bundle/release/*.aab

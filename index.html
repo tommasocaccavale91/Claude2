@@ -317,6 +317,8 @@ table.tbl{width:100%;border-collapse:collapse}
 .mt .sc{flex:none;font:600 13px/1 var(--f-mono);padding:4px 7px;border-radius:5px;background:var(--surface2);min-width:52px;text-align:center}
 .mt.me{background:var(--surface2)}
 .cup{width:34px;height:34px;flex:none;color:var(--gold)}
+.codebox{width:100%;min-height:140px;font:500 11px/1.4 var(--f-mono);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px;word-break:break-all;resize:vertical}
+.btn.busy{opacity:.6;pointer-events:none}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tcard{width:128px}.big{font-size:40px}}
 </style>
@@ -664,13 +666,13 @@ function migrate(d) {
   for (const p of clients()) { if (p.ovr0 == null) p.ovr0 = p.ovr; addCard(p); }
   return S;
 }
-function claimDaily() {
+function claimDaily(double) {
   if (S.daily.last === dayKey()) return;
   S.daily.streak = S.daily.last === dayKey(Date.now() - 864e5) ? S.daily.streak + 1 : 1;
   S.daily.best = Math.max(S.daily.best, S.daily.streak); S.daily.last = dayKey();
   const day = ((S.daily.streak - 1) % 7) + 1;
   const g = Math.round(1200 * day * (1 + (S.season - 1) * 0.5) / 100) * 100;
-  S.money += g;
+  S.money += double ? g * 2 : g;
   if (day === 7) {
     const age = ri(16, 18), ovr = ri(50, 58);
     const k = makePlayer({ age, ovr, pot: Math.min(93, ovr + ri(26, 34)), club: pick(CLUBS.filter(c => c.tier >= 3)).id });
@@ -678,7 +680,7 @@ function claimDaily() {
     S.cr += 1;
     news(`Settimo caffè (+1 credito): il barista ti parla di <b>${fullName(k)}</b>, ${age} anni. Lo trovi nel Mercato.`, 'good');
   }
-  toast(`Caffè del mattino · +${eur(g)}`); buzz(25);
+  toast(`Caffè del mattino · +${eur(double ? g * 2 : g)}`); buzz(25);
   progress(); save(); render();
 }
 
@@ -796,6 +798,89 @@ function euroChampion() {
   }
 }
 function euroSummary(sum) { if (S.euro && S.euro.champ != null) sum.lines.push(`<b>Coppa d'Europa</b> a ${esc(CLUBS[S.euro.champ].name)}${S.euro.champ === S.my && isClub() ? ': è il tuo club!' : '.'}`); }
+
+/* ---------- native app: ads, purchases, saves ---------- */
+const NAT = () => window.NATIVE;
+const ENT_KEY = 'il_procuratore_ent';
+const ent = (() => { try { return JSON.parse(localStorage.getItem(ENT_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+const saveEnt = () => { try { localStorage.setItem(ENT_KEY, JSON.stringify(ent)); } catch (e) {} };
+const adsLeft = () => 3 - (S.adDay && S.adDay.d === dayKey() ? S.adDay.n : 0);
+async function busy(fn) { if (ui.busy) return; ui.busy = true; render(); try { return await fn(); } finally { ui.busy = false; render(); } }
+async function watchForCredit() {
+  if (!NAT() || adsLeft() <= 0) return;
+  const ok = await busy(() => NAT().rewarded());
+  if (!ok) { toast('Video non disponibile, riprova più tardi'); return; }
+  if (!S.adDay || S.adDay.d !== dayKey()) S.adDay = { d: dayKey(), n: 0 };
+  S.adDay.n++; S.cr += 1; toast('+1 credito'); progress(); save(); render();
+}
+async function doubleCoffee() {
+  if (!NAT() || S.daily.last === dayKey()) return;
+  const ok = await busy(() => NAT().rewarded());
+  if (ok) claimDaily(true); else toast('Video non disponibile: ritira il caffè normale');
+}
+async function iapBuy(id) {
+  const N = NAT(), P = window.NATIVE_CONFIG.products; if (!N) return;
+  const pack = P.credits.find(c => c.id === id);
+  const ok = await busy(() => N.buy(id, !!pack));
+  if (!ok) { toast('Acquisto annullato'); return; }
+  if (pack) { S.cr += pack.amount; news(`Hai acquistato ${pack.amount} crediti.`, 'good'); toast(`+${pack.amount} crediti`); save(); }
+  else if (id === P.removeAds) { ent.noAds = true; saveEnt(); toast('Pubblicità rimossa. Grazie!'); }
+  render();
+}
+async function iapRestore() {
+  const N = NAT(); if (!N) return;
+  const ids = await busy(() => N.restore());
+  if ((ids || []).includes(window.NATIVE_CONFIG.products.removeAds)) { ent.noAds = true; saveEnt(); toast('Acquisti ripristinati'); } else toast('Nessun acquisto da ripristinare');
+  render();
+}
+function maybeInterstitial() { if (NAT() && !ent.noAds) NAT().interstitial(); }
+function storeBlock() {
+  const N = NAT(); if (!N) return '';
+  const P = window.NATIVE_CONFIG.products, left = adsLeft(), b = ui.busy ? 'busy' : '';
+  return `<div class="h2">Negozio</div><div class="panel list">
+  <div class="shop"><div class="mid"><b>Guarda un video</b><div class="small muted">+1 credito. Ancora ${Math.max(0, left)} oggi.</div></div><button class="btn pri ${b}" data-a="adcredit" ${left <= 0 ? 'disabled' : ''}>Guarda</button></div>
+  ${P.credits.map(c => `<div class="shop"><div class="mid"><b>${c.amount} crediti</b><div class="small muted">Da spendere in Bottega.</div></div><button class="btn pri ${b}" data-a="iap" data-v="${c.id}">${esc(N.price(c.id, c.fallback))}</button></div>`).join('')}
+  <div class="shop"><div class="mid"><b>Rimuovi pubblicità</b><div class="small muted">Niente più annunci a fine stagione. I video volontari restano.</div></div>${ent.noAds ? '<span class="pill free">Attivo</span>' : `<button class="btn pri ${b}" data-a="iap" data-v="${P.removeAds}">${esc(N.price(P.removeAds, P.removeAdsFallback))}</button>`}</div>
+  <button class="row-p" data-a="restore" style="justify-content:center;font-weight:700">Ripristina acquisti</button></div>
+  <p class="small muted" style="margin:0">Gli acquisti non fanno vincere partite: servono per la Bottega e per togliere gli annunci.</p>`;
+}
+async function exportSave() {
+  const json = JSON.stringify(S); let code;
+  try {
+    if (window.CompressionStream) {
+      const buf = new Uint8Array(await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
+      let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+      code = 'IPZ1' + btoa(bin);
+    } else code = 'IPJ1' + btoa(unescape(encodeURIComponent(json)));
+  } catch (e) { toast('Esportazione non riuscita'); return; }
+  ui.sheet = { k: 'export', code }; render();
+}
+async function importSave(code) {
+  code = (code || '').replace(/\s+/g, '');
+  try {
+    let json;
+    if (code.startsWith('IPZ1')) { const bin = atob(code.slice(4)), buf = Uint8Array.from(bin, c => c.charCodeAt(0)); json = await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); }
+    else if (code.startsWith('IPJ1')) json = decodeURIComponent(escape(atob(code.slice(4))));
+    else throw new Error('formato');
+    const d = JSON.parse(json); if (!d || d.v !== 1) throw new Error('versione');
+    applyClubs(CLUB_DEF); migrate(d); ui.sheet = null; ui.tab = 'home'; save(); render(); toast('Partita importata');
+  } catch (e) { toast('Codice non valido'); }
+}
+function saveTools() {
+  return `<div class="btns"><button class="btn ghost" data-a="export">Esporta partita</button><button class="btn ghost" data-a="importopen">Importa partita</button></div>
+  ${NAT() ? '<button class="btn ghost" data-a="privacy">Privacy e consenso pubblicità</button>' : ''}`;
+}
+function exportSheet(code) {
+  return `<h3>Esporta partita</h3><p class="lead">Copia questo codice e conservalo, ad esempio in una nota. Su un altro telefono scegli "Importa partita" e incollalo.</p>
+  <div class="body"><textarea class="codebox" id="exportCode" readonly aria-label="Codice della partita">${code}</textarea>
+  <div class="small muted">${Math.round(code.length / 1024)} KB di testo.</div>
+  <button class="btn pri full" data-a="copycode">Copia il codice</button></div>`;
+}
+function importSheet() {
+  return `<h3>Importa partita</h3><p class="lead">Incolla il codice esportato. ${S ? 'La partita attuale su questo telefono verrà sostituita.' : ''}</p>
+  <div class="body"><textarea class="codebox" id="importCode" aria-label="Codice da importare" placeholder="IPZ1…"></textarea>
+  <button class="btn pri full" data-a="importdo">Importa</button></div>`;
+}
 
 /* ---------- album, credits, shop ---------- */
 const RAR = ['Bronzo', 'Argento', 'Oro', 'Leggenda'], RARC = ['#B07A3A', '#9EA3A8', '#D9A23B', '#1F4D3A'];
@@ -1676,7 +1761,7 @@ const $app = document.getElementById('app');
 
 function render() {
   if (ui.headless) return;
-  if (!S) { $app.innerHTML = introView(); return; }
+  if (!S) { $app.innerHTML = introView() + (ui.sheet && ui.sheet.k === 'import' ? sheetView() : '') + '<div id="toastSlot"></div>'; renderToast(); return; }
   const mode = S.role === 'agent' ? 'agent' : isClub() ? 'club' : 'none', agent = mode === 'agent';
   const tabs = TABS[mode];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = 'home';
@@ -1711,6 +1796,7 @@ function introView() {
   <p>Scopri ragazzi sconosciuti, portali nei grandi club e tratta ogni euro dei loro contratti. Poi scala il calcio: direttore sportivo, amministratore delegato, presidente.</p>
   <div class="field"><label for="agencyName">Nome della tua agenzia</label><input id="agencyName" maxlength="26" placeholder="Es. Studio Bellavista" value="Studio Bellavista" autocomplete="off"></div>
   <div class="btns"><button class="btn pri" data-a="start">Apri lo studio</button>${had ? '<button class="btn ghost" style="color:var(--on-pitch);border-color:rgba(242,237,222,.35)" data-a="continue">Continua carriera</button>' : ''}</div>
+  <button class="btn ghost" style="color:var(--on-pitch);border-color:rgba(242,237,222,.25);align-self:flex-start;min-height:38px;font-size:14px" data-a="importopen">Importa una partita</button>
 </div></section>`;
 }
 
@@ -1739,8 +1825,7 @@ ${jobsBanner()}
 ${S.offers.length ? `<button class="panel pad" data-a="tab" data-v="deals" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)">
   <span class="ovr hi"><b>${S.offers.length}</b><span>OFF.</span></span><span style="flex:1"><b>${S.offers.length === 1 ? 'Un club ti aspetta al tavolo' : S.offers.length + ' offerte sul tavolo'}</b><br><span class="small muted">Scadono in fretta: tratta prima di giocare la giornata.</span></span><span aria-hidden="true">›</span></button>` : ''}
 
-${S.daily.last !== dayKey() ? (() => { const day = (S.daily.last === dayKey(Date.now() - 864e5) ? S.daily.streak : 0) % 7 + 1; const g = Math.round(1200 * day * (1 + (S.season - 1) * 0.5) / 100) * 100;
-  return `<div class="coffee">${CUP}<div style="flex:1;min-width:0"><b>Il caffè del mattino</b><div class="small muted">Giorno ${day} di 7${day === 7 ? ' · più una soffiata sul mercato' : ''}</div><div class="cups">${[1, 2, 3, 4, 5, 6, 7].map(i => `<i class="${i <= day ? 'on' : ''}"></i>`).join('')}</div></div><button class="btn pri" data-a="daily">+${eur(g)}</button></div>`; })() : ''}
+${coffeeCard()}
 
 <div class="h2">Sfide di stagione <span class="count">${S.obj.filter(o => o.done).length}/3</span></div>
 <div class="panel list">${S.obj.map(o => { const d = OBJ[o.t], pr = d.prog();
@@ -1826,20 +1911,23 @@ function officeView() {
     ${st === 1 ? `<button class="btn pri" data-a="claim" data-v="${id}">Ritira</button>` : st === 2 ? `<span class="ck" style="background:var(--good);border-color:var(--good);color:#fff">${CHECK}</span>` : ''}</div>`; }).join('')}</div>
   <div class="h2">Carriera</div><div class="panel season"><div><b>${S.season}</b><span>Stagione</span></div><div><b>${S.stats.deals}</b><span>Affari</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.earned)}</b><span>Guadagni</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.fees)}</b><span>Cartellini</span></div></div>
   <div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
-  <div class="small muted">Il salvataggio è automatico su questo dispositivo, a ogni giornata.</div>
+  <div class="small muted">Il salvataggio è automatico su questo dispositivo, a ogni giornata. Per cambiare telefono, esporta la partita.</div>
+  ${saveTools()}
   <button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
 }
 
 /* ---------- sheets ---------- */
 function sheetView() {
   const s = ui.sheet; if (!s) return '';
-  if (s.k === 'event' && S.event && S.event.pid != null && !P(S.event.pid)) { S.event = null; ui.sheet = null; return ''; }
+  if (s.k === 'event' && S && S.event && S.event.pid != null && !P(S.event.pid)) { S.event = null; ui.sheet = null; return ''; }
   let inner = '', closable = true;
   if (s.k === 'player') inner = playerSheet(P(s.id));
   if (s.k === 'nego') { const o = S.offers.find(x => x.id === s.id); inner = !o ? '' : o.type === 'buy' ? buySheet(o) : o.type === 'sell' ? sellSheet(o) : negoSheet(o); }
   if (s.k === 'ending') inner = endingSheet();
   if (s.k === 'own') inner = ownSheet(s.id);
   if (s.k === 'euro') inner = euroSheet();
+  if (s.k === 'export') inner = exportSheet(s.code);
+  if (s.k === 'import') inner = importSheet();
   if (s.k === 'table') inner = tableSheet();
   if (s.k === 'card') inner = cardSheet(S.album[s.id]);
   if (s.k === 'event' && S.event) { closable = false; const v = eventView(S.event);
@@ -1956,7 +2044,7 @@ function jobsBanner() {
 function coffeeCard() {
   if (S.daily.last === dayKey()) return '';
   const day = (S.daily.last === dayKey(Date.now() - 864e5) ? S.daily.streak : 0) % 7 + 1, g = Math.round(1200 * day * (1 + (S.season - 1) * 0.5) / 100) * 100;
-  return `<div class="coffee">${CUP}<div style="flex:1;min-width:0"><b>Il caffè del mattino</b><div class="small muted">Giorno ${day} di 7${day === 7 ? ' · più una soffiata' : ''}</div><div class="cups">${[1, 2, 3, 4, 5, 6, 7].map(i => `<i class="${i <= day ? 'on' : ''}"></i>`).join('')}</div></div><button class="btn pri" data-a="daily">+${eur(g)}</button></div>`;
+  return `<div class="coffee">${CUP}<div style="flex:1;min-width:0"><b>Il caffè del mattino</b><div class="small muted">Giorno ${day} di 7${day === 7 ? ' · più una soffiata' : ''}</div><div class="cups">${[1, 2, 3, 4, 5, 6, 7].map(i => `<i class="${i <= day ? 'on' : ''}"></i>`).join('')}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn pri" data-a="daily">+${eur(g)}</button>${NAT() ? `<button class="btn ghost" style="min-height:34px;font-size:13px;padding:0 10px" data-a="dailyx2">Doppio con video</button>` : ''}</div></div>`;
 }
 const newsList = () => `<div class="h2">Notiziario</div><div class="panel list">${S.news.slice(0, 14).map(n => `<div class="news ${n.k}"><span class="w">${n.w}</span><span class="t">${n.t}</span></div>`).join('')}</div>`;
 function clubHomeView() {
@@ -2107,7 +2195,7 @@ function careerView() {
   h += ownershipBlock();
   h += honorsBlock();
   h += achBlock();
-  h += `<div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Il salvataggio è automatico su questo dispositivo.</div><button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
+  h += `<div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Il salvataggio è automatico su questo dispositivo. Per cambiare telefono, esporta la partita.</div>${saveTools()}<button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
   return h;
 }
 function clubSeasonSheet(m) {
@@ -2198,8 +2286,7 @@ function albumView() {
   ${next ? `<p class="small muted" style="margin:0">Prossimo premio a ${next[0]} figurine: +${next[1]} ${next[1] === 1 ? 'credito' : 'crediti'}. Ci sono bonus anche per la prima figurina d'argento (70+), d'oro (80+) e leggenda (88+).</p>` : ''}
   <div class="album">${cards.map(c => { const x = rarity(c);
     return `<button class="acard ${c.active ? '' : 'off'}" style="--rar:${RARC[x]}" data-a="card" data-v="${c.id}" aria-label="${esc(fullName(c))}">${portrait(c)}<span class="o">${c.peak}</span><div class="n">${esc(c.last.replace(/_/g, ' '))}</div><div class="rr">${RAR[x]}</div></button>`; }).join('')}${'<div class="slot">?</div>'.repeat(slots)}</div>
-  <div class="h2">Bottega</div>
-  <div class="panel list">${SHOP.map(([id, name, desc, cost]) => `<div class="shop"><div class="mid"><b>${name}</b><div class="small muted">${typeof desc === 'function' ? desc() : desc}</div></div><button class="btn ${S.cr >= cost ? 'pri' : 'ghost'}" data-a="buy" data-v="${id}" ${S.cr < cost ? 'disabled' : ''}>${cost} cr.</button></div>`).join('')}</div>`;
+  ${storeBlock()}<div class="h2">Bottega</div><div class="panel list">${SHOP.map(([id, name, desc, cost]) => `<div class="shop"><div class="mid"><b>${name}</b><div class="small muted">${typeof desc === 'function' ? desc() : desc}</div></div><button class="btn ${S.cr >= cost ? 'pri' : 'ghost'}" data-a="buy" data-v="${id}" ${S.cr < cost ? 'disabled' : ''}>${cost} cr.</button></div>`).join('')}</div>`;
 }
 function cardSheet(c) {
   if (!c) return '';
@@ -2226,7 +2313,7 @@ document.addEventListener('input', e => {
   document.getElementById('askV').innerHTML = `${eur(ui.ask)}<span style="font-size:18px;opacity:.7"> /anno</span>`;
   const c = document.getElementById('askC'); c.innerHTML = c.innerHTML.replace(/Per te: [^ ]+/, 'Per te: ' + eur(ui.ask * p.fee / 100));
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season', 'table', 'card', 'ending', 'own', 'euro'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season', 'table', 'card', 'ending', 'own', 'euro', 'export', 'import'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
 
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-a]'); if (!el) return;
@@ -2273,9 +2360,20 @@ document.addEventListener('click', e => {
       const p = P(+v); if (!p) return; const c = releaseCost(p); S.budget -= c; ui.confirm = null; ui.sheet = null; news(`Hai svincolato <b>${fullName(p)}</b> (costo ${eur(c)}).`); removeSquad(p); save(); render(); break; }
     case 'fee': { const o = S.offers.find(x => x.id === +v); if (o) pushFee(o, ui.fee); break; }
     case 'cla': { const o = S.offers.find(x => x.id === +v); if (!o) return; o.cl = o.cl || {}; o.cl[el.dataset.k] = !o.cl[el.dataset.k]; save(); render(); break; }
-    case 'close': if (ui.sheet && ui.sheet.k === 'season') S.sum = null; ui.sheet = null; if (S && S.event) ui.sheet = { k: 'event' }; save(); render(); break;
+    case 'close': if (ui.sheet && ui.sheet.k === 'season') { S.sum = null; maybeInterstitial(); } ui.sheet = null; if (S && S.event) ui.sheet = { k: 'event' }; save(); render(); break;
     case 'ev': resolveEvent(v); break;
     case 'daily': claimDaily(); break;
+    case 'dailyx2': doubleCoffee(); break;
+    case 'adcredit': watchForCredit(); break;
+    case 'iap': iapBuy(v); break;
+    case 'restore': iapRestore(); break;
+    case 'privacy': if (NAT()) NAT().privacy(); break;
+    case 'export': exportSave(); break;
+    case 'importopen': ui.sheet = { k: 'import' }; render(); break;
+    case 'importdo': { const t = document.getElementById('importCode'); importSave(t ? t.value : ''); break; }
+    case 'copycode': { const t = document.getElementById('exportCode'); if (!t) return;
+      const fallback = () => { t.focus(); t.select(); toast('Seleziona e copia il testo'); };
+      try { navigator.clipboard.writeText(t.value).then(() => toast('Codice copiato'), fallback); } catch (err) { fallback(); } break; }
     case 'claim': { const a = ACH.find(x => x[0] === v); if (!a || S.ach[v] !== 1) return; S.ach[v] = 2; S.money += a[4]; addRep(a[5]); const crd = a[5] ? Math.ceil(a[5]) : 3; S.cr += crd; toast(`${a[1]} · premio ritirato · +${crd} cr.`); buzz([30, 50, 30]); progress(); save(); render(); break; }
     case 'recruit': {
       const p = P(+v), m = +el.dataset.m, cost = p.bonus * m; if (!p) return;
@@ -2313,6 +2411,7 @@ document.addEventListener('click', e => {
 
 /* ---------- boot ---------- */
 function start(data) {
+  if (NAT()) NAT().init();
   S = (data && data.S) || null;
   if (S) migrate(S);
   if (S && S.event) ui.sheet = { k: 'event' };
