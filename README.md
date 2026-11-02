@@ -33,3 +33,6 @@ Il mercato è aperto dalla G1 alla G5 e dalla G21 alla G24. Gli svincolati posso
 4. **Amministratore delegato**: centra l'obiettivo in un grande club con 65 di reputazione. Gestisci anche il bilancio settimanale, lo stadio, il vivaio e il marketing.
 5. **Presidente**: da AD compri un club con il tuo patrimonio. Niente esonero, ma i buchi di bilancio li copri tu.
 6. **Presidente della Lega**: vinci lo scudetto da presidente con 80 di reputazione. Ogni estate proponi una riforma.
+
+## Cinque paesi
+Italia, Inghilterra, Spagna, Germania e Francia, con prima e seconda divisione ciascuna (196 club inventati). Ogni campionato ha il suo calendario (34, 38 o 46 giornate) dentro le 38 settimane della stagione, con tre promozioni e tre retrocessioni. Stipendi e ricavi cambiano per paese: l'Inghilterra paga di più, la Francia di meno.
