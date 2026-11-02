@@ -25,3 +25,11 @@ Il mercato è aperto dalla G1 alla G5 e dalla G21 alla G24. Gli svincolati posso
 - **Trattative a tre**: se il club che vende chiede più di quanto offre chi compra, fai da mediatore sul prezzo del cartellino. Poi si tratta lo stipendio.
 - **Clausole**: bonus presenze, clausola rescissoria e quota sulla rivendita. Valgono soldi per te, ma il club le fa pesare sulla trattativa.
 - **Album e crediti**: ogni giocatore che rappresenti diventa una figurina (bronzo, argento, oro, leggenda). Album, traguardi e sfide ti danno crediti da spendere in Bottega.
+
+## La scalata
+1. **Procuratore**: da 40 di reputazione arrivano offerte da direttore sportivo (accettando cedi l'agenzia).
+2. **Direttore sportivo**: gestisci rosa, mercato (cartellino con il club, ingaggio con l'agente), rinnovi e cessioni con budget e monte ingaggi. La società fissa un obiettivo e ti esonera se la fiducia crolla.
+3. **DS di un grande club**: centra l'obiettivo in un club piccolo con 50 di reputazione.
+4. **Amministratore delegato**: centra l'obiettivo in un grande club con 65 di reputazione. Gestisci anche il bilancio settimanale, lo stadio, il vivaio e il marketing.
+5. **Presidente**: da AD compri un club con il tuo patrimonio. Niente esonero, ma i buchi di bilancio li copri tu.
+6. **Presidente della Lega**: vinci lo scudetto da presidente con 80 di reputazione. Ogni estate proponi una riforma.
