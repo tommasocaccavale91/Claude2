@@ -43,3 +43,8 @@ Italia, Inghilterra, Spagna, Germania e Francia, con prima e seconda divisione c
 - **Regola 50+1**: in Germania al massimo il 49%.
 - **Vendita del club** e rimborso del prestito dalla Carriera. Se il club fallisce lo perdi, ma la carriera continua.
 - Per diventare presidente della Lega serve vincere il campionato con un club che vale almeno €300M.
+
+## Coppa d'Europa e leggenda
+- **Coppa d'Europa**: 16 squadre (4 italiane, 4 inglesi, 3 spagnole, 3 tedesche, 2 francesi), qualificate dalla classifica della stagione prima. Quattro gironi da 4 (G8–G23), poi quarti, semifinali e finale in gara secca (G28, G32, G37). Premi al club da €10M per partecipare fino a €20M per il titolo.
+- **Albo d'oro** in Carriera con campionati, coppe e la presidenza della Lega.
+- **Obiettivi da leggenda** dopo la Lega: Coppa d'Europa, tre campionati da presidente, club da €1 miliardo, titoli in due paesi, 100 figurine e la Coppa vinta da presidente della Lega.

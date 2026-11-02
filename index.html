@@ -306,6 +306,17 @@ table.tbl{width:100%;border-collapse:collapse}
 .chipb{padding:8px 10px;border-radius:999px;border:1.5px solid var(--line);font:700 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
 .chipb.on{background:var(--pitch);color:var(--on-pitch);border-color:var(--pitch)}
 .cc{font:700 9.5px/1 var(--f-body);letter-spacing:.1em;color:var(--muted);margin-left:5px}
+.grps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:420px){.grps{grid-template-columns:1fr}}
+.grp .br{padding:7px 12px;font-size:13px}
+.grp .gh{padding:8px 12px;font:800 13px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.mt{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:14px}
+.mt .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt .t.r{text-align:right}
+.mt .t.win{font-weight:700}
+.mt .sc{flex:none;font:600 13px/1 var(--f-mono);padding:4px 7px;border-radius:5px;background:var(--surface2);min-width:52px;text-align:center}
+.mt.me{background:var(--surface2)}
+.cup{width:34px;height:34px;flex:none;color:var(--gold)}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tcard{width:128px}.big{font-size:40px}}
 </style>
@@ -531,7 +542,7 @@ function newGame(name) {
     rivals: RIVALS.map(([n, t]) => ({ n, t, s: 0 })), ach: {}, daily: { last: null, streak: 0, best: 0 },
     rec: { maxFee: 0, tier1: false, wonder: false, award: false, top1: false, deadline: false, grow: 0, title: false }, sRec: { tier1: false, youth: false, maxFee: 0 },
     album: {}, cr: 0, am: {}, cs: CLUB_DEF.map(c => ({ ...c })),
-    role: 'agent', my: null, squad: [], jobs: [], stakes: [], own: null, fac: { stadium: 1, youth: 1, mkt: 1 }, maxStage: 0, budget: 0, salary: 0 };
+    role: 'agent', my: null, squad: [], jobs: [], stakes: [], own: null, honors: [], fac: { stadium: 1, youth: 1, mkt: 1 }, maxStage: 0, budget: 0, salary: 0 };
   genFixtures();
   const t4 = CLUBS.filter(c => c.tier === 4 && c.co === 'IT'), t3 = CLUBS.filter(c => c.tier === 3 && c.co === 'IT');
   const a = makePlayer({ age: 18, ovr: 55, pot: 77, club: pick(t4).id, role: 'ATT' }); a.contract = 2; a.fee = 8; a.morale = 72; a.trait = 'Ambizioso';
@@ -599,7 +610,14 @@ const ACH = [
   ['adjob', 'Stanza dei bottoni', 'Diventa amministratore delegato', () => (S.maxStage || 0) >= 3, 0, 3],
   ['owner', 'Il padrone', 'Compra un club e diventane presidente', () => (S.maxStage || 0) >= 4, 0, 3],
   ['presTitle', 'Titolo del presidente', 'Vinci il campionato di prima divisione da presidente', () => !!S.rec.presTitle, 0, 3],
-  ['lega', 'In cima alla piramide', 'Diventa presidente della Lega', () => !!S.lega, 0, 5]
+  ['lega', 'In cima alla piramide', 'Diventa presidente della Lega', () => !!S.lega, 0, 5],
+  ['euroClient', "Campione d'Europa", "Un tuo assistito vince la Coppa d'Europa", () => !!S.rec.euroClient, 50000, 2],
+  ['euro', 'Notte europea', "Vinci la Coppa d'Europa con il tuo club", () => !!S.rec.euro, 0, 3],
+  ['legDyn', 'Dinastia', 'Vinci tre campionati da presidente', () => (S.presTitles || 0) >= 3, 0, 4],
+  ['legBil', 'Il club da un miliardo', 'Porta il tuo club a valere almeno €1 miliardo', () => S.role === 'pres' && clubValue(myClub()) >= 1e9, 0, 4],
+  ['legTwo', "Re d'Europa", 'Vinci il campionato in due paesi diversi', () => new Set((S.honors || []).filter(h => h.t === 'title').map(h => h.co)).size >= 2, 0, 4],
+  ['legAlb', 'Collezionista', "Metti 100 figurine nell'album", () => Object.keys(S.album).length >= 100, 0, 4],
+  ['legImm', 'Immortale', "Da presidente della Lega, vinci la Coppa d'Europa con il tuo club", () => !!S.lega && !!S.rec.euroPres, 0, 5]
 ];
 function progress() {
   S.maxStage = Math.max(S.maxStage || 0, stage());
@@ -639,7 +657,10 @@ function migrate(d) {
   d.cs = d.cs || CLUB_DEF.map(c => ({ ...c })); applyClubs(d.cs);
   d.role = d.role || 'agent'; d.squad = d.squad || []; d.jobs = d.jobs || []; d.fac = d.fac || { stadium: 1, youth: 1, mkt: 1 }; d.maxStage = d.maxStage || 0; d.stakes = d.stakes || []; if (d.role === 'pres' && !d.own) d.own = { club: d.my, pct: 100, loan: 0, cordata: false, miss: 0 }; d.budget = d.budget || 0; d.salary = d.salary || 0;
   S = d; if (!S.obj) genObjectives();
-  if (!S.order) { genFixtures(); for (let w = 1; w < Math.min(S.week, WEEKS + 1); w++) playRound(w); S.res = {}; }
+  S.honors = S.honors || [];
+  if (!S.order) { genFixtures(); for (let w = 1; w < Math.min(S.week, WEEKS + 1); w++) playRound(w); S.res = {}; S.euroReplay = true; }
+  if (!S.euro) { genEuro(); S.euroReplay = true; }
+  if (S.euroReplay) { for (let w = 1; w < Math.min(S.week, WEEKS + 1); w++) euroWeek(w, true); S.eres = {}; delete S.euroReplay; }
   for (const p of clients()) { if (p.ovr0 == null) p.ovr0 = p.ovr; addCard(p); }
   return S;
 }
@@ -671,6 +692,7 @@ const tierName = k => k.tier === 5 ? `${lgName(lgOf(k))} · ${CC[k.co]}` : `${lg
 function genFixtures() {
   S.order = {}; S.tab = {}; S.res = {}; delete S.fix;
   for (const lg of LGS) { const ids = lgIds(lg).sort(() => R() - 0.5); S.order[lg] = ids; for (const id of ids) S.tab[id] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }; }
+  genEuro(S.euroNext); S.euroNext = null;
 }
 const nRounds = lg => 2 * (S.order[lg].length - 1);
 function pairs(lg, r) {
@@ -696,6 +718,84 @@ const standings = lg => (S.order && S.order[lg] ? S.order[lg].slice() : []).sort
 const panelLg = () => { if (isClub()) return lgOf(myClub()); if (ui.lg) return ui.lg; const cnt = {}; for (const p of clients()) if (club(p)) { const l = lgOf(club(p)); cnt[l] = (cnt[l] || 0) + 1; } return Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0] || 'IT1'; };
 const resText = id => { const m = S.res[id]; const o = m.f > m.g ? 'V' : m.f < m.g ? 'S' : 'P'; return `<span class="res ${o}">${m.f}–${m.g}</span>${m.o < 0 ? 'in Serie B' : (m.home ? '' : '@ ') + esc(CLUBS[m.o].name)}`; };
 const hlClubs = () => isClub() ? new Set([S.my]) : new Set(clients().map(p => p.club).filter(x => x != null));
+
+/* ---------- european cup ---------- */
+const EURO_SLOTS = { IT: 4, EN: 4, ES: 3, DE: 3, FR: 2 };
+const EW = { g: [8, 11, 14, 17, 20, 23], qf: 28, sf: 32, f: 37 };
+const GMD = [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]], [[1, 0], [3, 2]], [[2, 0], [3, 1]], [[3, 0], [2, 1]]];
+const EURO_PRIZE = { start: 10e6, win: 1.5e6, draw: 5e5, qf: 8e6, sf: 12e6, f: 15e6, champ: 20e6 };
+function euroQualifiers(byLevel) {
+  const out = [];
+  for (const co of Object.keys(CO)) { const ids = byLevel ? lgIds(co + '1').sort((a, b) => CLUBS[b].level - CLUBS[a].level) : standings(co + '1'); out.push(...ids.slice(0, EURO_SLOTS[co])); }
+  return out;
+}
+function genEuro(q) {
+  const teams = (q && q.length === 16 ? q : euroQualifiers(true)).slice().sort((a, b) => CLUBS[b].level - CLUBS[a].level);
+  let groups;
+  for (let tries = 0; tries < 800; tries++) {
+    groups = [[], [], [], []];
+    for (let p = 0; p < 4; p++) { const pot = teams.slice(p * 4, p * 4 + 4).sort(() => R() - 0.5); pot.forEach((id, i) => groups[i].push(id)); }
+    if (groups.every(g => new Set(g.map(id => CLUBS[id].co)).size === 4)) break;
+  }
+  S.euro = { groups, gtab: {}, qf: [], sf: [], f: [], champ: null, log: [] };
+  for (const id of teams) S.euro.gtab[id] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+  S.eres = {};
+}
+const euroIn = id => !!(S.euro && S.euro.gtab[id]);
+const gStand = g => g.slice().sort((a, b) => { const x = S.euro.gtab[a], y = S.euro.gtab[b]; return y.pts - x.pts || (y.gf - y.ga) - (x.gf - x.ga) || y.gf - x.gf; });
+function euroPlay(h, a, ko, stage, quiet) {
+  const d = clamp(CLUBS[h].level - CLUBS[a].level + (ko ? 0 : 1.5) + gauss() * 2.5, -14, 14);
+  const f = poisson(1.25 * Math.exp(d * 0.07)), g = poisson(1.05 * Math.exp(-d * 0.07));
+  let w = f > g ? h : g > f ? a : null, pen = false;
+  if (ko && w == null) { pen = true; w = R() < 0.5 + clamp(CLUBS[h].level - CLUBS[a].level, -10, 10) * 0.02 ? h : a; }
+  const m = { stage, h, a, f, g, w, pen };
+  S.euro.log.push(m);
+  S.eres[h] = { o: a, f, g, w, stage, pen }; S.eres[a] = { o: h, f: g, g: f, w, stage, pen };
+  if (!quiet) {
+    const mine = hlClubs();
+    if (mine.has(h) || mine.has(a)) news(`Coppa d'Europa · ${esc(CLUBS[h].name)} ${f}–${g} ${esc(CLUBS[a].name)}${pen ? ` (${esc(CLUBS[w].name)} ai rigori)` : ''}.`, mine.has(w) || (!ko && ((mine.has(h) && f > g) || (mine.has(a) && g > f))) ? 'good' : '');
+    if (isClub() && (h === S.my || a === S.my)) {
+      const myF = h === S.my ? f : g, myG = h === S.my ? g : f;
+      if (!ko) S.budget += myF > myG ? EURO_PRIZE.win : myF === myG ? EURO_PRIZE.draw : 0;
+      S.conf = clamp((S.conf || 0) + (w === S.my || (!ko && myF > myG) ? 0.8 : myF < myG ? -0.5 : 0), 0, 100);
+    }
+  }
+  return m;
+}
+function euroWeek(w, quiet) {
+  const E = S.euro; if (!E) return;
+  S.eres = {};
+  const gi = EW.g.indexOf(w);
+  if (gi === 0 && !quiet && isClub() && euroIn(S.my)) { S.budget += EURO_PRIZE.start; news(`Debutto in Coppa d'Europa: ${eur(EURO_PRIZE.start)} di premio partecipazione.`, 'good'); }
+  if (gi >= 0) {
+    for (const g of E.groups) for (const [x, y] of GMD[gi]) { const m = euroPlay(g[x], g[y], false, 'g', quiet), A = E.gtab[m.h], B = E.gtab[m.a];
+      A.p++; B.p++; A.gf += m.f; A.ga += m.g; B.gf += m.g; B.ga += m.f;
+      if (m.f > m.g) { A.w++; A.pts += 3; B.l++; } else if (m.f < m.g) { B.w++; B.pts += 3; A.l++; } else { A.d++; B.d++; A.pts++; B.pts++; } }
+    if (gi === 5) { const st = E.groups.map(gStand); E.qf = [[st[0][0], st[1][1]], [st[1][0], st[0][1]], [st[2][0], st[3][1]], [st[3][0], st[2][1]]]; euroStageNews('qf', E.qf.flat(), quiet); }
+  }
+  const ko = (pairs, stage, next) => pairs.map(([h, a]) => euroPlay(h, a, true, stage, quiet).w);
+  if (w === EW.qf && E.qf.length) { const ws = ko(E.qf, 'qf'); E.sf = [[ws[0], ws[2]], [ws[1], ws[3]]]; euroStageNews('sf', ws, quiet); }
+  if (w === EW.sf && E.sf.length) { const ws = ko(E.sf, 'sf'); E.f = [[ws[0], ws[1]]]; euroStageNews('f', ws, quiet); }
+  if (w === EW.f && E.f.length) { E.champ = ko(E.f, 'f')[0]; if (!quiet) euroChampion(); }
+}
+function euroStageNews(stage, ids, quiet) {
+  if (quiet || !isClub() || !ids.includes(S.my)) return;
+  S.budget += EURO_PRIZE[stage];
+  news(`${esc(myClub().name)} va ${{ qf: 'ai quarti', sf: 'in semifinale', f: 'in finale' }[stage]} di Coppa d'Europa: ${eur(EURO_PRIZE[stage])} di premio.`, 'good');
+}
+function euroChampion() {
+  const c = S.euro.champ, k = CLUBS[c];
+  if (isClub() && c === S.my) {
+    S.budget += EURO_PRIZE.champ; addRep(6); S.cr += 4; S.rec.euro = true; if (S.role === 'pres') S.rec.euroPres = true;
+    S.honors.push({ s: S.season, t: 'euro', club: c, co: k.co, role: S.role });
+    news(`<b>${esc(k.name)} vince la Coppa d'Europa!</b> Premio ${eur(EURO_PRIZE.champ)}, +4 crediti.`, 'good'); toast('Campioni d\'Europa!'); buzz([60, 80, 60, 80, 120]);
+  } else {
+    const cl = clients().filter(p => p.club === c);
+    if (cl.length) { S.rec.euroClient = true; addRep(1.5); news(`<b>${cl.map(p => fullName(p)).join(', ')}</b> vince la Coppa d'Europa con ${esc(k.name)}!`, 'good'); }
+    else news(`${esc(k.name)} vince la Coppa d'Europa.`);
+  }
+}
+function euroSummary(sum) { if (S.euro && S.euro.champ != null) sum.lines.push(`<b>Coppa d'Europa</b> a ${esc(CLUBS[S.euro.champ].name)}${S.euro.champ === S.my && isClub() ? ': è il tuo club!' : '.'}`); }
 
 /* ---------- album, credits, shop ---------- */
 const RAR = ['Bronzo', 'Argento', 'Oro', 'Leggenda'], RARC = ['#B07A3A', '#9EA3A8', '#D9A23B', '#1F4D3A'];
@@ -1030,7 +1130,7 @@ function advanceClub() {
   if (S.week > WEEKS) { seasonEndClub(); return; }
   const k = isClub() ? myClub() : null;
   if (k) k.level = teamLevel();
-  playRound(S.week);
+  playRound(S.week); euroWeek(S.week);
   if (k) simSquad(); else S.report = [];
   S.week++;
   S.money += Math.round((S.salary || 0) / WEEKS);
@@ -1052,9 +1152,10 @@ function seasonEndClub() {
   const pos = k ? standings(lgOf(k)).indexOf(S.my) + 1 : 0;
   const met = k ? pos <= S.goal.pos : false;
   if (k) { sum.pos = `${pos}°`; sum.goal = S.goal.t; sum.met = met; }
+  S.euroNext = euroQualifiers(false); euroSummary(sum);
   const { champs, rels: rel, proms } = leagueTurnover(sum);
   if (k) {
-    if (champs.includes(S.my)) { addRep(5); S.cr += 3; S.rec.title = true; if (S.role === 'pres') S.rec.presTitle = true; S.trophies = (S.trophies || 0) + 1; sum.lines.unshift(`<b>Campioni!</b> ${esc(k.name)} vince la ${CO[k.co].l1}. +3 crediti.`); }
+    if (champs.includes(S.my)) { addRep(5); S.cr += 3; S.rec.title = true; if (S.role === 'pres') S.rec.presTitle = true; S.trophies = (S.trophies || 0) + 1; S.honors.push({ s: S.season, t: 'title', club: k.id, co: k.co, role: S.role }); if (S.role === 'pres') S.presTitles = (S.presTitles || 0) + 1; sum.lines.unshift(`<b>Campioni!</b> ${esc(k.name)} vince la ${CO[k.co].l1}. +3 crediti.`); }
     if (met) { addRep(S.role === 'pres' ? 2 : 4); S.conf = clamp(S.conf + 25, 0, 100); const b = Math.round((S.salary || 0) * 0.5); S.money += b; sum.lines.push(`Obiettivo centrato: ${S.goal.t}.${b ? ` Premio personale ${eur(b)}.` : ''}`); }
     else { addRep(-3); S.conf = clamp(S.conf - 35, 0, 100); sum.lines.push(`Obiettivo mancato: ${S.goal.t}.`); }
     if (rel.includes(S.my)) { sum.lines.push(`${esc(k.name)} retrocede in ${CO[k.co].l2}.`); if (S.role !== 'pres') S.conf = 0; }
@@ -1158,7 +1259,7 @@ function advance() {
   if (S.event || S.over) return;
   if (S.role !== 'agent') { advanceClub(); return; }
   if (S.week > WEEKS) { seasonEnd(); return; }
-  playRound(S.week);
+  playRound(S.week); euroWeek(S.week);
   const report = [];
   for (const p of clients()) {
     const c = club(p);
@@ -1382,7 +1483,7 @@ function resolveEvent(act) {
     case 'fsilent': S.conf = clamp((S.conf || 0) - 3, 0, 100); news('Silenzio stampa. La piazza resta calda.', 'bad'); break;
     case 'nyes': S.budget += v.cost; S.conf = clamp((S.conf || 0) - 4, 0, 100); addRep(-0.5); news(`Lo stadio cambia nome: +${eur(v.cost)} al club.`); break;
     case 'nno': addRep(0.5); news('Lo stadio resta com\'è. I tifosi apprezzano.', 'good'); break;
-    case 'lega': S.lega = true; addRep(5); S.cr += 5; news('<b>Sei il presidente della Lega.</b> Hai completato la scalata.', 'good'); ui.sheet = { k: 'ending' }; break;
+    case 'lega': S.lega = true; S.honors.push({ s: S.season, t: 'lega', club: S.my, co: myClub().co, role: 'pres' }); addRep(5); S.cr += 5; news('<b>Sei il presidente della Lega.</b> Hai completato la scalata.', 'good'); ui.sheet = { k: 'ending' }; break;
     case 'rtv': addRep(1); S.cr += 1; for (const c of CLUBS) if (c.tier >= 3 && c.id !== S.my) c.level += 1; news('Riforma approvata: diritti TV più equi, le piccole crescono.', 'good'); break;
     case 'rcap': addRep(1); for (const c of CLUBS) if (c.tier === 1 && c.id !== S.my) c.level -= 1; news('Riforma approvata: tetto agli ingaggi, il campionato è più equilibrato.', 'good'); break;
     case 'ryouth': addRep(1); S.ref = { ...(S.ref || {}), youth: ((S.ref && S.ref.youth) || 0) + 1 }; news('Riforma approvata: più giovani nelle rose. I vivai sfornano un talento in più.', 'good'); break;
@@ -1489,6 +1590,7 @@ function seasonEnd() {
   else sum.lines.unshift(`Chiudi ${rank}° nella classifica dei procuratori. ${board()[0].n} resta davanti a tutti.`);
   for (const o of S.obj) if (!o.done && OBJ[o.t].end && OBJ[o.t].prog() <= o.target) completeObj(o);
   sum.obj = S.obj.filter(o => o.done).length;
+  S.euroNext = euroQualifiers(false); euroSummary(sum);
   const { champs, rels: rel } = leagueTurnover(sum);
   for (const p of cl) {
     if (champs.includes(p.club)) { p.morale += 10; addRep(0.6); S.rec.title = true; S.cr += 1; sum.lines.push(`<b>${fullName(p)}</b> vince il campionato con ${esc(CLUBS[p.club].name)}! +1 credito.`); }
@@ -1648,6 +1750,7 @@ ${S.daily.last !== dayKey() ? (() => { const day = (S.daily.last === dayKey(Date
   return `<div class="obj ${o.done ? 'done' : ''}"><span class="ck">${CHECK}</span><div class="mid"><div class="tx">${d.txt(o)}</div>${o.done ? '' : `<div class="prog"><i style="width:${pct}%"></i></div>`}<div class="pv">${pv}</div></div><div class="rw">+${eur(o.money)}<br>+${o.rep} rep</div></div>`; }).join('')}</div>
 
 ${S.report.length ? `<div class="h2">Ultima giornata</div><div class="panel list">${rep}</div>` : ''}
+${euroPanel()}
 ${leaguePanel()}
 <div class="h2">Classifica procuratori</div>
 <div class="panel list">${board().map((x, i) => `<div class="br ${x.me ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="bn">${esc(x.n)}</span><span class="num small">${eur(x.s)}</span></div>`).join('')}</div>
@@ -1736,6 +1839,7 @@ function sheetView() {
   if (s.k === 'nego') { const o = S.offers.find(x => x.id === s.id); inner = !o ? '' : o.type === 'buy' ? buySheet(o) : o.type === 'sell' ? sellSheet(o) : negoSheet(o); }
   if (s.k === 'ending') inner = endingSheet();
   if (s.k === 'own') inner = ownSheet(s.id);
+  if (s.k === 'euro') inner = euroSheet();
   if (s.k === 'table') inner = tableSheet();
   if (s.k === 'card') inner = cardSheet(S.album[s.id]);
   if (s.k === 'event' && S.event) { closable = false; const v = eventView(S.event);
@@ -1871,14 +1975,15 @@ function clubHomeView() {
   ${jobsBanner()}
   ${S.offers.length ? `<button class="panel pad" data-a="tab" data-v="deals" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)"><span class="ovr hi"><b>${S.offers.length}</b><span>TRAT.</span></span><span style="flex:1"><b>Trattative aperte</b><br><span class="small muted">Rispondi prima che scadano.</span></span><span aria-hidden="true">›</span></button>` : ''}
   ${coffeeCard()}
-  ${m ? `<div class="h2">Ultima giornata</div><div class="panel list"><div class="rep-row"><span class="mid"><b>${esc(k.name)}</b> ${resText(S.my)}</span></div>${rows}</div>` : ''}
+  ${m || (S.eres && S.eres[S.my]) ? `<div class="h2">Ultima giornata</div><div class="panel list">${m ? `<div class="rep-row"><span class="mid"><b>${esc(k.name)}</b> ${resText(S.my)}</span></div>` : ''}${S.eres && S.eres[S.my] ? (() => { const e = S.eres[S.my], o = e.w === S.my || (e.stage === 'g' && e.f > e.g) ? 'V' : e.f < e.g || (e.w != null && e.w !== S.my) ? 'S' : 'P'; return `<div class="rep-row"><span class="mid"><b>Coppa d'Europa</b> <span class="res ${o}">${e.f}–${e.g}</span>${esc(CLUBS[e.o].name)}${e.pen ? ' · rigori' : ''}</span></div>`; })() : ''}${rows}</div>` : ''}
+  ${euroPanel()}
   ${leaguePanel()}
   ${newsList()}`;
 }
 function noneHomeView() {
   return `<section class="hero"><div class="lines"></div><div class="in"><div class="label">Stagione ${seasonLabel()}</div><div class="big" style="font-family:var(--f-display)">Senza incarico</div>
   <p style="margin:10px 0 0;opacity:.85">Segui il campionato dalla tribuna. Le offerte arrivano in base alla tua reputazione (${Math.floor(S.rep)}/100). Dalla Carriera puoi anche tornare a fare il procuratore.</p></div></section>
-  ${jobsBanner()}${coffeeCard()}${leaguePanel()}${newsList()}`;
+  ${jobsBanner()}${coffeeCard()}${euroPanel()}${leaguePanel()}${newsList()}`;
 }
 function squadView() {
   const xi = new Set(bestXI().map(p => p.id));
@@ -2000,6 +2105,7 @@ function careerView() {
     return `<div class="panel up"><div class="hd"><h4>${name}</h4><span class="lv">${[0, 1, 2, 3, 4].map(i => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div><div class="small muted">${desc}.</div>${l < 5 ? `<button class="btn green full" data-a="fac" data-v="${key}" ${S.budget < c ? 'disabled' : ''}>Investi ${eur(c)} dal budget</button>` : '<div class="tiny" style="color:var(--gold)">Livello massimo</div>'}</div>`; }).join('');
   if (S.role === 'pres') h += `<div class="h2">Finanzia il club</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Sposta soldi dal tuo patrimonio alle casse del club.</div><div class="btns">${[1e6, 5e6, 2e7].map(x => `<button class="btn ghost" data-a="inject" data-v="${x}" ${S.money < x ? 'disabled' : ''}>${eur(x)}</button>`).join('')}</div></div>`;
   h += ownershipBlock();
+  h += honorsBlock();
   h += achBlock();
   h += `<div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Il salvataggio è automatico su questo dispositivo.</div><button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
   return h;
@@ -2013,8 +2119,56 @@ function clubSeasonSheet(m) {
 function endingSheet() {
   return `<h3>Presidente della Lega</h3><p class="lead">Hai completato la scalata: dallo studio di provincia al vertice del calcio.</p><div class="body">
   <div class="panel season"><div><b>${S.season}</b><span>Stagioni</span></div><div><b>${S.trophies || 0}</b><span>Titoli</span></div><div><b>${S.stats.deals}</b><span>Affari</span></div><div><b>${Object.keys(S.album).length}</b><span>Figurine</span></div></div>
-  <p class="small muted" style="margin:0">Puoi continuare a guidare il tuo club. Ogni estate proporrai una riforma alla Lega.</p>
+  <p class="small muted" style="margin:0">Puoi continuare a guidare il tuo club. Ogni estate proporrai una riforma alla Lega, e in Carriera trovi gli obiettivi da leggenda: Coppa d'Europa, dinastie, il club da un miliardo.</p>
   <button class="btn pri full" data-a="close">Continua</button></div>`;
+}
+const TROPHY = '<svg class="cup" viewBox="0 0 34 34" aria-hidden="true"><path d="M10 5h14v7a7 7 0 0 1-14 0z" fill="currentColor"/><path d="M10 7H5.5a4 4 0 0 0 4.5 6M24 7h4.5a4 4 0 0 1-4.5 6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 19h4v5h-4zM11 27h12v3H11z" fill="currentColor"/></svg>';
+function euroPhase() {
+  const E = S.euro, w = S.week; if (!E) return '';
+  if (E.champ != null) return `Vinta da ${esc(CLUBS[E.champ].name)}`;
+  if (w <= EW.g[0]) return `Gironi dalla G${EW.g[0]}`;
+  if (w <= EW.g[5]) return `Fase a gironi · ${EW.g.filter(x => x < w).length} giornate su 6`;
+  if (w <= EW.qf) return `Quarti alla G${EW.qf}`;
+  if (w <= EW.sf) return `Semifinali alla G${EW.sf}`;
+  return `Finale alla G${EW.f}`;
+}
+function euroStatus(id) {
+  const E = S.euro;
+  if (E.champ === id) return 'Campione';
+  if (E.f.flat().includes(id)) return 'In finale';
+  if (E.sf.flat().includes(id)) return E.f.length ? 'Eliminato in semifinale' : 'In semifinale';
+  if (E.qf.flat().includes(id)) return E.sf.length ? 'Eliminato ai quarti' : 'Ai quarti';
+  if (E.qf.length) return 'Eliminato ai gironi';
+  const g = E.groups.find(x => x.includes(id)), t = E.gtab[id];
+  return `Girone ${'ABCD'[E.groups.indexOf(g)]} · ${gStand(g).indexOf(id) + 1}° con ${t.pts} pt`;
+}
+function euroPanel() {
+  if (!S.euro) return '';
+  const mine = [...hlClubs()].filter(euroIn);
+  return `<div class="h2">Coppa d'Europa</div><button class="panel pad" data-a="euro" style="display:flex;align-items:center;gap:12px;text-align:left;width:100%">${TROPHY}
+  <span style="flex:1;min-width:0"><b>${euroPhase()}</b><br><span class="small muted">${mine.length ? mine.map(id => `${esc(CLUBS[id].name)}: ${euroStatus(id)}`).join(' · ') : isClub() ? 'Il tuo club non partecipa. Si qualificano le prime di ogni campionato.' : 'Nessun tuo assistito è in gara.'}</span></span><span aria-hidden="true" class="muted">›</span></button>`;
+}
+function euroSheet() {
+  const E = S.euro, mine = hlClubs();
+  const row = m => `<div class="mt ${mine.has(m.h) || mine.has(m.a) ? 'me' : ''}"><span class="t r ${m.w === m.h ? 'win' : ''}">${esc(CLUBS[m.h].name)}</span><span class="sc">${m.f}–${m.g}${m.pen ? '*' : ''}</span><span class="t ${m.w === m.a ? 'win' : ''}">${esc(CLUBS[m.a].name)}</span></div>`;
+  const tbd = ([h, a]) => `<div class="mt ${mine.has(h) || mine.has(a) ? 'me' : ''}"><span class="t r">${esc(CLUBS[h].name)}</span><span class="sc">vs</span><span class="t">${esc(CLUBS[a].name)}</span></div>`;
+  const stage = (st, pairs, title) => { const played = E.log.filter(m => m.stage === st); if (!played.length && !pairs.length) return '';
+    return `<div class="h2">${title}</div><div class="panel list">${played.length ? played.map(row).join('') : pairs.map(tbd).join('')}</div>`; };
+  return `<div style="display:flex;align-items:center;gap:12px">${TROPHY}<div><h3>Coppa d'Europa</h3><div class="small muted">${euroPhase()} · 16 squadre da 5 paesi</div></div></div>
+  <div class="body" style="margin-top:12px">
+  ${stage('f', E.f, 'Finale')}${stage('sf', E.sf, 'Semifinali')}${stage('qf', E.qf, 'Quarti di finale')}
+  <div class="h2">Gironi</div><div class="grps">${E.groups.map((g, gi) => `<div class="panel list grp"><div class="gh">Girone ${'ABCD'[gi]}</div>${gStand(g).map((id, i) => { const t = E.gtab[id], c = CLUBS[id];
+    return `<div class="br ${mine.has(id) ? 'me' : ''}"><span class="pos" style="${i < 2 && E.qf.length ? 'color:var(--gold)' : ''}">${i + 1}</span><span class="bn"><span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}<span class="cc">${CC[c.co]}</span></span><span class="num small"><b>${t.pts}</b></span></div>`; }).join('')}</div>`).join('')}</div>
+  <p class="small muted" style="margin:0">Passano le prime due di ogni girone. Dai quarti si gioca in gara secca: in caso di pareggio decidono i rigori (*). Premi al club: ${eur(EURO_PRIZE.start)} per partecipare, poi fino a ${eur(EURO_PRIZE.champ)} per il titolo.</p></div>`;
+}
+function honorsBlock() {
+  const H = S.honors || [];
+  const legIds = ['euro', 'legDyn', 'legBil', 'legTwo', 'legAlb', 'legImm'];
+  let h = `<div class="h2">Albo d'oro <span class="count">${H.length}</span></div>`;
+  h += H.length ? `<div class="panel list">${H.slice().reverse().map(x => `<div class="br"><span class="pos" style="color:var(--gold);font-size:14px;width:auto">${2025 + x.s}/${String(26 + x.s).slice(-2)}</span><span class="bn"><b>${{ title: 'Campionato', euro: "Coppa d'Europa", lega: 'Presidente della Lega' }[x.t]}</b> · ${esc(CLUBS[x.club] ? CLUBS[x.club].name : '')}</span><span class="small muted">${ROLE_NAME[x.role] || ''}</span></div>`).join('')}</div>` : '<div class="panel empty"><b>Ancora vuoto</b>Campionati e coppe vinti da dirigente o presidente finiscono qui.</div>';
+  if (S.lega) h += `<div class="h2">Obiettivi da leggenda</div><p class="small muted" style="margin:0">Hai completato la scalata. Ora resta la storia: ogni obiettivo vale crediti e reputazione.</p><div class="panel list">${legIds.map(id => { const a = ACH.find(x => x[0] === id), st = S.ach[id];
+    return `<div class="obj ${st ? 'done' : ''}"><span class="ck">${CHECK}</span><div class="mid"><div class="tx">${a[1]}</div><div class="small muted" style="margin-top:3px">${a[2]}</div></div>${st === 1 ? `<button class="btn pri" style="min-height:38px;font-size:15px" data-a="claim" data-v="${id}">Ritira</button>` : ''}</div>`; }).join('')}</div>`;
+  return h;
 }
 function leaguePanel() {
   if (!S.tab) return '';
@@ -2072,7 +2226,7 @@ document.addEventListener('input', e => {
   document.getElementById('askV').innerHTML = `${eur(ui.ask)}<span style="font-size:18px;opacity:.7"> /anno</span>`;
   const c = document.getElementById('askC'); c.innerHTML = c.innerHTML.replace(/Per te: [^ ]+/, 'Per te: ' + eur(ui.ask * p.fee / 100));
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season', 'table', 'card', 'ending', 'own'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season', 'table', 'card', 'ending', 'own', 'euro'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
 
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-a]'); if (!el) return;
@@ -2088,6 +2242,7 @@ document.addEventListener('click', e => {
     case 'nego': ui.sheet = { k: 'nego', id: +v }; ui.ask = 0; ui.fee = 0; render(); break;
     case 'table': ui.sheet = { k: 'table' }; ui.tlg = null; render(); break;
     case 'lg': ui.tlg = v; render(); break;
+    case 'euro': ui.sheet = { k: 'euro' }; render(); break;
     case 'card': ui.sheet = { k: 'card', id: +v }; render(); break;
     case 'buy': buy(v); break;
     case 'bstart': { const ex = S.offers.find(o => o.type === 'buy' && o.pid === +v); ui.fee = 0; ui.ask = 0; if (ex) { ui.sheet = { k: 'nego', id: ex.id }; render(); } else startBuy(+v); break; }
@@ -2163,7 +2318,7 @@ function start(data) {
   if (S && S.event) ui.sheet = { k: 'event' };
   render();
 }
-if (window.__SIM) window.__game = { get S() { return S; }, set S(v) { S = v; }, ui, newGame, advance, acceptJob, startBuy, pushBuyFee, pushBuyWage, doSell, finalize, pushFee, pushAsk, pushSell, resolveEvent, eventView, buy, buyClubWith, buyOptions, takeControl, sellClub, sellStake,
+if (window.__SIM) window.__game = { get S() { return S; }, set S(v) { S = v; }, ui, newGame, advance, acceptJob, startBuy, pushBuyFee, pushBuyWage, doSell, finalize, pushFee, pushAsk, pushSell, resolveEvent, euroWeek, eventView, buy, buyClubWith, buyOptions, takeControl, sellClub, sellStake,
   clubValue, finWeek, bestXI, teamLevel, recruitChance, value, wagesTotal, squad, clients, myClub, CLUBS, CAP, UPG, FAC, facCost, ACH, stage, standings, lgOf, capOf, penOf, isClub, inWindow, renewAsk, releaseCost, removeSquad, progress, addCard, scoutRange, genMarket, genClubMarket, stakeOf, clubBudget };
 window.claude?.hot?.snapshot?.(() => ({ S }));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
