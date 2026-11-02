@@ -731,12 +731,12 @@ function euroQualifiers(byLevel) {
 }
 function genEuro(q) {
   const teams = (q && q.length === 16 ? q : euroQualifiers(true)).slice().sort((a, b) => CLUBS[b].level - CLUBS[a].level);
-  let groups;
-  for (let tries = 0; tries < 800; tries++) {
-    groups = [[], [], [], []];
-    for (let p = 0; p < 4; p++) { const pot = teams.slice(p * 4, p * 4 + 4).sort(() => R() - 0.5); pot.forEach((id, i) => groups[i].push(id)); }
-    if (groups.every(g => new Set(g.map(id => CLUBS[id].co)).size === 4)) break;
-  }
+  const pots = [0, 1, 2, 3].map(p => teams.slice(p * 4, p * 4 + 4)), groups = [[], [], [], []];
+  const perms = a => a.length <= 1 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map(q => [x, ...q]));
+  const solve = p => { if (p === 4) return true;
+    for (const perm of perms(pots[p]).sort(() => R() - 0.5)) if (perm.every((id, g) => !groups[g].some(x => CLUBS[x].co === CLUBS[id].co))) { perm.forEach((id, g) => groups[g].push(id)); if (solve(p + 1)) return true; perm.forEach((id, g) => groups[g].pop()); }
+    return false; };
+  if (!solve(0)) { groups.forEach(g => (g.length = 0)); pots.forEach(pot => pot.slice().sort(() => R() - 0.5).forEach((id, i) => groups[i].push(id))); }
   S.euro = { groups, gtab: {}, qf: [], sf: [], f: [], champ: null, log: [] };
   for (const id of teams) S.euro.gtab[id] = { p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
   S.eres = {};
