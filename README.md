@@ -36,3 +36,10 @@ Il mercato è aperto dalla G1 alla G5 e dalla G21 alla G24. Gli svincolati posso
 
 ## Cinque paesi
 Italia, Inghilterra, Spagna, Germania e Francia, con prima e seconda divisione ciascuna (196 club inventati). Ogni campionato ha il suo calendario (34, 38 o 46 giornate) dentro le 38 settimane della stagione, con tre promozioni e tre retrocessioni. Stipendi e ricavi cambiano per paese: l'Inghilterra paga di più, la Francia di meno.
+
+## Comprare un club
+- **Valori realistici**: seconde divisioni da €3–25M, prima divisione da circa €60–80M (bassa classifica) fino a oltre €1 miliardo per le grandi inglesi. Il valore segue la forza della squadra, le strutture e la categoria.
+- **Quattro modi**: da solo, con prestito bancario (50% al 6%), in cordata (20% o 35%, i soci portano capitali ma ti tolgono la presidenza dopo due obiettivi mancati), quote di minoranza da 10% (dividendi; oltre il 50% prendi il controllo).
+- **Regola 50+1**: in Germania al massimo il 49%.
+- **Vendita del club** e rimborso del prestito dalla Carriera. Se il club fallisce lo perdi, ma la carriera continua.
+- Per diventare presidente della Lega serve vincere il campionato con un club che vale almeno €300M.

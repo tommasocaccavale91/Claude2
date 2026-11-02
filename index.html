@@ -94,7 +94,9 @@ main.wrap{padding-block:16px calc(var(--bar)*2 + 28px + env(safe-area-inset-bott
 .row-p:active{background:var(--surface2)}
 .mini{width:46px;height:56px;flex:none;border-radius:6px;overflow:hidden;background:var(--cardpaper);box-shadow:inset 0 0 0 1px var(--cardline)}
 .mini svg{display:block;width:100%;height:100%}
-.row-p .mid{flex:1;min-width:0}
+.row-p .mid{flex:1;min-width:0;display:block}
+.row-p .nm,.row-p .meta{display:block}
+.row-p>.num{flex:none}
 .row-p .nm{font:700 16px/1.15 var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row-p .meta{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .ovr{flex:none;width:44px;text-align:center;border-radius:8px;padding:5px 0 4px;background:var(--surface2);border:1px solid var(--line)}
@@ -426,7 +428,7 @@ const errFor = l => Math.max(1, 13 - l * 2.4);
 let S = null;
 const ui = { tab: 'home', sheet: null, confirm: null, toast: null, ask: 0, fee: 0 };
 
-const save = () => { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} };
+const save = () => { if (ui.headless) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} };
 const load = () => { try { const d = JSON.parse(localStorage.getItem(SAVE) || 'null'); return d && d.v === 1 ? d : null; } catch (e) { return null; } };
 
 const P = id => S.players[id];
@@ -529,7 +531,7 @@ function newGame(name) {
     rivals: RIVALS.map(([n, t]) => ({ n, t, s: 0 })), ach: {}, daily: { last: null, streak: 0, best: 0 },
     rec: { maxFee: 0, tier1: false, wonder: false, award: false, top1: false, deadline: false, grow: 0, title: false }, sRec: { tier1: false, youth: false, maxFee: 0 },
     album: {}, cr: 0, am: {}, cs: CLUB_DEF.map(c => ({ ...c })),
-    role: 'agent', my: null, squad: [], jobs: [], fac: { stadium: 1, youth: 1, mkt: 1 }, maxStage: 0, budget: 0, salary: 0 };
+    role: 'agent', my: null, squad: [], jobs: [], stakes: [], own: null, fac: { stadium: 1, youth: 1, mkt: 1 }, maxStage: 0, budget: 0, salary: 0 };
   genFixtures();
   const t4 = CLUBS.filter(c => c.tier === 4 && c.co === 'IT'), t3 = CLUBS.filter(c => c.tier === 3 && c.co === 'IT');
   const a = makePlayer({ age: 18, ovr: 55, pot: 77, club: pick(t4).id, role: 'ATT' }); a.contract = 2; a.fee = 8; a.morale = 72; a.trait = 'Ambizioso';
@@ -635,7 +637,7 @@ function migrate(d) {
   d.sRec = d.sRec || { tier1: false, youth: false, maxFee: 0 };
   d.album = d.album || {}; d.cr = d.cr || 0; d.am = d.am || {};
   d.cs = d.cs || CLUB_DEF.map(c => ({ ...c })); applyClubs(d.cs);
-  d.role = d.role || 'agent'; d.squad = d.squad || []; d.jobs = d.jobs || []; d.fac = d.fac || { stadium: 1, youth: 1, mkt: 1 }; d.maxStage = d.maxStage || 0; d.budget = d.budget || 0; d.salary = d.salary || 0;
+  d.role = d.role || 'agent'; d.squad = d.squad || []; d.jobs = d.jobs || []; d.fac = d.fac || { stadium: 1, youth: 1, mkt: 1 }; d.maxStage = d.maxStage || 0; d.stakes = d.stakes || []; if (d.role === 'pres' && !d.own) d.own = { club: d.my, pct: 100, loan: 0, cordata: false, miss: 0 }; d.budget = d.budget || 0; d.salary = d.salary || 0;
   S = d; if (!S.obj) genObjectives();
   if (!S.order) { genFixtures(); for (let w = 1; w < Math.min(S.week, WEEKS + 1); w++) playRound(w); S.res = {}; }
   for (const p of clients()) { if (p.ovr0 == null) p.ovr0 = p.ovr; addCard(p); }
@@ -742,11 +744,11 @@ const TABS = {
 };
 const LADDER = [
   ['Procuratore', 'Scopri talenti e vivi di commissioni.'],
-  ['Direttore sportivo', 'Un club piccolo ti affida rosa e mercato. Le offerte arrivano da 40 di reputazione.'],
-  ['DS di un grande club', 'Centra l\'obiettivo in un club piccolo con almeno 50 di reputazione.'],
-  ['Amministratore delegato', 'Centra l\'obiettivo in un grande club con almeno 65 di reputazione. Gestisci anche bilancio, stadio e vivaio.'],
-  ['Presidente', 'Da amministratore delegato, compra un club con il tuo patrimonio.'],
-  ['Presidente della Lega', 'Vinci il campionato da presidente con almeno 80 di reputazione.']
+  ['Direttore sportivo', 'Un club piccolo ti affida rosa e mercato. Le offerte arrivano da 35 di reputazione.'],
+  ['DS di un grande club', 'Centra l\'obiettivo in un club piccolo con almeno 45 di reputazione.'],
+  ['Amministratore delegato', 'Centra l\'obiettivo in un grande club con almeno 55 di reputazione. Gestisci anche bilancio, stadio e vivaio.'],
+  ['Presidente', 'Dopo essere stato amministratore delegato, compra un club: da solo, con un prestito, in cordata o salendo di quota.'],
+  ['Presidente della Lega', 'Vinci il campionato da presidente di un club che vale almeno €300M, con almeno 80 di reputazione.']
 ];
 const isClub = () => S.role === 'ds' || S.role === 'ad' || S.role === 'pres';
 const myClub = () => CLUBS[S.my];
@@ -756,8 +758,75 @@ const absW = () => S.season * 50 + S.week;
 const TIER_LV = [0, 80, 74, 68, 62, 57];
 const billOf = k => Math.round(22 * 0.75 * baseWage(TIER_LV[k.tier], k.tier) * CO[k.co].w);
 const clubBudget = k => Math.round(billOf(k) * 0.35 / 1e5) * 1e5;
-const clubPrice = k => Math.round(billOf(k) * 0.9 / 1e5) * 1e5;
-const salaryFor = (role, k) => { const b = Math.round(50000 * Math.exp((TIER_LV[k.tier] - 62) * 0.09) / 1000) * 1000; return role === 'ds' ? b : role === 'ad' ? b * 2.5 : 0; };
+const VAL_T = [0, 900e6, 400e6, 180e6, 80e6], VAL_B = { IT: 6e6, EN: 25e6, ES: 7e6, DE: 9e6, FR: 4e6 }, VAL_CO = { IT: 1, EN: 1.6, ES: 1.1, DE: 1, FR: 0.7 };
+function clubValue(k) {
+  const base = k.tier === 5 ? VAL_B[k.co] : VAL_T[k.tier] * VAL_CO[k.co];
+  let v = base * Math.exp(clamp(k.level - TIER_LV[k.tier] - CO[k.co].lv, -8, 10) * 0.09);
+  if (isClub() && k.id === S.my) v *= 1 + 0.04 * (S.fac.stadium + S.fac.youth + S.fac.mkt - 3);
+  return Math.round(v / 1e5) * 1e5;
+}
+const clubPrice = clubValue;
+const r5 = x => Math.round(x / 1e5) * 1e5;
+function buyOptions(k) {
+  const v = clubValue(k), de = k.co === 'DE', o = [];
+  if (!de) {
+    o.push({ m: 'solo', pct: 100, pay: v, loan: 0, t: 'Da solo · 100%', d: 'Il club è tutto tuo. Nessuno può mandarti via.' });
+    o.push({ m: 'loan', pct: 100, pay: r5(v * 0.5), loan: r5(v * 0.5), t: 'Con prestito bancario · 100%', d: `Metti metà del prezzo, la banca il resto al 6%: ${eur(v * 0.5 * 0.06)} di interessi l'anno a carico del club.` });
+    o.push({ m: 'cordata', pct: 35, pay: r5(v * 0.35), loan: 0, t: 'Cordata · 35%', d: 'Guidi un gruppo di soci che versano subito il 25% del valore per il mercato, e altro capitale quando centri l\'obiettivo. Se lo manchi due stagioni di fila, ti tolgono la presidenza.' });
+    o.push({ m: 'cordata', pct: 20, pay: r5(v * 0.2), loan: 0, t: 'Cordata · 20%', d: 'Come sopra, con una quota più piccola: costa meno, rendi meno quando vendi.' });
+  }
+  o.push({ m: 'stake', pct: 10, pay: r5(v * 0.1), loan: 0, t: 'Quota di minoranza · 10%', d: `Incassi dividendi ogni estate.${de ? ' Regola 50+1: in Germania nessun privato può superare il 49%.' : ' Oltre il 50% puoi prendere il controllo.'}` });
+  return o;
+}
+const stakeOf = id => (S.stakes || []).find(x => x.club === id);
+const canOwn = () => (S.maxStage || 0) >= 3;
+function buyClubWith(id, i) {
+  const k = CLUBS[id], opt = buyOptions(k)[i];
+  if (!opt || !canOwn() || S.money < opt.pay) return;
+  if (opt.m === 'stake') {
+    const st = stakeOf(id), cap = k.co === 'DE' ? 49 : 100;
+    if (st && st.pct + 10 > cap) { toast('Regola 50+1: massimo 49%'); return; }
+    if (S.own && S.own.club === id) { toast('Il club è già tuo'); return; }
+    S.money -= opt.pay;
+    if (st) st.pct += 10; else S.stakes.push({ club: id, pct: 10 });
+    news(`Compri il 10% di <b>${esc(k.name)}</b> per ${eur(opt.pay)}.`, 'good'); toast(`Quota in ${k.name}`);
+  } else {
+    if (S.role === 'pres') { toast('Vendi prima il tuo club'); return; }
+    S.money -= opt.pay;
+    if (S.role === 'agent') sellAgency(id);
+    if (isClub() && S.my === id) { S.role = 'pres'; S.salary = 0; }
+    else { if (isClub()) leaveClub(); setupClub(id, 'pres'); S.budget = clubBudget(k); }
+    S.own = { club: id, pct: opt.pct, loan: opt.loan, cordata: opt.m === 'cordata', miss: 0 };
+    if (S.own.cordata) { const cap = r5(clubValue(k) * 0.25); S.budget += cap; news(`I soci della cordata versano ${eur(cap)} per il mercato.`, 'good'); }
+    S.stakes = S.stakes.filter(x => x.club !== id);
+    news(`Compri <b>${esc(k.name)}</b> (${opt.t.toLowerCase()}) per ${eur(opt.pay)}: ora sei il presidente.`, 'good');
+    toast(`Presidente di ${k.name}`); buzz([40, 60, 40]); ui.tab = 'home';
+  }
+  S.jobs = []; ui.sheet = null; progress(); save(); render();
+}
+function takeControl(id) {
+  const st = stakeOf(id), k = CLUBS[id];
+  if (!st || st.pct < 51 || k.co === 'DE' || S.role === 'pres') return;
+  if (S.role === 'agent') sellAgency(id);
+  if (isClub() && S.my === id) { S.role = 'pres'; S.salary = 0; } else { if (isClub()) leaveClub(); setupClub(id, 'pres'); S.budget = clubBudget(k); }
+  S.own = { club: id, pct: st.pct, loan: 0, cordata: st.pct < 100, miss: 0 };
+  S.stakes = S.stakes.filter(x => x.club !== id);
+  news(`Con il ${S.own.pct}% prendi il controllo di <b>${esc(k.name)}</b>.`, 'good'); toast(`Presidente di ${k.name}`);
+  ui.tab = 'home'; progress(); save(); render();
+}
+function sellStake(id) {
+  const st = stakeOf(id); if (!st) return;
+  const v = r5(clubValue(CLUBS[id]) * st.pct / 100); S.money += v; S.stakes = S.stakes.filter(x => x !== st);
+  news(`Vendi il ${st.pct}% di ${esc(CLUBS[id].name)} per ${eur(v)}.`); toast(`+${eur(v)}`); save(); render();
+}
+function sellClub() {
+  if (S.role !== 'pres' || !S.own) return;
+  const k = myClub(), gross = r5(clubValue(k) * S.own.pct / 100 * rnd(0.95, 1.08)), net = gross - S.own.loan;
+  S.money += net;
+  news(`Vendi la tua quota di <b>${esc(k.name)}</b> per ${eur(gross)}${S.own.loan ? `, ${eur(S.own.loan)} vanno alla banca` : ''}.`, 'good');
+  S.own = null; leaveClub(); S.role = 'none'; ui.tab = 'office'; toast(`Club venduto · ${eur(net)}`); progress(); save(); render();
+}
+const salaryFor = (role, k) => { const b = Math.round(50000 * Math.exp((TIER_LV[k.tier] - 62) * 0.09) / 1000) * 1000; return role === 'ds' ? b : role === 'ad' ? b * 4 : 0; };
 const wagesTotal = () => squad().reduce((t, p) => t + p.wage, 0);
 const tripCostClub = () => Math.max(20000, Math.round(clubBudget(myClub()) * 0.03 / 1e4) * 1e4);
 const renewAsk = p => { if (!p.rAsk) p.rAsk = Math.round(wageAt(p.ovr, myClub()) * rnd(1, 1.2) / 1000) * 1000; return p.rAsk; };
@@ -799,7 +868,7 @@ function setupClub(id, role) {
   S.budget = Math.round(clubBudget(k) * (role === 'ds' ? 1 : 1.2) / 1e5) * 1e5;
   S.wcap = Math.max(Math.round(wagesTotal() * 1.1 / 1e4) * 1e4, Math.round(billOf(k) * 0.95 / 1e4) * 1e4);
   S.salary = salaryFor(role, k); S.conf = 60; S.lossRun = 0; S.lastNet = null;
-  S.goal = setGoal(); genClubMarket();
+  S.goal = setGoal(); genClubMarket(); S.adBase = clubValue(k);
   news(`Firmi con <b>${esc(k.name)}</b> come ${ROLE_NAME[role].toLowerCase()}. Obiettivo: ${S.goal.t}.`, 'good');
 }
 function removeSquad(p) {
@@ -830,14 +899,14 @@ function offerJob(role, tiers, allowSame) {
 function jobsWeek() {
   S.jobs = S.jobs.filter(j => j.exp >= absW());
   if (S.jobs.length || S.event) return;
-  if (S.role === 'agent' && S.rep >= 40 && R() < 0.04) offerJob('ds', S.rep >= 55 ? [2, 3] : [3, 4]);
+  if (S.role === 'agent' && S.rep >= 35 && R() < 0.06) offerJob('ds', S.rep >= 55 ? [2, 3] : [3, 4]);
   if (S.role === 'none' && R() < 0.15) offerJob('ds', S.rep >= 60 ? [2, 3] : [3, 4]);
 }
 function acceptJob(cid) {
   const j = S.jobs.find(x => x.club === cid); if (!j) { render(); return; }
   const k = CLUBS[cid];
   if (S.role === 'agent') sellAgency(cid);
-  if (isClub() && S.my === cid) { S.role = j.role; S.salary = salaryFor(j.role, k); S.budget = Math.max(S.budget, Math.round(clubBudget(k) * 1.2 / 1e5) * 1e5); news(`Promozione interna: diventi ${ROLE_NAME[j.role].toLowerCase()} di <b>${esc(k.name)}</b>.`, 'good'); }
+  if (isClub() && S.my === cid) { S.role = j.role; S.adBase = clubValue(k); S.salary = salaryFor(j.role, k); S.budget = Math.max(S.budget, Math.round(clubBudget(k) * 1.2 / 1e5) * 1e5); news(`Promozione interna: diventi ${ROLE_NAME[j.role].toLowerCase()} di <b>${esc(k.name)}</b>.`, 'good'); }
   else { if (isClub()) leaveClub(); setupClub(cid, j.role); }
   S.jobs = []; S.event = null; ui.tab = 'home'; ui.sheet = null;
   progress(); buzz([40, 60, 40]); toast(`Nuovo incarico: ${ROLE_NAME[j.role]}`); save(); render();
@@ -846,13 +915,6 @@ function backToAgent() {
   S.role = 'agent'; S.my = null; S.squad = []; S.offers = []; S.salary = 0; S.rep = Math.max(5, S.rep * 0.7);
   genMarket(); genObjectives();
   news('Riapri lo studio da procuratore. Si riparte.', 'good'); ui.tab = 'home'; save(); render();
-}
-function buyClub(id) {
-  const k = CLUBS[id], price = clubPrice(k); if (S.money < price || S.role !== 'ad') return;
-  S.money -= price;
-  if (S.my === id) { S.role = 'pres'; S.salary = 0; news(`Compri <b>${esc(k.name)}</b> per ${eur(price)}: ora sei il presidente.`, 'good'); }
-  else { leaveClub(); setupClub(id, 'pres'); S.budget = clubBudget(k); news(`Compri <b>${esc(k.name)}</b> per ${eur(price)}: ora sei il presidente.`, 'good'); }
-  S.jobs = []; ui.tab = 'home'; progress(); buzz([40, 60, 40]); toast(`Presidente di ${k.name}`); save(); render();
 }
 function genClubMarket() {
   for (const id of S.market) if (!S.squad.includes(id) && !S.clients.includes(id)) delete S.players[id];
@@ -870,8 +932,9 @@ function genClubMarket() {
 function finWeek() {
   const k = myClub(), B = billOf(k);
   const rev = (B * 0.62 + B * 0.27 * (0.7 + 0.15 * S.fac.stadium) * (k.tier === 5 ? 0.6 : 1) + B * 0.27 * (0.7 + 0.15 * S.fac.mkt)) / WEEKS;
+  const boost = Math.exp(clamp(k.level - TIER_LV[k.tier] - CO[k.co].lv, -6, 10) * 0.065);
   const cost = wagesTotal() / WEEKS;
-  return { rev: Math.round(rev), cost: Math.round(cost), net: Math.round(rev - cost) };
+  return { rev: Math.round(rev * boost), cost: Math.round(cost), net: Math.round(rev * boost - cost) };
 }
 function simSquad() {
   const k = myClub(), m = S.res[S.my], xiArr = bestXI(), xi = new Set(xiArr.map(p => p.id));
@@ -933,6 +996,7 @@ function maybeEventClub() {
   S.event = { t, pid: p ? p.id : null };
 }
 function youthIntake(sum) {
+  if (!isClub()) return;
   const k = myClub(), n = Math.min(4, 2 + ((S.ref && S.ref.youth) || 0)), names = [];
   for (let i = 0; i < n; i++) {
     const ovr = ri(44, 50) + S.fac.youth * 2;
@@ -954,6 +1018,10 @@ function leagueTurnover(sum) {
     for (const id of rel) { CLUBS[id].tier = 5; CLUBS[id].level = 57 + CO[co].lv + ri(0, 2); }
     for (const id of prom) { CLUBS[id].tier = 4; CLUBS[id].level = 61 + CO[co].lv + ri(0, 2); }
   }
+  for (const co of Object.keys(CO)) {
+    const ids = CLUBS.filter(c => c.co === co && c.tier <= 4).sort((a, b) => b.level - a.level), plan = ids.length === 20 ? [3, 4, 6, 7] : [3, 4, 5, 6];
+    let i = 0; plan.forEach((cnt, t) => { for (let j = 0; j < cnt && i < ids.length; j++, i++) { const c = ids[i]; if (c.id === (isClub() ? S.my : -1) && t + 1 < c.tier) sum.lines.push(`${esc(c.name)} ora è considerato un club di ${['', 'primissima fascia', 'alta classifica', 'metà classifica', 'bassa classifica'][t + 1]}.`); c.tier = t + 1; } });
+  }
   sum.lines.unshift(`<b>Campioni</b> · ${parts.join(' · ')}.`);
   S.cs = CLUBS.map(c => ({ tier: c.tier, level: c.level }));
   return { champs, rels, proms };
@@ -966,7 +1034,7 @@ function advanceClub() {
   if (k) simSquad(); else S.report = [];
   S.week++;
   S.money += Math.round((S.salary || 0) / WEEKS);
-  if (k && S.role !== 'ds') { const f = finWeek(); S.budget += f.net; S.lastNet = f.net; } else S.lastNet = Math.round((S.salary || 0) / WEEKS);
+  if (k && S.role !== 'ds') { const f = finWeek(), int = S.role === 'pres' && S.own ? Math.round(S.own.loan * 0.06 / WEEKS) : 0; S.budget += f.net - int; S.lastNet = f.net - int; } else S.lastNet = Math.round((S.salary || 0) / WEEKS);
   S.offers = S.offers.filter(o => { if (o.exp < S.week) { const p = P(o.pid); news(`Scaduta la trattativa per ${p ? fullName(p) : 'un giocatore'}.`); return false; } return true; });
   if (k) { boardWeek(); }
   if (isClub()) { genSellOffers(); maybeEventClub(); if (++S.mktAge >= 6) { genClubMarket(); news('Nuovo rapporto degli osservatori: obiettivi aggiornati nel Mercato.'); } }
@@ -994,10 +1062,12 @@ function seasonEndClub() {
     if (S.role !== 'ds') {
       const prize = Math.round(billOf(k) * 0.015 * Math.max(1, (wasB ? 12 : 21) - pos)); S.budget += prize; sum.lines.push(`Premi di piazzamento: ${eur(prize)} nelle casse del club.`);
       if (S.budget < 0) {
-        if (S.role === 'pres') { S.money += S.budget; sum.lines.push(`Ripiani il rosso del club con ${eur(-S.budget)} di tasca tua.`); S.budget = 0; if (S.money < 0) { S.over = true; } }
+        if (S.role === 'pres') { S.money += S.budget; sum.lines.push(`Ripiani il rosso del club con ${eur(-S.budget)} di tasca tua.`); S.budget = 0; if (S.money < 0) { sum.lines.push(`<b>Non basta: ${esc(k.name)} finisce in amministrazione controllata.</b> Perdi il club, il tuo patrimonio va a coprire i debiti.`); S.money = 0; addRep(-10); S.own = null; leaveClub(); S.role = 'none'; } }
         else { S.conf = clamp(S.conf - 20, 0, 100); sum.lines.push('Il bilancio chiude in rosso: la società non è contenta.'); }
       }
     }
+    if (S.role === 'ad') { const v = clubValue(k), gain = v - (S.adBase || v); if (gain > 0) { const b = Math.round(gain * 0.03 / 1000) * 1000; S.money += b; sum.lines.push(`Il valore del club è salito di ${eur(gain)}: premio personale ${eur(b)}.`); } S.adBase = v; }
+    if (S.role === 'pres' && S.own && S.own.cordata) { if (met) { const cap = r5(clubValue(k) * 0.07 * (100 - S.own.pct) / 100); S.budget += cap; sum.lines.push(`Obiettivo centrato: i soci versano ${eur(cap)} nelle casse del club.`); } S.own.miss = met ? 0 : (S.own.miss || 0) + 1; if (S.own.miss === 1 && !met) sum.lines.push('I soci della cordata sono delusi: un\'altra stagione così e ti tolgono la presidenza.'); }
     for (const p of squad()) {
       p.age++; p.yrs++; p.apps = p.goals = p.assists = p.rsum = 0; p.form = 0;
       if (p.age >= 34 && R() < (p.age - 33) * 0.3) { sum.lines.push(`<b>${fullName(p)}</b> si ritira.`); removeSquad(p); continue; }
@@ -1007,17 +1077,19 @@ function seasonEndClub() {
     }
     youthIntake(sum);
     if (S.role === 'ds') { S.budget = Math.round((clubBudget(k) * (met ? 1.15 : 0.85) + Math.max(0, S.budget) * 0.4) / 1e5) * 1e5; S.wcap = Math.max(Math.round(wagesTotal() * 1.05 / 1e4) * 1e4, Math.round(billOf(k) * 0.95 / 1e4) * 1e4); }
-    if (S.role !== 'pres' && S.conf < 25) { sum.lines.push(`<b>${esc(k.name)} ti esonera.</b> Cerca un nuovo incarico.`); leaveClub(); S.role = 'none'; }
+    if (S.role === 'pres' && S.own && S.own.cordata && S.own.miss >= 2) { const pay = r5(clubValue(k) * S.own.pct / 100); S.money += pay; sum.lines.push(`<b>I soci ti tolgono la presidenza.</b> Rilevano la tua quota per ${eur(pay)}.`); S.own = null; leaveClub(); S.role = 'none'; }
+    else if (isClub() && S.role !== 'pres' && S.conf < 25) { sum.lines.push(`<b>${esc(k.name)} ti esonera.</b> Cerca un nuovo incarico.`); leaveClub(); S.role = 'none'; }
   }
+  for (const st of S.stakes || []) { const d = Math.round(clubValue(CLUBS[st.club]) * 0.02 * st.pct / 100 / 1000) * 1000; S.money += d; sum.lines.push(`Dividendi dal ${st.pct}% di ${esc(CLUBS[st.club].name)}: ${eur(d)}.`); }
   S.offers = [];
   S.season++; S.week = 1; S.report = []; S.lossRun = 0; S.named = false;
   for (const x of S.rivals) x.s = 0;
   genFixtures();
   if (isClub()) { myClub().level = teamLevel(); S.goal = setGoal(); genClubMarket(); }
   const kk = isClub() ? myClub() : null;
-  if (kk && S.role === 'ds' && met) { if (kk.tier >= 3 && S.rep >= 50) offerJob('ds', [1, 2]); else if (kk.tier <= 2 && S.rep >= 65) offerJob('ad', [1, 2], true); }
+  if (kk && S.role === 'ds' && met) { if (kk.tier >= 3 && S.rep >= 45) offerJob('ds', [1, 2]); else if (kk.tier <= 2 && S.rep >= 55) offerJob('ad', [1, 2], true); }
   if (S.role === 'none') offerJob('ds', S.rep >= 60 ? [2, 3] : [3, 4]);
-  if (S.role === 'pres' && S.rec.presTitle && S.rep >= 80 && !S.lega) S.event = { t: 'lega' };
+  if (S.role === 'pres' && S.rec.presTitle && S.rep >= 80 && clubValue(myClub()) >= 300e6 && !S.lega) S.event = { t: 'lega' };
   else if (S.lega && !S.event) S.event = { t: 'reform' };
   progress();
   news(`Inizia la stagione ${seasonLabel()}.${isClub() ? ` Obiettivo: ${S.goal.t}.` : ''}`);
@@ -1440,7 +1512,7 @@ function seasonEnd() {
   S.season++; S.week = 1; S.sEarn = 0; S.sDeals = 0; S.sRep = S.rep; S.report = [];
   genFixtures(); genMarket(); genObjectives(); progress();
   news(`Inizia la stagione ${seasonLabel()}. Mercato estivo aperto e tre nuove sfide sul tavolo.`);
-  if (S.rep >= 40 && !S.jobs.length) offerJob('ds', S.rep >= 55 ? [2, 3] : [3, 4]);
+  if (S.rep >= 35 && !S.jobs.length) offerJob('ds', S.rep >= 55 ? [2, 3] : [3, 4]);
   S.sum = sum; ui.sheet = { k: 'season' };
   save(); render();
 }
@@ -1501,6 +1573,7 @@ const moraleWord = m => m >= 80 ? 'Entusiasta' : m >= 60 ? 'Sereno' : m >= 35 ? 
 const $app = document.getElementById('app');
 
 function render() {
+  if (ui.headless) return;
   if (!S) { $app.innerHTML = introView(); return; }
   const mode = S.role === 'agent' ? 'agent' : isClub() ? 'club' : 'none', agent = mode === 'agent';
   const tabs = TABS[mode];
@@ -1643,7 +1716,7 @@ function officeView() {
     <div class="small muted">${u.desc(l)}</div>
     ${maxed ? '<div class="tiny" style="color:var(--gold)">Livello massimo</div>' : `<div class="small">Prossimo: ${u.desc(l + 1)}</div><button class="btn green full" data-a="upg" data-v="${k}" ${S.money < cost ? 'disabled' : ''}>Investi ${eur(cost)}</button>`}</div>`;
   }).join('');
-  return `${careerBlock()}<div class="h2">Investimenti</div>${ups}
+  return `${careerBlock()}${canOwn() || (S.stakes || []).length ? ownershipBlock() : ''}<div class="h2">Investimenti</div>${ups}
   <div class="h2">Traguardi <span class="count">${Object.keys(S.ach).length}/${ACH.length}</span></div>
   <div class="panel list">${ACH.map(([id, name, desc, , money, rep]) => { const st = S.ach[id];
     return `<div class="ach ${st ? '' : 'locked'}">${medal(!!st, rep)}<div class="mid"><b>${name}</b><div class="small muted">${desc}</div><div class="rw" style="text-align:left;margin-top:3px">${money ? '+' + eur(money) : ''}${money && rep ? ' · ' : ''}${rep ? '+' + rep + ' rep' : ''}</div></div>
@@ -1662,6 +1735,7 @@ function sheetView() {
   if (s.k === 'player') inner = playerSheet(P(s.id));
   if (s.k === 'nego') { const o = S.offers.find(x => x.id === s.id); inner = !o ? '' : o.type === 'buy' ? buySheet(o) : o.type === 'sell' ? sellSheet(o) : negoSheet(o); }
   if (s.k === 'ending') inner = endingSheet();
+  if (s.k === 'own') inner = ownSheet(s.id);
   if (s.k === 'table') inner = tableSheet();
   if (s.k === 'card') inner = cardSheet(S.album[s.id]);
   if (s.k === 'event' && S.event) { closable = false; const v = eventView(S.event);
@@ -1887,6 +1961,35 @@ function achBlock() {
     return `<div class="ach ${st ? '' : 'locked'}">${medal(!!st, rep)}<div class="mid"><b>${name}</b><div class="small muted">${desc}</div><div class="rw" style="text-align:left;margin-top:3px">${money ? '+' + eur(money) : ''}${money && rep ? ' · ' : ''}${rep ? '+' + rep + ' rep' : ''}</div></div>
     ${st === 1 ? `<button class="btn pri" data-a="claim" data-v="${id}">Ritira</button>` : st === 2 ? `<span class="ck" style="background:var(--good);border-color:var(--good);color:#fff">${CHECK}</span>` : ''}</div>`; }).join('')}</div>`;
 }
+function ownershipBlock() {
+  let h = '';
+  if (S.role === 'pres' && S.own) { const k = myClub(), v = clubValue(k);
+    h += `<div class="h2">La tua proprietà</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
+    <div class="kv"><div><span>Quota</span><b>${S.own.pct}%</b></div><div><span>Valore club</span><b>${eur(v)}</b></div><div><span>Prestito</span><b>${eur(S.own.loan)}</b></div></div>
+    <div class="small muted">${S.own.cordata ? `In cordata con altri soci. Obiettivi mancati di fila: ${S.own.miss || 0} su 2.` : 'Proprietà piena: nessuno può toglierti la presidenza.'}${k.co === 'DE' ? '' : ''}</div>
+    ${S.own.loan ? `<div class="btns"><button class="btn ghost" data-a="repay" data-v="me" ${S.money <= 0 ? 'disabled' : ''}>Rimborsa dal patrimonio</button><button class="btn ghost" data-a="repay" data-v="club" ${S.budget <= 0 ? 'disabled' : ''}>Rimborsa dal club</button></div>` : ''}
+    <button class="btn danger full" data-a="sellclub">${ui.confirm === 'sellclub' ? `Confermi? Incassi circa ${eur(r5(v * S.own.pct / 100) - S.own.loan)}` : 'Vendi il club'}</button></div>`; }
+  if ((S.stakes || []).length) h += `<div class="h2">Quote di minoranza</div><div class="panel list">${S.stakes.map(st => { const k = CLUBS[st.club], v = clubValue(k), cap = k.co === 'DE' ? 49 : 100, add = r5(v * 0.1);
+    return `<div class="shop" style="flex-wrap:wrap"><div class="mid"><b><span class="clubdot" style="background:${k.c1}"></span>${esc(k.name)}<span class="cc">${CC[k.co]}</span></b><div class="small muted">${st.pct}% · vale ${eur(r5(v * st.pct / 100))}</div></div>
+    <div class="btns" style="width:100%">${st.pct + 10 <= cap ? `<button class="btn ghost" data-a="stakeadd" data-v="${k.id}" ${S.money < add ? 'disabled' : ''}>+10% · ${eur(add)}</button>` : ''}${st.pct >= 51 && k.co !== 'DE' && S.role !== 'pres' ? `<button class="btn pri" data-a="control" data-v="${k.id}">Prendi il controllo</button>` : ''}<button class="btn ghost" data-a="stakesell" data-v="${k.id}">Vendi</button></div></div>`; }).join('')}</div>`;
+  if (canOwn()) {
+    const co = ui.bco || 'IT', dv = ui.bdiv || '2';
+    const list = lgIds(co + dv).map(id => CLUBS[id]).sort((a, b) => clubValue(a) - clubValue(b));
+    h += `<div class="h2">Compra un club</div><p class="small muted" style="margin:0">Puoi comprarlo da solo, con un prestito, in cordata o a quote. In Germania vale la regola 50+1: al massimo il 49%.</p>
+    <div class="chips">${Object.keys(CO).map(c => `<button class="chipb ${c === co ? 'on' : ''}" data-a="bco" data-v="${c}">${CC[c]}</button>`).join('')}<button class="chipb ${dv === '1' ? 'on' : ''}" data-a="bdiv" data-v="1">1ª div.</button><button class="chipb ${dv === '2' ? 'on' : ''}" data-a="bdiv" data-v="2">2ª div.</button></div>
+    <div class="panel list">${list.map(c => { const v = clubValue(c), cheapest = c.co === 'DE' ? r5(v * 0.1) : r5(v * 0.1);
+      return `<button class="row-p" data-a="own" data-v="${c.id}"><span class="mid"><span class="nm"><span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}</span><span class="meta">${tierName(c)}</span></span><span class="num small" style="text-align:right"><b>${eur(v)}</b><br><span class="muted">quota da ${eur(cheapest)}</span></span></button>`; }).join('')}</div>`;
+  } else h += `<div class="h2">Compra un club</div><div class="panel empty"><b>Non ancora</b>Potrai comprare club e quote dopo essere stato amministratore delegato.</div>`;
+  return h;
+}
+function ownSheet(id) {
+  const k = CLUBS[id], v = clubValue(k), st = stakeOf(id);
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">${clubCrest(k).replace('class="crest"', 'class="crest" style="width:48px;height:48px"')}<div style="min-width:0"><div class="tiny muted">${esc(tierName(k))} · ${CO[k.co].name}</div><h3 style="margin:2px 0 0">${esc(k.name)}</h3><div class="small muted">Valore ${eur(v)} · forza ${k.level}${st ? ` · hai già il ${st.pct}%` : ''}</div></div></div>
+  <div class="body">${k.co === 'DE' ? '<div class="warn">Regola 50+1: in Germania i soci del club tengono la maggioranza. Puoi comprare solo quote, fino al 49%.</div>' : ''}
+  ${S.role === 'pres' ? '<div class="warn">Sei già presidente di un club: per comprarne un altro devi prima vendere il tuo. Le quote di minoranza puoi comprarle comunque.</div>' : ''}
+  <div class="panel list">${buyOptions(k).map((o, i) => `<div class="shop"><div class="mid"><b>${o.t}</b><div class="small muted">${o.d}</div></div><button class="btn ${S.money >= o.pay ? 'pri' : 'ghost'}" data-a="ownbuy" data-v="${id}" data-i="${i}" ${S.money < o.pay || (o.m !== 'stake' && S.role === 'pres') ? 'disabled' : ''}>${eur(o.pay)}</button></div>`).join('')}</div>
+  <p class="small muted" style="margin:0">Il tuo patrimonio: ${eur(S.money)}.</p></div>`;
+}
 function careerView() {
   const k = isClub() ? myClub() : null;
   let h = `<div class="panel pad"><div class="tiny muted">Patrimonio personale</div><div class="big" style="font-size:40px;font-family:var(--f-display)">${eur(S.money)}</div>
@@ -1896,9 +1999,7 @@ function careerView() {
   if (k && S.role !== 'ds') h += `<div class="h2">Strutture del club</div>` + Object.entries(FAC).map(([key, [name, desc]]) => { const l = S.fac[key], c = l < 5 ? facCost(l + 1) : 0;
     return `<div class="panel up"><div class="hd"><h4>${name}</h4><span class="lv">${[0, 1, 2, 3, 4].map(i => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div><div class="small muted">${desc}.</div>${l < 5 ? `<button class="btn green full" data-a="fac" data-v="${key}" ${S.budget < c ? 'disabled' : ''}>Investi ${eur(c)} dal budget</button>` : '<div class="tiny" style="color:var(--gold)">Livello massimo</div>'}</div>`; }).join('');
   if (S.role === 'pres') h += `<div class="h2">Finanzia il club</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Sposta soldi dal tuo patrimonio alle casse del club.</div><div class="btns">${[1e6, 5e6, 2e7].map(x => `<button class="btn ghost" data-a="inject" data-v="${x}" ${S.money < x ? 'disabled' : ''}>${eur(x)}</button>`).join('')}</div></div>`;
-  if (S.role === 'ad') { const list = CLUBS.slice().sort((a, b) => clubPrice(a) - clubPrice(b)).slice(0, 8);
-    h += `<div class="h2">Compra un club</div><p class="small muted" style="margin:0">Con il tuo patrimonio diventi presidente, in qualsiasi paese. Puoi comprare anche il club dove lavori.</p><div class="panel list">${list.map(c => { const pr = clubPrice(c);
-      return `<div class="shop"><div class="mid"><b><span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}</b><div class="small muted">${tierName(c)} · ${eur(pr)}</div></div><button class="btn ${S.money >= pr ? 'pri' : 'ghost'}" data-a="buyclub" data-v="${c.id}" ${S.money < pr ? 'disabled' : ''}>Compra</button></div>`; }).join('')}</div>`; }
+  h += ownershipBlock();
   h += achBlock();
   h += `<div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Il salvataggio è automatico su questo dispositivo.</div><button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
   return h;
@@ -1971,13 +2072,13 @@ document.addEventListener('input', e => {
   document.getElementById('askV').innerHTML = `${eur(ui.ask)}<span style="font-size:18px;opacity:.7"> /anno</span>`;
   const c = document.getElementById('askC'); c.innerHTML = c.innerHTML.replace(/Per te: [^ ]+/, 'Per te: ' + eur(ui.ask * p.fee / 100));
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season', 'table', 'card', 'ending'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season', 'table', 'card', 'ending', 'own'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
 
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-a]'); if (!el) return;
   if (el.dataset.self && e.target !== el) return;
   const a = el.dataset.a, v = el.dataset.v;
-  if (a !== 'reset' && a !== 'release' && a !== 'releasesq') ui.confirm = null;
+  if (a !== 'reset' && a !== 'release' && a !== 'releasesq' && a !== 'sellclub') ui.confirm = null;
   switch (a) {
     case 'start': { const n = (document.getElementById('agencyName').value || '').trim() || 'Studio Bellavista'; newGame(n); ui.tab = 'home'; render(); window.scrollTo(0, 0); break; }
     case 'continue': migrate(load()); if (S && S.event) ui.sheet = { k: 'event' }; render(); break;
@@ -1997,7 +2098,15 @@ document.addEventListener('click', e => {
     case 'sacc': { const o = S.offers.find(x => x.id === +v); if (o) doSell(o, o.fee); break; }
     case 'job': acceptJob(+v); break;
     case 'backagent': backToAgent(); break;
-    case 'buyclub': buyClub(+v); break;
+    case 'buyclub': case 'own': ui.sheet = { k: 'own', id: +v }; render(); break;
+    case 'ownbuy': buyClubWith(+v, +el.dataset.i); break;
+    case 'bco': ui.bco = v; render(); break;
+    case 'bdiv': ui.bdiv = v; render(); break;
+    case 'stakeadd': buyClubWith(+v, buyOptions(CLUBS[+v]).findIndex(o => o.m === 'stake')); break;
+    case 'stakesell': sellStake(+v); break;
+    case 'control': takeControl(+v); break;
+    case 'repay': { if (!S.own) return; const src = v === 'me' ? 'money' : 'budget', x = Math.min(S.own.loan, Math.max(0, S[src])); S[src] -= x; S.own.loan -= x; toast(`Rimborsati ${eur(x)}`); save(); render(); break; }
+    case 'sellclub': if (ui.confirm !== 'sellclub') { ui.confirm = 'sellclub'; render(); return; } ui.confirm = null; sellClub(); break;
     case 'inject': { const x = +v; if (S.money < x) return; S.money -= x; S.budget += x; news(`Versi ${eur(x)} nelle casse del club.`); toast(`+${eur(x)} al club`); save(); render(); break; }
     case 'fac': { const l = S.fac[v], c = facCost(l + 1); if (l >= 5 || S.budget < c) return; S.budget -= c; S.fac[v]++; news(`${FAC[v][0]} al livello ${S.fac[v]}.`, 'good'); toast(`${FAC[v][0]} · livello ${S.fac[v]}`); save(); render(); break; }
     case 'tripc': { const c = tripCostClub(); if (S.budget < c) return; S.budget -= c; genClubMarket(); toast('Nuovo rapporto degli osservatori'); save(); render(); break; }
@@ -2054,6 +2163,8 @@ function start(data) {
   if (S && S.event) ui.sheet = { k: 'event' };
   render();
 }
+if (window.__SIM) window.__game = { get S() { return S; }, set S(v) { S = v; }, ui, newGame, advance, acceptJob, startBuy, pushBuyFee, pushBuyWage, doSell, finalize, pushFee, pushAsk, pushSell, resolveEvent, eventView, buy, buyClubWith, buyOptions, takeControl, sellClub, sellStake,
+  clubValue, finWeek, bestXI, teamLevel, recruitChance, value, wagesTotal, squad, clients, myClub, CLUBS, CAP, UPG, FAC, facCost, ACH, stage, standings, lgOf, capOf, penOf, isClub, inWindow, renewAsk, releaseCost, removeSquad, progress, addCard, scoutRange, genMarket, genClubMarket, stakeOf, clubBudget };
 window.claude?.hot?.snapshot?.(() => ({ S }));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 })();
