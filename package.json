@@ -1,0 +1,19 @@
+{
+  "name": "il-procuratore",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Il Procuratore — gioco manageriale di calcio per Android",
+  "scripts": {
+    "build": "node scripts/build-web.mjs",
+    "sync": "npm run build && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "8.3.0",
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capgo/native-purchases": "8.9.6"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}

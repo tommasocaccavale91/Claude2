@@ -1,0 +1,8 @@
+{
+  "appId": "app.ilprocuratore.game",
+  "appName": "Il Procuratore",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#1F4D3A"
+  }
+}
