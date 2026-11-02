@@ -1,0 +1,993 @@
+<title>Il Procuratore</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1F4D3A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one phone-width column — masthead, scrolling content, fixed "advance week" bar + tab bar.
+   Look: 1970s sticker-album football — bottle green, chalk paper, mustard; player cards stay paper in both themes. */
+:root{
+  --paper:#E6E2D3; --surface:#F4F1E6; --surface2:#EBE6D7; --ink:#1C2922; --muted:#5D6A61; --line:rgba(28,41,34,.14);
+  --pitch:#1F4D3A; --pitch2:#2A5E47; --on-pitch:#F2EDDE; --gold:#A8741A; --gold-ink:#1C2922; --gold-bg:#D9A23B;
+  --red:#A3412D; --good:#2E6B45; --shadow:0 1px 0 rgba(28,41,34,.06),0 6px 18px -10px rgba(28,41,34,.35);
+  --cardpaper:#F2EBD8; --cardink:#2A241C; --cardline:#C9B994;
+  --f-display:'Big Shoulders Display','Oswald','Arial Narrow',sans-serif;
+  --f-body:'Barlow','Helvetica Neue',Arial,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --r:12px; --bar:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1A15; --surface:#15251E; --surface2:#1B2F26; --ink:#ECE6D3; --muted:#97A79C; --line:rgba(236,230,211,.12);
+  --pitch:#1E4A37; --pitch2:#275C45; --on-pitch:#F2EDDE; --gold:#E0B24E; --gold-ink:#16231C; --gold-bg:#D9A23B;
+  --red:#DB7B63; --good:#71B88A; --shadow:0 1px 0 rgba(0,0,0,.2),0 10px 24px -12px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1A15; --surface:#15251E; --surface2:#1B2F26; --ink:#ECE6D3; --muted:#97A79C; --line:rgba(236,230,211,.12);
+  --pitch:#1E4A37; --pitch2:#275C45; --on-pitch:#F2EDDE; --gold:#E0B24E; --gold-ink:#16231C; --gold-bg:#D9A23B;
+  --red:#DB7B63; --good:#71B88A; --shadow:0 1px 0 rgba(0,0,0,.2),0 10px 24px -12px rgba(0,0,0,.7); color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:500 15px/1.45 var(--f-body);-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .45 0 0 0 0 .35 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--pitch)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* masthead */
+.mast{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--pitch);color:var(--on-pitch);
+  box-shadow:0 2px 0 var(--gold-bg),0 6px 16px -8px rgba(0,0,0,.5)}
+.mast .wrap{padding-block:10px 10px;display:flex;align-items:center;gap:12px}
+.crest{width:38px;height:38px;flex:none}
+.mast h1{margin:0;font:800 22px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mast .sub{font:600 11px/1.2 var(--f-body);letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin-top:3px}
+.mast .id{min-width:0;flex:1}
+.cash{text-align:right;flex:none}
+.cash b{display:block;font:600 17px/1 var(--f-mono);letter-spacing:-.02em}
+.cash b.neg{color:#F0A08C}
+.cash span{font:600 10px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;opacity:.7}
+
+main.wrap{padding-block:16px calc(var(--bar)*2 + 28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
+.h2{font:800 15px/1 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin:4px 0 -6px}
+.h2::after{content:"";flex:1;height:1px;background:var(--line)}
+.h2 .count{font:600 12px var(--f-mono);letter-spacing:0;color:var(--ink)}
+
+.panel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--line)}
+.pad{padding:14px 16px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tiny{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+
+/* hero (home) */
+.hero{background:var(--pitch);color:var(--on-pitch);border-radius:var(--r);overflow:hidden;position:relative;box-shadow:var(--shadow)}
+.hero::before{content:"";position:absolute;inset:0;background:
+  repeating-linear-gradient(90deg,transparent 0 44px,rgba(255,255,255,.035) 44px 88px);pointer-events:none}
+.hero .lines{position:absolute;right:-60px;top:-60px;width:200px;height:200px;border:2px solid rgba(242,237,222,.14);border-radius:50%}
+.hero .in{position:relative;padding:16px}
+.hero .row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font:700 11px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase}
+.chip.open{background:var(--gold-bg);color:#1C2922}
+.chip.closed{background:rgba(242,237,222,.14);color:var(--on-pitch)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.open .dot{animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.big{font:800 46px/.9 var(--f-display);letter-spacing:.01em}
+.hero .label{font:600 11px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;opacity:.7;margin-bottom:6px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(242,237,222,.16);border-top:1px solid rgba(242,237,222,.16)}
+.stats3>div{background:var(--pitch);padding:12px 14px}
+.stats3 b{display:block;font:600 16px/1.1 var(--f-mono);letter-spacing:-.02em}
+.stats3 span{font:600 10px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;opacity:.7}
+.repbar{height:6px;border-radius:3px;background:rgba(242,237,222,.18);overflow:hidden;margin-top:8px}
+.repbar i{display:block;height:100%;background:var(--gold-bg);border-radius:3px}
+
+/* lists */
+.list{display:flex;flex-direction:column}
+.list>*+*{border-top:1px solid var(--line)}
+.row-p{display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;text-align:left}
+.row-p:active{background:var(--surface2)}
+.mini{width:46px;height:56px;flex:none;border-radius:6px;overflow:hidden;background:var(--cardpaper);box-shadow:inset 0 0 0 1px var(--cardline)}
+.mini svg{display:block;width:100%;height:100%}
+.row-p .mid{flex:1;min-width:0}
+.row-p .nm{font:700 16px/1.15 var(--f-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-p .meta{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.ovr{flex:none;width:44px;text-align:center;border-radius:8px;padding:5px 0 4px;background:var(--surface2);border:1px solid var(--line)}
+.ovr b{display:block;font:800 22px/1 var(--f-display)}
+.ovr span{font:700 9px/1 var(--f-body);letter-spacing:.14em;color:var(--muted)}
+.ovr.hi{background:var(--gold-bg);border-color:transparent;color:#1C2922}
+.ovr.hi span{color:#1C2922;opacity:.7}
+.mbar{height:4px;width:70px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:6px}
+.mbar i{display:block;height:100%;border-radius:2px}
+.clubdot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:-1px;margin-right:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.pill{display:inline-block;font:700 10px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;padding:3px 6px;border-radius:4px;vertical-align:1px;margin-left:4px}
+.pill.inj{background:var(--red);color:#fff}
+.pill.free{background:var(--gold-bg);color:#1C2922}
+.pill.list{background:var(--pitch);color:var(--on-pitch)}
+.pill.exp{border:1px solid var(--red);color:var(--red)}
+
+.news{padding:10px 14px;display:flex;gap:12px;font-size:14px}
+.news .w{flex:none;width:64px;white-space:nowrap;font:600 11px/1.75 var(--f-mono);color:var(--muted)}
+.news.good .t b{color:var(--good)}
+.news.bad .t b{color:var(--red)}
+.news .t{min-width:0}
+
+.rep-row{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:14px}
+.rep-row .mid{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate{font:600 13px var(--f-mono);padding:3px 7px;border-radius:5px;background:var(--surface2)}
+.rate.g{background:var(--good);color:#fff}
+.rate.b{background:var(--red);color:#fff}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:10px;
+  font:800 17px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;transition:transform .08s,filter .15s}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn.pri{background:var(--gold-bg);color:#1C2922;box-shadow:0 2px 0 #9C711F}
+.btn.green{background:var(--pitch);color:var(--on-pitch);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.danger{background:transparent;border:1.5px solid var(--red);color:var(--red)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn.full{width:100%}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btns>.btn{flex:1 1 140px}
+
+/* market cards */
+.mk{padding:14px;display:flex;flex-direction:column;gap:12px}
+.mk .top{display:flex;gap:12px;align-items:center}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kv>div{background:var(--surface2);border-radius:8px;padding:8px 10px;min-width:0}
+.kv span{display:block;font:700 9.5px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.kv b{font:600 14px/1.1 var(--f-mono);letter-spacing:-.02em}
+.refused{font-size:13px;color:var(--red);font-weight:600}
+
+/* advance bar + tabs */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -8px 24px -16px rgba(0,0,0,.4)}
+.adv .wrap{display:flex;align-items:center;gap:12px;padding-block:10px}
+.adv .when{flex:1;min-width:0}
+.adv .when b{display:block;font:800 18px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.adv .when span{font-size:12px;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);max-width:560px;margin:0 auto;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 9px;color:var(--muted);position:relative;
+  font:700 10px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase}
+.tab svg{width:22px;height:22px}
+.tab.on{color:var(--ink)}
+.tab.on::before{content:"";position:absolute;top:-1px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--gold-bg)}
+.badge{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;
+  font:700 10.5px/17px var(--f-mono);text-align:center;padding:0 4px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(8,14,11,.55);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s}
+.sheet{width:100%;max-width:560px;max-height:92%;overflow:auto;background:var(--paper);border-radius:18px 18px 0 0;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  animation:up .26s cubic-bezier(.2,.9,.3,1);overscroll-behavior:contain}
+.grab{width:42px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 12px}
+.sheet h3{margin:0 0 4px;font:800 28px/1 var(--f-display);text-transform:uppercase;letter-spacing:.03em;text-wrap:balance}
+.sheet .lead{margin:0 0 14px;color:var(--muted)}
+.sheet .body{display:flex;flex-direction:column;gap:14px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+
+/* the trading card */
+.card-wrap{display:flex;gap:14px;align-items:stretch}
+.tcard{width:150px;flex:none;background:var(--cardpaper);color:var(--cardink);border-radius:10px;padding:7px;
+  box-shadow:0 1px 0 rgba(0,0,0,.1),0 12px 22px -12px rgba(0,0,0,.55);transform:rotate(-1.5deg)}
+.tcard .frame{border:1.5px solid var(--cardline);border-radius:6px;overflow:hidden;position:relative}
+.tcard svg{display:block;width:100%;height:auto}
+.tcard .o{position:absolute;left:6px;top:4px;font:800 30px/1 var(--f-display);color:var(--cardink);text-shadow:0 1px 0 var(--cardpaper)}
+.tcard .o small{display:block;font:700 10px/1 var(--f-body);letter-spacing:.12em}
+.tcard .nb{background:var(--cb,#1F4D3A);color:var(--cf,#F2EDDE);text-align:center;font:800 15px/1 var(--f-display);letter-spacing:.06em;
+  text-transform:uppercase;padding:7px 4px 6px;margin-top:6px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcard .cl{font:600 10px/1.2 var(--f-body);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-top:5px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.facts{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;align-content:start}
+.facts div{min-width:0}
+.facts span{display:block;font:700 9.5px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.facts b{font:600 14px/1.15 var(--f-mono);letter-spacing:-.02em;display:block;overflow:hidden;text-overflow:ellipsis}
+.facts .wide{grid-column:1/-1}
+
+.season{display:grid;grid-template-columns:repeat(4,1fr);text-align:center}
+.season>div{padding:10px 4px}
+.season>div+div{border-left:1px solid var(--line)}
+.season b{display:block;font:800 26px/1 var(--f-display)}
+.season span{font:700 9.5px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* negotiation */
+.deal{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.deal>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.deal span{display:block;font:700 9.5px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.deal b{font:600 17px/1 var(--f-mono);letter-spacing:-.02em}
+.ask{background:var(--pitch);color:var(--on-pitch);border-radius:12px;padding:14px 16px}
+.ask .v{font:800 40px/1 var(--f-display);letter-spacing:.01em}
+.ask .c{font-size:13px;opacity:.8;margin-top:4px}
+input[type=range]{width:100%;margin:14px 0 4px;accent-color:var(--gold-bg);height:28px}
+.pat{display:flex;gap:5px;align-items:center}
+.pat i{width:22px;height:8px;border-radius:2px;background:var(--gold-bg)}
+.pat i.off{background:var(--line)}
+.log{font-size:14px;display:flex;flex-direction:column;gap:6px}
+.log div{padding:8px 12px;border-radius:8px;background:var(--surface2)}
+.log div.me{background:transparent;border:1px dashed var(--line);text-align:right}
+.warn{font-size:13.5px;padding:10px 12px;border-radius:8px;border-left:3px solid var(--red);background:var(--surface)}
+
+/* upgrades */
+.up{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.up .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.up h4{margin:0;font:800 21px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em}
+.lv{display:flex;gap:4px}
+.lv i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--gold);background:transparent}
+.lv i.on{background:var(--gold-bg);border-color:var(--gold-bg)}
+
+/* intro */
+.intro{min-height:100vh;min-height:100dvh;background:var(--pitch);color:var(--on-pitch);display:flex;align-items:center;position:relative;overflow:hidden}
+.intro::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 56px,rgba(255,255,255,.04) 56px 112px)}
+.intro .circle{position:absolute;width:420px;height:420px;border:2px solid rgba(242,237,222,.13);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.intro .halfway{position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(242,237,222,.13)}
+.intro .wrap{position:relative;padding-block:40px;display:flex;flex-direction:column;gap:22px;width:100%}
+.intro .kicker{font:700 12px/1 var(--f-body);letter-spacing:.3em;text-transform:uppercase;color:var(--gold-bg)}
+.intro h1{margin:0;font:800 clamp(54px,15.5vw,100px)/.86 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.intro h1 em{font-style:normal;color:var(--gold-bg)}
+.intro p{margin:0;max-width:34ch;font-size:16px;opacity:.85}
+.field label{display:block;font:700 11px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;opacity:.75;margin-bottom:8px}
+.field input{width:100%;font:700 20px var(--f-body);color:var(--on-pitch);background:rgba(0,0,0,.18);border:1.5px solid rgba(242,237,222,.3);border-radius:10px;padding:12px 14px}
+.field input::placeholder{color:rgba(242,237,222,.45)}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--bar)*2 + 24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;
+  background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);
+  box-shadow:var(--shadow);animation:up .25s}
+.empty{padding:22px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font:800 20px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:380px){.tcard{width:128px}.big{font-size:40px}}
+</style>
+
+<div id="app"></div>
+
+<script>
+(() => {
+'use strict';
+const SAVE = 'il_procuratore_v1';
+const R = Math.random;
+const rnd = (a, b) => a + R() * (b - a);
+const ri = (a, b) => Math.floor(rnd(a, b + 1));
+const pick = a => a[Math.floor(R() * a.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const gauss = () => { let u = 0, v = 0; while (!u) u = R(); while (!v) v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const wpick = arr => { const t = arr.reduce((s, x) => s + x[1], 0); let r = R() * t; for (const x of arr) { if ((r -= x[1]) <= 0) return x[0]; } return arr[0][0]; };
+const eur = n => {
+  const s = n < 0 ? '−' : ''; n = Math.abs(n);
+  if (n >= 1e6) return s + '€' + (n / 1e6).toFixed(n >= 1e7 ? 1 : 2).replace(/\.?0+$/, '') + 'M';
+  if (n >= 1e3) return s + '€' + Math.round(n / 1e3) + 'k';
+  return s + '€' + Math.round(n);
+};
+
+/* ---------- world ---------- */
+const CLUBS = [
+  { name: 'Real Valdoro',        tier: 1, c1: '#F1ECDD', c2: '#C29A2E', pat: 'solid' },
+  { name: 'Atletico Portoverde', tier: 1, c1: '#1F5A3D', c2: '#F1ECDD', pat: 'stripes' },
+  { name: 'Olympia Castelmare',  tier: 1, c1: '#253A6E', c2: '#E8E1CC', pat: 'hoops' },
+  { name: 'Dinamo Varska',       tier: 2, c1: '#8E2B2B', c2: '#1E1E22', pat: 'stripes' },
+  { name: 'Union Rivabella',     tier: 2, c1: '#5B88B5', c2: '#F1ECDD', pat: 'halves' },
+  { name: 'Sporting Lusenti',    tier: 2, c1: '#2F7A4E', c2: '#F1ECDD', pat: 'hoops' },
+  { name: 'FC Nordhaven',        tier: 2, c1: '#2B2B30', c2: '#E3B23C', pat: 'stripes' },
+  { name: 'Racing Montecorvo',   tier: 3, c1: '#6D2E5B', c2: '#F1ECDD', pat: 'solid' },
+  { name: 'Calcio Pietrasanta',  tier: 3, c1: '#C9622A', c2: '#2A2A2E', pat: 'solid' },
+  { name: 'Virtus Lagobruno',    tier: 3, c1: '#F1ECDD', c2: '#2C4F86', pat: 'hoops' },
+  { name: 'Hellas Marenco',      tier: 3, c1: '#DDBB3A', c2: '#26408B', pat: 'halves' },
+  { name: 'Pro Ventoria',        tier: 4, c1: '#A33A2F', c2: '#F1ECDD', pat: 'stripes' },
+  { name: 'Audace Collefiore',   tier: 4, c1: '#3F7F8C', c2: '#F1ECDD', pat: 'solid' },
+  { name: 'Fortitudo Sabbiadoro',tier: 4, c1: '#E2C27A', c2: '#3A2A1E', pat: 'stripes' },
+  { name: 'Sangiorgese',         tier: 4, c1: '#2D5E9E', c2: '#C8352C', pat: 'halves' },
+  { name: 'Robur Valtorta',      tier: 4, c1: '#5A6B3A', c2: '#F1ECDD', pat: 'hoops' }
+].map((c, i) => ({ ...c, id: i, level: [0, 80, 74, 68, 62][c.tier] + [-1, 0, 1][i % 3] }));
+const TIERNAME = ['', 'Prima fascia', 'Seconda fascia', 'Terza fascia', 'Quarta fascia'];
+
+const ROLES = { POR: 'Portiere', DIF: 'Difensore', CEN: 'Centrocampista', ATT: 'Attaccante' };
+const NATS = [['ITA', 50], ['ARG', 6], ['BRA', 7], ['FRA', 6], ['ESP', 6], ['POR', 4], ['NED', 4], ['SEN', 4], ['URU', 3], ['CRO', 3], ['SRB', 3], ['NGA', 4]];
+const POOLS = {
+  IT: { f: 'Luca Marco Andrea Matteo Lorenzo Davide Simone Federico Riccardo Giacomo Tommaso Alessio Nicolò Pietro Gabriele Edoardo Filippo Samuele Manuel Daniele Emanuele Salvatore Gennaro Ciro Vincenzo Michele Stefano Mattia'.split(' '),
+        l: "Russo Ferrari Esposito Bianchi Romano Colombo Ricci Marino Greco Bruno Gallo Conti De_Luca Mancini Costa Giordano Rizzo Lombardi Moretti Barbieri Fontana Santoro Mariani Rinaldi Caruso Galli Martini Leone Longo Gentile Vitale Serra Coppola De_Santis D'Angelo Marchetti Parisi Cattaneo Pellegrini Palumbo Sala Fabbri Bellini Orlando".split(' ') },
+  ES: { f: 'Mateo Santiago Thiago Facundo Nicolás Joaquín Diego Álvaro Iker Pablo Rodrigo Gonzalo João Gonçalo Rafael Vinícius Gabriel Lucas Bruno Enzo'.split(' '),
+        l: 'Fernández González Rodríguez López Martínez Pereira Silva Sousa Almeida Romero Acosta Benítez Ríos Medina Herrera Cabral Moreira Lima Correa Ferreyra'.split(' ') },
+  FR: { f: 'Théo Hugo Mathis Noah Enzo Moussa Ibrahima Cheikh Ousmane Samuel Chinedu Emeka Adama Yannick Victor'.split(' '),
+        l: 'Diallo Ndiaye Traoré Dubois Moreau Laurent Girard Bonnet Mensah Okafor Adeyemi Sarr Camara Faye Lemoine'.split(' ') },
+  SL: { f: 'Luka Ivan Marko Nikola Filip Stefan Dušan Mateo Josip'.split(' '), l: 'Kovač Petrović Jovanović Babić Marić Horvat Ilić Novak Perić'.split(' ') },
+  NL: { f: 'Daan Sem Jesse Milan Bram Stijn Ruben Thijs'.split(' '), l: 'de_Jong van_Dijk Bakker Visser Smit de_Vries Mulder Bos'.split(' ') }
+};
+const GROUP = { ITA: 'IT', ARG: 'ES', ESP: 'ES', URU: 'ES', POR: 'ES', BRA: 'ES', FRA: 'FR', SEN: 'FR', NGA: 'FR', CRO: 'SL', SRB: 'SL', NED: 'NL' };
+const SKINS = ['#F1D4BA', '#E2B38E', '#C88E63', '#9A6440', '#6A4229'];
+const HAIRC = ['#2A201A', '#4A3322', '#7A5232', '#B98B4E', '#161616', '#8B857A'];
+const TRAITS = { Ambizioso: 'Vuole giocare ad alto livello. Soffre se resta in un club piccolo.', Leale: 'Difficile da strappare alla tua agenzia.', Mercenario: 'Segue i soldi. I rivali lo tentano facilmente.', Professionista: 'Umore stabile, poche pretese.' };
+const MONTHS = ['Ago', 'Ago', 'Ago', 'Ago', 'Set', 'Set', 'Set', 'Set', 'Ott', 'Ott', 'Ott', 'Ott', 'Nov', 'Nov', 'Nov', 'Nov', 'Dic', 'Dic', 'Dic', 'Dic', 'Gen', 'Gen', 'Gen', 'Gen', 'Feb', 'Feb', 'Feb', 'Feb', 'Mar', 'Mar', 'Mar', 'Mar', 'Apr', 'Apr', 'Apr', 'Apr', 'Mag', 'Mag'];
+const WEEKS = 38;
+const UPG = {
+  office: { name: 'Ufficio', max: 5, cost: [0, 0, 40000, 120000, 350000, 900000], desc: l => `Fino a ${CAP[l]} assistiti · spese ${eur(OFFICE_COST[l])}/sett.` },
+  scout: { name: 'Rete osservatori', max: 5, cost: [0, 0, 25000, 80000, 220000, 600000], desc: l => `${4 + l * 2} talenti per rapporto · stima potenziale ±${Math.round(errFor(l) / 2)}` },
+  legal: { name: 'Studio legale', max: 4, cost: [30000, 100000, 300000, 700000], desc: l => l ? `Tetto dei club più alto del ${l * 5}% · stima del tetto ${['', 'larga', 'buona', 'precisa', 'esatta'][l]}` : 'Nessun legale: tratti alla cieca.' }
+};
+const CAP = [0, 3, 5, 8, 12, 16];
+const OFFICE_COST = [0, 300, 900, 2200, 4800, 9000];
+const errFor = l => Math.max(1, 13 - l * 2.4);
+
+/* ---------- state ---------- */
+let S = null;
+const ui = { tab: 'home', sheet: null, confirm: null, toast: null, ask: 0 };
+
+const save = () => { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} };
+const load = () => { try { const d = JSON.parse(localStorage.getItem(SAVE) || 'null'); return d && d.v === 1 ? d : null; } catch (e) { return null; } };
+
+const P = id => S.players[id];
+const clients = () => S.clients.map(P).filter(Boolean);
+const club = p => p.club == null ? null : CLUBS[p.club];
+const fullName = p => `${p.first} ${p.last}`.replace(/_/g, ' ');
+const shortName = p => `${p.first[0]}. ${p.last.replace(/_/g, ' ')}`;
+const inWindow = (w = S.week) => (w >= 1 && w <= 5) || (w >= 21 && w <= 24);
+const seasonLabel = () => `${2025 + S.season}/${String(26 + S.season).padStart(2, '0')}`;
+const weekLabel = (w = S.week) => w > WEEKS ? 'Fine campionato' : `G${w} · ${MONTHS[w - 1]}`;
+const repTitle = r => r < 15 ? 'Procuratore di provincia' : r < 30 ? 'Agente emergente' : r < 50 ? 'Nome conosciuto' : r < 75 ? 'Super agente' : 'Leggenda del mercato';
+
+function value(p) {
+  let v = 1e6 * Math.exp((p.ovr - 60) * 0.155);
+  const gap = Math.max(0, p.pot - p.ovr);
+  if (p.age <= 23) v *= 1 + gap * 0.045; else if (p.age <= 26) v *= 1 + gap * 0.02;
+  if (p.age > 29) v *= Math.max(0.15, 1 - (p.age - 29) * 0.13);
+  if (p.club != null && p.contract <= 1) v *= 0.7;
+  return Math.max(50000, Math.round(v / 1e4) * 1e4);
+}
+function baseWage(ovr, tier) {
+  const w = 2e6 * Math.exp((ovr - 75) * 0.155) * [0, 1.3, 1.1, 0.95, 0.8][tier];
+  return Math.max(25000, Math.round(w / 1000) * 1000);
+}
+const weeklyCut = p => p.club == null ? 0 : p.wage * p.fee / 100 / WEEKS;
+const weeklyIncome = () => clients().reduce((s, p) => s + weeklyCut(p), 0);
+
+function makePlayer(o) {
+  const nat = wpick(NATS), pool = POOLS[GROUP[nat]];
+  const dark = nat === 'SEN' || nat === 'NGA', mixed = nat === 'BRA' || nat === 'FRA';
+  const skin = dark ? ri(3, 4) : mixed ? ri(1, 4) : wpick([[0, 4], [1, 4], [2, 2]]);
+  const p = {
+    id: S.nid++, first: pick(pool.f), last: pick(pool.l), nat, age: o.age,
+    role: o.role || wpick([['POR', 1], ['DIF', 3.5], ['CEN', 3.5], ['ATT', 3]]),
+    ovr: o.ovr, ovrF: o.ovr, pot: Math.max(o.pot, o.ovr), club: o.club ?? null, wage: 0,
+    contract: o.club == null ? 0 : ri(1, 4), fee: ri(6, 10), morale: ri(58, 80), form: 0,
+    apps: 0, goals: 0, assists: 0, rsum: 0, inj: 0, trait: pick(Object.keys(TRAITS)),
+    skin, hair: dark ? wpick([[1, 3], [3, 2], [0, 1]]) : ri(0, 4), hairC: dark ? 4 : ri(0, 5), stache: o.age > 22 && R() < 0.2,
+    listed: false, yrs: 0, refused: false, renewReq: false, lowWeeks: 0
+  };
+  if (p.age > 31 && R() < 0.5) p.hairC = 5;
+  if (p.club != null) p.wage = Math.round(baseWage(p.ovr, CLUBS[p.club].tier) * rnd(0.8, 1.1) / 1000) * 1000;
+  scoutRange(p);
+  return p;
+}
+function scoutRange(p, exact) {
+  const err = exact ? 0 : errFor(S.up.scout);
+  const off = Math.round(rnd(0, err));
+  p.pLo = Math.max(p.ovr, p.pot - off); p.pHi = Math.max(p.pLo, p.pot - off + Math.round(err));
+}
+const potText = p => (p.yrs >= 1 || p.pLo === p.pHi) ? String(Math.max(p.pot, p.ovr)) : `${p.pLo}–${p.pHi}`;
+
+function genMarket(extra) {
+  for (const id of S.market) if (!S.clients.includes(id)) delete S.players[id];
+  S.market = []; S.mktAge = 0;
+  const n = 4 + S.up.scout * 2;
+  for (let i = 0; i < n; i++) {
+    let p;
+    if (R() < 0.6) {
+      const age = ri(16, 20), ovr = ri(44, 60);
+      const potBoost = ri(6, 18) + Math.round(R() * R() * (10 + S.up.scout * 4));
+      const pot = Math.min(94, ovr + potBoost + (20 - age));
+      const cl = R() < 0.15 ? null : pick(CLUBS.filter(c => c.tier >= (pot > 82 ? 1 : 2))).id;
+      p = makePlayer({ age, ovr, pot, club: cl });
+    } else {
+      const age = ri(22, 32);
+      const ovr = Math.round(56 + Math.pow(R(), 1.8) * 24);
+      const pot = age < 26 ? ovr + ri(0, 6) : ovr;
+      const fits = CLUBS.filter(c => Math.abs(c.level - ovr) <= 6);
+      const cl = R() < 0.18 ? null : pick(fits.length ? fits : CLUBS).id;
+      p = makePlayer({ age, ovr, pot, club: cl });
+    }
+    p.bonus = signBonus(p);
+    S.players[p.id] = p; S.market.push(p.id);
+  }
+  if (extra) S.market.unshift(extra.id);
+  S.market.sort((a, b) => P(b).pHi - P(a).pHi);
+}
+const stature = p => Math.max(p.ovr, p.pot - 8);
+const signBonus = p => Math.round((value(p) * 0.015 + 2000) / 500) * 500;
+const recruitChance = (p, mult) => clamp(0.55 + (S.rep - (stature(p) - 50) * 1.5) * 0.025 + (mult - 1) * 0.22, 0.05, 0.95);
+
+function news(t, k = '') { S.news.unshift({ w: weekLabel(), t, k }); if (S.news.length > 40) S.news.length = 40; }
+function toast(t) { ui.toast = t; renderToast(); clearTimeout(toast.h); toast.h = setTimeout(() => { ui.toast = null; renderToast(); }, 2600); }
+
+function newGame(name) {
+  S = { v: 1, name, season: 1, week: 1, money: 40000, rep: 10, nid: 1, oid: 1, players: {}, clients: [], market: [], offers: [], news: [],
+    up: { scout: 1, office: 1, legal: 0 }, stats: { earned: 0, deals: 0, fees: 0 }, sEarn: 0, sDeals: 0, sRep: 10, debt: 0,
+    event: null, mktAge: 0, report: [], over: false, sum: null };
+  const t4 = CLUBS.filter(c => c.tier === 4), t3 = CLUBS.filter(c => c.tier === 3);
+  const a = makePlayer({ age: 18, ovr: 55, pot: 77, club: pick(t4).id, role: 'ATT' }); a.contract = 2; a.fee = 8; a.morale = 72; a.trait = 'Ambizioso';
+  const b = makePlayer({ age: 27, ovr: 65, pot: 66, club: pick(t3).id, role: 'CEN' }); b.contract = 1; b.fee = 7; b.trait = 'Professionista';
+  for (const p of [a, b]) { scoutRange(p, true); S.players[p.id] = p; S.clients.push(p.id); }
+  genMarket();
+  news(`Apri lo studio con due assistiti: <b>${fullName(a)}</b>, talento grezzo, e <b>${fullName(b)}</b>, in scadenza a fine stagione.`);
+  news('Il mercato estivo è aperto fino alla G5. Proponi i tuoi giocatori ai club o cerca nuovi talenti.');
+  save();
+}
+
+/* ---------- weekly simulation ---------- */
+function advance() {
+  if (S.event || S.over) return;
+  if (S.week > WEEKS) { seasonEnd(); return; }
+  const report = [];
+  for (const p of clients()) {
+    const c = club(p);
+    if (p.inj > 0) { p.inj--; report.push({ id: p.id, s: 'inj' }); develop(p, false); continue; }
+    if (!c) { p.morale -= 1.2; report.push({ id: p.id, s: 'free' }); develop(p, false); continue; }
+    const diff = p.ovr - c.level;
+    const played = R() < clamp(0.55 + diff * 0.08 + (p.form * 0.05), 0.06, 0.97);
+    if (played) {
+      const rating = clamp(6.3 + diff * 0.04 + p.form * 0.35 + gauss() * 0.65, 4.5, 10);
+      const gch = { POR: 0, DIF: 0.04, CEN: 0.12, ATT: 0.32 }[p.role] * clamp(1 + diff * 0.04, 0.4, 1.8);
+      const ach = { POR: 0.01, DIF: 0.05, CEN: 0.16, ATT: 0.12 }[p.role];
+      let g = 0, a = 0;
+      if (R() < gch) g++; if (R() < gch * 0.25) g++; if (R() < ach) a++;
+      const r = Math.round(clamp(rating + g * 0.6 + a * 0.3, 4.5, 10) * 10) / 10;
+      p.apps++; p.goals += g; p.assists += a; p.rsum += r;
+      p.form = clamp(p.form * 0.6 + (r - 6.5) * 0.5, -1.5, 1.5);
+      p.morale += 1.2;
+      report.push({ id: p.id, s: 'play', r, g, a });
+      if (R() < 0.014) { p.inj = ri(1, 6); news(`<b>${fullName(p)}</b> si ferma per infortunio: fuori ${p.inj} settimane.`, 'bad'); }
+    } else {
+      p.form *= 0.8;
+      p.morale -= p.trait === 'Ambizioso' ? 2.5 : p.trait === 'Professionista' ? 0.8 : 1.5;
+      report.push({ id: p.id, s: 'bench' });
+    }
+    if (p.trait === 'Ambizioso' && p.ovr - c.level >= 5) p.morale -= 0.8;
+    develop(p, played);
+  }
+  for (const p of clients()) {
+    p.morale = clamp(p.morale, 0, 100);
+    p.lowWeeks = p.morale < 12 ? p.lowWeeks + 1 : 0;
+    if (p.lowWeeks >= 4) { dropClient(p, `<b>${fullName(p)}</b> era scontento da settimane e ha lasciato la tua agenzia.`); S.rep = Math.max(0, S.rep - 2); }
+  }
+  S.report = report;
+
+  S.week++;
+  const inc = Math.round(weeklyIncome()), cost = OFFICE_COST[S.up.office];
+  S.money += inc - cost; S.sEarn += inc; S.stats.earned += inc;
+  S.lastNet = inc - cost;
+
+  S.offers = S.offers.filter(o => {
+    if (o.exp < S.week) { news(`L'offerta di <b>${CLUBS[o.club].name}</b> per ${shortName(P(o.pid))} è scaduta.`); return false; }
+    return true;
+  });
+  genOffers();
+  if (S.week === 21) news('Si apre la sessione invernale di mercato (fino alla G24).');
+  if (S.week === 6 || S.week === 25) news('Mercato chiuso. Solo gli svincolati possono firmare.');
+
+  if (++S.mktAge >= 6) { genMarket(); news('Nuovo rapporto dei tuoi osservatori: talenti aggiornati nel Mercato.'); }
+  S.debt = S.money < 0 ? S.debt + 1 : 0;
+  if (S.debt === 1) news('Conto in rosso. Hai 8 settimane per rientrare prima della chiusura dello studio.', 'bad');
+  if (S.debt >= 8) { S.over = true; ui.sheet = { k: 'over' }; }
+  maybeEvent();
+  if (S.event) ui.sheet = { k: 'event' };
+  save(); render();
+}
+
+function develop(p, played) {
+  let d = 0;
+  const gap = p.pot - p.ovrF;
+  if (p.age <= 21) d = gap * 0.012 * (played ? 1.35 : 0.6) * rnd(0.5, 1.5);
+  else if (p.age <= 24) d = gap * 0.009 * (played ? 1.3 : 0.6) * rnd(0.5, 1.5);
+  else if (p.age <= 28) d = gap * 0.005 * rnd(0.5, 1.5);
+  else if (p.age >= 31) d = -rnd(0, 0.035) * (p.age - 29);
+  p.ovrF = clamp(p.ovrF + d, 30, 95);
+  const before = p.ovr; p.ovr = Math.round(p.ovrF);
+  if (p.ovr > before && p.ovr % 3 === 0) news(`<b>${fullName(p)}</b> cresce: ora è valutato <b>${p.ovr}</b>.`, 'good');
+}
+
+function genOffers() {
+  for (const p of clients()) {
+    if (p.inj > 2) continue;
+    const mine = S.offers.filter(o => o.pid === p.id);
+    const c = club(p);
+    if (c && p.contract <= 1 && !mine.some(o => o.type === 'renew')) {
+      const wants = p.ovr >= c.level - 6;
+      if (R() < (p.renewReq ? (wants ? 0.55 : 0.15) : (wants ? 0.07 : 0.02))) { addOffer(p, c, 'renew'); p.renewReq = false; }
+    }
+    if (mine.filter(o => o.type !== 'renew').length >= 2) continue;
+    let ch = 0;
+    if (!c) ch = 0.3 + S.rep * 0.002;
+    else if (inWindow()) ch = 0.07 + S.rep * 0.002 + (p.listed ? 0.28 : 0) + Math.max(0, p.ovr - c.level) * 0.025 + p.form * 0.04;
+    if (R() >= ch) continue;
+    const ceil = p.ovr + 5 + (p.age <= 21 ? (p.pot - p.ovr) * 0.35 : 0);
+    const cands = CLUBS.filter(k => k.id !== p.club && k.level <= ceil && k.level >= p.ovr - 12 && !mine.some(o => o.club === k.id));
+    if (!cands.length) continue;
+    const ws = cands.map(k => [k, 1 + Math.max(0, k.level - p.ovr + 8)]);
+    addOffer(p, wpick(ws), c ? 'transfer' : 'free');
+  }
+}
+function addOffer(p, k, type) {
+  const youth = p.age <= 21 ? (p.pot - p.ovr) * 0.25 : 0;
+  let wage = Math.round(baseWage(p.ovr + youth, k.tier) * rnd(0.85, 1.12) / 1000) * 1000;
+  if (type === 'renew') wage = Math.max(Math.round(p.wage * rnd(1.02, 1.12) / 1000) * 1000, wage);
+  const fee = type === 'transfer' ? Math.round(value(p) * rnd(0.85, 1.3) / 1e4) * 1e4 : 0;
+  const years = p.age < 24 ? ri(4, 5) : p.age < 30 ? ri(3, 4) : ri(1, 2);
+  const max = Math.round(wage * (1.08 + R() * 0.32 + S.up.legal * 0.05 + S.rep * 0.0015) / 1000) * 1000;
+  const spread = max * [0.5, 0.3, 0.18, 0.08, 0][S.up.legal];
+  const lo = Math.round((max - spread * R()) / 1000) * 1000;
+  S.offers.push({ id: S.oid++, pid: p.id, club: k.id, type, fee, wage, cur: wage, max, years, exp: S.week + 2, pat: 3, log: [], hLo: lo, hHi: Math.round((lo + spread) / 1000) * 1000 });
+  const what = type === 'renew' ? 'propone il rinnovo a' : type === 'free' ? 'vuole tesserare lo svincolato' : `offre ${eur(fee)} per`;
+  news(`<b>${k.name}</b> ${what} <b>${fullName(p)}</b>. Vai a Trattative.`, 'good');
+}
+
+function dropClient(p, msg) {
+  S.clients = S.clients.filter(id => id !== p.id);
+  S.offers = S.offers.filter(o => o.pid !== p.id);
+  delete S.players[p.id];
+  if (msg) news(msg, 'bad');
+}
+
+/* ---------- events ---------- */
+function maybeEvent() {
+  const cl = clients();
+  if (!cl.length || R() > 0.17) return;
+  const opts = [];
+  const stars = cl.filter(p => p.ovr >= 64 || p.pot >= 78); if (stars.length) opts.push(['poach', pick(stars)]);
+  const sad = cl.filter(p => p.morale < 40 && p.club != null); if (sad.length) opts.push(['unhappy', pick(sad)], ['unhappy', pick(sad)]);
+  const fam = cl.filter(p => p.ovr >= 68 && p.club != null); if (fam.length) opts.push(['sponsor', pick(fam)]);
+  opts.push(['press', pick(cl)], ['tip', null]);
+  const [t, p] = pick(opts);
+  S.event = { t, pid: p ? p.id : null };
+}
+function eventView(ev) {
+  const p = ev.pid != null ? P(ev.pid) : null;
+  const n = p ? `<b>${esc(fullName(p))}</b>` : '';
+  switch (ev.t) {
+    case 'poach': {
+      const cost = Math.max(2000, Math.round(value(p) * 0.012 / 1000) * 1000);
+      return { title: 'Uno squalo in tribuna', text: `Un procuratore rivale ha avvicinato ${n} promettendogli un ingaggio più ricco. ${p.trait === 'Mercenario' ? 'Sai che i soldi gli parlano forte.' : p.trait === 'Leale' ? 'Di solito ti è fedele.' : ''}`,
+        ch: [[`Premio fedeltà · ${eur(cost)}`, 'loyal', S.money < cost], ['Fidati del rapporto', 'trust']], cost };
+    }
+    case 'unhappy': return { title: 'Musi lunghi', text: `${n} è scontento: ${club(p) && p.ovr - club(p).level >= 4 ? 'si sente sprecato in questa squadra.' : 'gioca poco e lo fa notare.'}`,
+      ch: [['Mettilo sul mercato', 'list'], ['Chiedigli pazienza', 'calm']] };
+    case 'sponsor': return { title: 'Contratto di immagine', text: `Un marchio di scarpini vuole ${n} come testimonial per la prossima campagna. A te spetta il 20% dell'accordo.`,
+      ch: [[`Firma · +${eur(Math.round(p.wage * 0.05 / 500) * 500)} per te`, 'sponsor'], ['Rifiuta: deve pensare al campo', 'nosponsor']] };
+    case 'press': return { title: 'Il giornalista chiama', text: `Un quotidiano sportivo vuole un tuo commento sul futuro di ${n}.`,
+      ch: [['«Merita un palcoscenico più grande»', 'hype'], ['«Parliamo solo di campo»', 'humble']] };
+    case 'tip': return { title: 'La soffiata', text: 'Un vecchio osservatore di fiducia ti chiama: ha visto un ragazzo di cui nessuno parla ancora. Vuole un rimborso spese per il dossier.',
+      ch: [['Compra il dossier · €1.5k', 'tip', S.money < 1500], ['Non ora', 'none']] };
+  }
+}
+function resolveEvent(act) {
+  const ev = S.event; if (!ev) return;
+  const p = ev.pid != null ? P(ev.pid) : null;
+  const v = eventView(ev);
+  S.event = null; ui.sheet = null;
+  if (p && !S.clients.includes(p.id)) { render(); return; }
+  switch (act) {
+    case 'loyal': S.money -= v.cost; p.morale += 18; news(`Premio fedeltà pagato: <b>${fullName(p)}</b> resta con te.`, 'good'); break;
+    case 'trust': {
+      const ch = clamp({ Leale: 0.08, Mercenario: 0.55, Ambizioso: 0.32, Professionista: 0.22 }[p.trait] - (p.morale - 50) / 200, 0.03, 0.8);
+      if (R() < ch) { dropClient(p, `<b>${fullName(p)}</b> ha firmato con l'agenzia rivale. Una brutta giornata.`); S.rep = Math.max(0, S.rep - 2); }
+      else { p.morale += 6; news(`<b>${fullName(p)}</b> ha rifiutato il rivale: «Il mio procuratore è uno solo».`, 'good'); }
+      break;
+    }
+    case 'list': p.listed = true; p.morale += 12; news(`Hai messo <b>${fullName(p)}</b> sul mercato.${inWindow() ? '' : ' Le offerte arriveranno alla riapertura.'}`); break;
+    case 'calm': if (p.trait === 'Leale' || p.trait === 'Professionista') { p.morale += 8; news(`<b>${fullName(p)}</b> ti dà fiducia.`); } else { p.morale -= 6; news(`<b>${fullName(p)}</b> non l'ha presa bene.`, 'bad'); } break;
+    case 'sponsor': { const g = Math.round(p.wage * 0.05 / 500) * 500; S.money += g; S.sEarn += g; S.stats.earned += g; S.rep += 0.5; p.morale += 4; news(`Accordo con lo sponsor per <b>${fullName(p)}</b>: +${eur(g)}.`, 'good'); break; }
+    case 'nosponsor': p.form = clamp(p.form + 0.4, -1.5, 1.5); p.morale += 2; break;
+    case 'hype': S.rep += 1; p.listed = p.club != null; p.morale += p.trait === 'Leale' ? -4 : 5; news(`La tua intervista su <b>${fullName(p)}</b> fa rumore. I club prendono nota.`); break;
+    case 'humble': S.rep += 0.4; p.morale += 3; break;
+    case 'tip': {
+      S.money -= 1500;
+      const age = ri(16, 18), ovr = ri(50, 58);
+      const k = makePlayer({ age, ovr, pot: Math.min(93, ovr + ri(24, 34)), club: pick(CLUBS.filter(c => c.tier >= 3)).id });
+      k.bonus = signBonus(k); S.players[k.id] = k; S.market.unshift(k.id);
+      news(`Dossier ricevuto: <b>${fullName(k)}</b>, ${age} anni. Lo trovi in cima al Mercato.`, 'good');
+      break;
+    }
+  }
+  save(); render();
+}
+
+/* ---------- negotiation ---------- */
+function finalize(o, wage) {
+  const p = P(o.pid), k = CLUBS[o.club], prev = club(p);
+  let gain = 0, msg;
+  if (o.type === 'transfer') {
+    gain = Math.round(o.fee * 0.05);
+    p.morale += (k.level > prev.level ? 16 : -4) + (wage > p.wage * 1.3 ? 6 : 0);
+    if (p.trait === 'Ambizioso' && k.level < prev.level) p.morale -= 14;
+    S.rep += clamp(1 + o.fee / 1.5e6, 1, 8);
+    S.stats.fees += o.fee;
+    msg = `Affare chiuso: <b>${fullName(p)}</b> passa a <b>${k.name}</b> per ${eur(o.fee)}. Commissione: ${eur(gain)}.`;
+  } else if (o.type === 'free') {
+    gain = Math.round(wage * 0.1);
+    p.morale += 15; S.rep += 1;
+    msg = `<b>${fullName(p)}</b> firma con <b>${k.name}</b> da svincolato. Bonus alla firma per te: ${eur(gain)}.`;
+  } else {
+    gain = Math.round(wage * 0.03);
+    p.morale += 8; S.rep += 0.5;
+    msg = `Rinnovo firmato: <b>${fullName(p)}</b> resta a <b>${k.name}</b> fino al ${2025 + S.season + o.years}. Bonus: ${eur(gain)}.`;
+  }
+  p.club = k.id; p.wage = wage; p.contract = o.years; p.listed = false; p.renewReq = false;
+  p.morale = clamp(p.morale, 0, 100);
+  S.money += gain; S.sEarn += gain; S.stats.earned += gain; S.stats.deals++; S.sDeals++;
+  S.rep = clamp(S.rep, 0, 100);
+  S.offers = S.offers.filter(x => x.id !== o.id && !(x.pid === p.id && (o.type !== 'renew' || x.type === 'renew')));
+  news(msg, 'good');
+  ui.sheet = null; save(); render();
+  toast(`Firmato · +${eur(gain)}`);
+}
+function pushAsk(o, ask) {
+  o.log.push({ me: true, t: `Chiedi ${eur(ask)} l'anno.` });
+  if (ask <= o.cur) { finalize(o, ask); return; }
+  if (ask <= o.max) { o.log.push({ t: 'Il direttore sportivo stringe la mano: accordo.' }); finalize(o, ask); return; }
+  o.pat--;
+  if (o.pat <= 0) {
+    S.offers = S.offers.filter(x => x.id !== o.id);
+    S.rep = Math.max(0, S.rep - 1);
+    news(`<b>${CLUBS[o.club].name}</b> ha interrotto la trattativa per ${fullName(P(o.pid))}: richieste troppo alte.`, 'bad');
+    ui.sheet = null; save(); render(); toast('Trattativa saltata'); return;
+  }
+  const counter = Math.round(Math.min(o.max, o.cur + (ask - o.cur) * rnd(0.3, 0.6)) / 1000) * 1000;
+  o.cur = Math.max(o.cur, counter);
+  o.log.push({ t: o.pat === 1 ? `Ultima offerta: ${eur(o.cur)}. Poi ci alziamo dal tavolo.` : `Possiamo arrivare a ${eur(o.cur)}.` });
+  ui.ask = o.cur; save(); render();
+}
+
+/* ---------- season end ---------- */
+function seasonEnd() {
+  const sum = { label: seasonLabel(), earned: S.sEarn, deals: S.sDeals, rep: S.rep - S.sRep, lines: [] };
+  const cl = clients();
+  const ranked = cl.filter(p => p.apps >= 12).sort((a, b) => b.rsum / b.apps - a.rsum / a.apps);
+  if (ranked[0] && ranked[0].rsum / ranked[0].apps >= 7.0) {
+    const b = ranked[0]; S.rep += 3; b.morale += 10;
+    sum.lines.push(`<b>${fullName(b)}</b> vince il premio di miglior giocatore della stagione (media ${(b.rsum / b.apps).toFixed(2)}).`);
+  }
+  const yng = cl.filter(p => p.age <= 21 && p.apps >= 10).sort((a, b) => b.rsum / b.apps - a.rsum / a.apps)[0];
+  if (yng && yng !== ranked[0] && yng.rsum / yng.apps >= 6.8) { S.rep += 2; sum.lines.push(`<b>${fullName(yng)}</b> è il miglior giovane del campionato.`); }
+  const top = cl.filter(p => p.role === 'ATT').sort((a, b) => b.goals - a.goals)[0];
+  if (top && top.goals >= 12) sum.lines.push(`<b>${fullName(top)}</b> chiude con ${top.goals} gol.`);
+  for (const p of cl) {
+    p.age++; p.yrs++; p.apps = p.goals = p.assists = p.rsum = 0; p.form = 0;
+    if (p.age >= 33 && R() < (p.age - 32) * 0.22) { sum.lines.push(`<b>${fullName(p)}</b> si ritira a ${p.age} anni. Grazie di tutto.`); dropClient(p); continue; }
+    if (p.club != null) {
+      p.contract--;
+      if (p.contract <= 0) { sum.lines.push(`<b>${fullName(p)}</b> è svincolato da ${club(p).name}: trovagli una squadra.`); p.club = null; p.wage = 0; p.morale -= 12; }
+    }
+    if (p.age >= 31) p.pot = Math.min(p.pot, p.ovr);
+  }
+  S.offers = S.offers.filter(o => o.type !== 'renew' && P(o.pid) && (o.type !== 'transfer' || P(o.pid).club != null));
+  S.rep = clamp(S.rep, 0, 100);
+  S.season++; S.week = 1; S.sEarn = 0; S.sDeals = 0; S.sRep = S.rep; S.report = [];
+  genMarket();
+  news(`Inizia la stagione ${seasonLabel()}. Mercato estivo aperto.`);
+  S.sum = sum; ui.sheet = { k: 'season' };
+  save(); render();
+}
+
+/* ---------- art ---------- */
+function portrait(p) {
+  const c = club(p) || { c1: '#8C8F86', c2: '#E9E4D6', pat: 'solid' };
+  const sk = SKINS[p.skin], hc = HAIRC[p.hairC], uid = 'p' + p.id + Math.floor(R() * 1e6);
+  const shirt = 'M6 122 C8 97 22 88 38 84 L50 93 L62 84 C78 88 92 97 94 122Z';
+  let pat = '';
+  if (c.pat === 'stripes') for (let x = 10; x < 100; x += 16) pat += `<rect x="${x}" y="80" width="7" height="45" fill="${c.c2}"/>`;
+  if (c.pat === 'hoops') for (let y = 90; y < 125; y += 12) pat += `<rect x="0" y="${y}" width="100" height="6" fill="${c.c2}"/>`;
+  if (c.pat === 'halves') pat = `<rect x="50" y="80" width="50" height="45" fill="${c.c2}"/>`;
+  const back = p.hair === 2 ? `<path d="M33 50 C32 33 42 29 50 29 C59 29 68 33 67 50 L69 76 C64 74 61 71 61 66 L39 66 C39 71 36 74 31 76Z" fill="${hc}"/>` : '';
+  const hairTop = [
+    `<path d="M34.5 54 C33 36 43 32 50 32 C58 32 67 36 65.5 54 C63 45 57 41.5 50 41.5 C43 41.5 37 45 34.5 54Z" fill="${hc}"/>`,
+    `<g fill="${hc}"><circle cx="37" cy="45" r="7"/><circle cx="44" cy="38" r="8.5"/><circle cx="56" cy="38" r="8.5"/><circle cx="63" cy="45" r="7"/><circle cx="50" cy="35" r="8"/></g>`,
+    `<path d="M34 55 C32 35 43 31 50 31 C58 31 68 35 66 55 C64 46 60 42 54 41 C50 44 42 45 34 55Z" fill="${hc}"/>`,
+    `<path d="M35 50 C35 38 43 35 50 35 C57 35 65 38 65 50 C62 44 57 42 50 42 C43 42 38 44 35 50Z" fill="${hc}" opacity=".55"/>`,
+    `<path d="M34.5 55 C32 36 42 31 52 32 C61 33 67 38 65.5 53 C64 46 61 43 56 42 C49 42 42 40 38 43 C36 46 35 50 34.5 55Z" fill="${hc}"/><path d="M42 33 C46 38 47 41 47 42" stroke="${sk}" stroke-width="1" fill="none" opacity=".5"/>`
+  ][p.hair];
+  const stache = p.stache ? `<path d="M43 65 C46 62.5 54 62.5 57 65 C54 66.5 46 66.5 43 65Z" fill="${hc}"/>` : '';
+  return `<svg viewBox="0 0 100 122" aria-hidden="true"><defs><clipPath id="${uid}"><path d="${shirt}"/></clipPath>
+<radialGradient id="${uid}g" cx=".5" cy=".38" r=".7"><stop offset="0" stop-color="#F6F0DF"/><stop offset="1" stop-color="#DCCFAE"/></radialGradient></defs>
+<rect width="100" height="122" fill="url(#${uid}g)"/><circle cx="50" cy="52" r="34" fill="${c.c1}" opacity=".16"/>
+${back}<rect x="43" y="68" width="14" height="20" rx="5" fill="${sk}"/><path d="M43 78 Q50 83 57 78 L57 82 Q50 87 43 82Z" fill="#000" opacity=".12"/>
+<path d="${shirt}" fill="${c.c1}"/><g clip-path="url(#${uid})">${pat}<path d="${shirt}" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="2"/></g>
+<path d="M36 84.5 L50 97 L64 84.5" stroke="${c.c2 === c.c1 ? '#2A241C' : c.c2}" stroke-width="4" fill="none" stroke-linejoin="round"/>
+<path d="M36 84.5 L50 97 L64 84.5" stroke="${c.c1}" stroke-width="1.2" fill="none" opacity=".5"/>
+<ellipse cx="34.5" cy="57" rx="3" ry="4.5" fill="${sk}"/><ellipse cx="65.5" cy="57" rx="3" ry="4.5" fill="${sk}"/>
+<ellipse cx="50" cy="55" rx="15.5" ry="18.5" fill="${sk}"/>
+<path d="M36 60 Q50 76 64 60 Q62 73 50 73.5 Q38 73 36 60Z" fill="#000" opacity=".06"/>
+${hairTop}
+<path d="M41 50.5 L46.5 50" stroke="${hc}" stroke-width="1.6" stroke-linecap="round"/><path d="M53.5 50 L59 50.5" stroke="${hc}" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="44" cy="55" r="1.5" fill="#2A211C"/><circle cx="56" cy="55" r="1.5" fill="#2A211C"/>
+<path d="M50 56 L48.6 62 L51 62" stroke="#000" stroke-opacity=".18" stroke-width="1" fill="none"/>
+${stache}<path d="M46 67.5 Q50 69.3 54 67.5" stroke="#5a3a2c" stroke-opacity=".55" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+</svg>`;
+}
+const crest = `<svg class="crest" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 L36 7 V19 C36 29 29 35 20 38 C11 35 4 29 4 19 V7Z" fill="#D9A23B"/><path d="M20 5.5 L33 9.5 V19 C33 27.5 27 32.5 20 35 C13 32.5 7 27.5 7 19 V9.5Z" fill="#1F4D3A"/><circle cx="20" cy="20" r="7.5" fill="#F2EDDE"/><path d="M20 13.2 L22.3 17.5 L20 20 L17.7 17.5Z M14.6 22.6 L17.7 17.5 L20 20 L18.2 24.6Z M25.4 22.6 L22.3 17.5 L20 20 L21.8 24.6Z" fill="#1F4D3A"/></svg>`;
+const ICONS = {
+  home: '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
+  clients: '<circle cx="9" cy="8.5" r="3.3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 20c.6-3.8 3-5.8 6-5.8s5.4 2 6 5.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.6 14.6c1.8.7 3 2.5 3.4 5.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+  market: '<circle cx="7" cy="14" r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17" cy="14" r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M10.6 13.4h2.8M5 10.6 7.5 5h2l.8 4M19 10.6 16.5 5h-2l-.8 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>',
+  deals: '<path d="M7 3h8l4 4v14H7z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 11h6M10 14.5h6M10 18h3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+  office: '<path d="M4 20V8l8-4 8 4v12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M2.5 20h19M8 11v6M12 11v6M16 11v6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>'
+};
+const moraleColor = m => m >= 60 ? 'var(--good)' : m >= 35 ? 'var(--gold-bg)' : 'var(--red)';
+const moraleWord = m => m >= 80 ? 'Entusiasta' : m >= 60 ? 'Sereno' : m >= 35 ? 'Inquieto' : m >= 15 ? 'Scontento' : 'Furioso';
+
+/* ---------- views ---------- */
+const $app = document.getElementById('app');
+
+function render() {
+  if (!S) { $app.innerHTML = introView(); return; }
+  const tabs = [['home', 'Agenzia'], ['clients', 'Assistiti'], ['market', 'Mercato'], ['deals', 'Trattative'], ['office', 'Ufficio']];
+  const body = { home: homeView, clients: clientsView, market: marketView, deals: dealsView, office: officeView }[ui.tab]();
+  const next = S.week > WEEKS ? 'Chiudi la stagione' : 'Gioca la giornata';
+  $app.innerHTML = `
+<header class="mast"><div class="wrap">${crest}
+  <div class="id"><h1>${esc(S.name)}</h1><div class="sub">${seasonLabel()} · ${repTitle(S.rep)}</div></div>
+  <div class="cash"><b class="${S.money < 0 ? 'neg' : ''}">${eur(S.money)}</b><span>in cassa</span></div></div></header>
+<main class="wrap">${body}</main>
+<nav class="dock">
+  <div class="adv"><div class="wrap"><div class="when"><b>${weekLabel()}</b><span>${inWindow() ? 'Mercato aperto' : 'Mercato chiuso'} · ${S.lastNet == null ? 'stagione al via' : (S.lastNet >= 0 ? '+' : '') + eur(S.lastNet) + ' ultima sett.'}</span></div>
+  <button class="btn pri" data-a="advance">${next} ›</button></div></div>
+  <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${ui.tab === k ? 'on' : ''}" data-a="tab" data-v="${k}" aria-label="${l}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}${k === 'deals' && S.offers.length ? `<span class="badge">${S.offers.length}</span>` : ''}</button>`).join('')}</div>
+</nav>
+${sheetView()}<div id="toastSlot"></div>`;
+  renderToast();
+}
+function renderToast() { const s = document.getElementById('toastSlot'); if (s) s.innerHTML = ui.toast ? `<div class="toast" role="status">${esc(ui.toast)}</div>` : ''; }
+
+function introView() {
+  const had = !!load();
+  return `<section class="intro"><div class="circle"></div><div class="halfway"></div><div class="wrap">
+  <div class="kicker">Calciomercato · dal 2026</div>
+  <h1>Il<br><em>Procuratore</em></h1>
+  <p>Scopri ragazzi sconosciuti, portali nei grandi club e tratta ogni euro dei loro contratti. La tua fetta è la commissione.</p>
+  <div class="field"><label for="agencyName">Nome della tua agenzia</label><input id="agencyName" maxlength="26" placeholder="Es. Studio Bellavista" value="Studio Bellavista" autocomplete="off"></div>
+  <div class="btns"><button class="btn pri" data-a="start">Apri lo studio</button>${had ? '<button class="btn ghost" style="color:var(--on-pitch);border-color:rgba(242,237,222,.35)" data-a="continue">Continua carriera</button>' : ''}</div>
+</div></section>`;
+}
+
+function homeView() {
+  const open = inWindow();
+  const left = S.week <= 5 ? 6 - S.week : S.week <= 24 && S.week >= 21 ? 25 - S.week : 0;
+  const reopen = S.week < 21 ? 21 - S.week : Math.max(1, WEEKS + 2 - S.week);
+  const inc = Math.round(weeklyIncome()), cost = OFFICE_COST[S.up.office];
+  const rep = S.report.map(r => {
+    const p = P(r.id); if (!p) return '';
+    const right = r.s === 'play' ? `<span class="small muted">${r.g ? r.g + (r.g > 1 ? ' gol' : ' gol') : ''}${r.g && r.a ? ' · ' : ''}${r.a ? r.a + ' assist' : ''}</span><span class="rate ${r.r >= 7.5 ? 'g' : r.r < 5.8 ? 'b' : ''}">${r.r.toFixed(1)}</span>`
+      : `<span class="small muted">${{ bench: 'In panchina', inj: 'Infortunato', free: 'Senza squadra' }[r.s]}</span>`;
+    return `<div class="rep-row"><span class="mid"><b>${esc(shortName(p))}</b> <span class="muted small">${club(p) ? esc(club(p).name) : ''}</span></span>${right}</div>`;
+  }).join('');
+  return `
+<section class="hero"><div class="lines"></div><div class="in">
+  <div class="row"><div><div class="label">Stagione ${seasonLabel()} · ${S.week > WEEKS ? 'campionato concluso' : `giornata ${S.week} di ${WEEKS}`}</div>
+  <div class="big num" style="font-family:var(--f-display)">${eur(S.money)}</div></div>
+  <span class="chip ${open ? 'open' : 'closed'}"><span class="dot"></span>${open ? `Mercato aperto · ${left} sett.` : `Riapre tra ${reopen} sett.`}</span></div>
+  <div style="margin-top:14px"><div class="label" style="display:flex;justify-content:space-between"><span>Reputazione · ${repTitle(S.rep)}</span><span class="num">${Math.floor(S.rep)}/100</span></div>
+  <div class="repbar"><i style="width:${clamp(S.rep, 2, 100)}%"></i></div></div>
+</div>
+<div class="stats3"><div><b>+${eur(inc)}</b><span>Commissioni/sett.</span></div><div><b>−${eur(cost)}</b><span>Spese/sett.</span></div><div><b>${S.clients.length}/${CAP[S.up.office]}</b><span>Assistiti</span></div></div></section>
+
+${S.offers.length ? `<button class="panel pad" data-a="tab" data-v="deals" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)">
+  <span class="ovr hi"><b>${S.offers.length}</b><span>OFF.</span></span><span style="flex:1"><b>${S.offers.length === 1 ? 'Un club ti aspetta al tavolo' : S.offers.length + ' offerte sul tavolo'}</b><br><span class="small muted">Scadono in fretta: tratta prima di giocare la giornata.</span></span><span aria-hidden="true">›</span></button>` : ''}
+
+${S.report.length ? `<div class="h2">Ultima giornata</div><div class="panel list">${rep}</div>` : ''}
+<div class="h2">Notiziario</div>
+<div class="panel list">${S.news.slice(0, 14).map(n => `<div class="news ${n.k}"><span class="w">${n.w}</span><span class="t">${n.t}</span></div>`).join('')}</div>`;
+}
+
+function playerRow(p, action = 'player') {
+  const c = club(p);
+  const pills = (p.inj ? `<span class="pill inj">Inf. ${p.inj}s</span>` : '') + (!c ? '<span class="pill free">Svincolato</span>' : '') +
+    (p.listed ? '<span class="pill list">Sul mercato</span>' : '') + (c && p.contract <= 1 ? '<span class="pill exp">Scade</span>' : '');
+  return `<button class="row-p" data-a="${action}" data-v="${p.id}">
+  <span class="mini">${portrait(p)}</span>
+  <span class="mid"><span class="nm">${esc(fullName(p))}${pills}</span>
+  <span class="meta">${p.role} · ${p.age} anni · ${c ? `<span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}` : 'nessun club'}</span>
+  <span class="mbar"><i style="width:${p.morale}%;background:${moraleColor(p.morale)}"></i></span></span>
+  <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>OVR</span></span></button>`;
+}
+
+function clientsView() {
+  const cl = clients().sort((a, b) => b.ovr - a.ovr);
+  return `<div class="h2">Scuderia <span class="count">${cl.length}/${CAP[S.up.office]}</span></div>
+  ${cl.length ? `<div class="panel list">${cl.map(p => playerRow(p)).join('')}</div>` :
+    `<div class="panel empty"><b>Nessun assistito</b>Vai al Mercato e convinci un talento a firmare con te.</div>`}
+  <p class="small muted" style="margin:0">La barra sotto il nome è l'umore. Sotto il 12% per quattro settimane, il giocatore se ne va.</p>`;
+}
+
+function marketView() {
+  const full = S.clients.length >= CAP[S.up.office];
+  const cards = S.market.map(P).filter(p => p && !S.clients.includes(p.id)).map(p => {
+    const c = club(p), b1 = p.bonus, c1 = recruitChance(p, 1), c2 = recruitChance(p, 2);
+    return `<div class="panel mk"><div class="top"><span class="mini">${portrait(p)}</span>
+      <span style="flex:1;min-width:0"><span class="nm" style="font:700 16px/1.15 var(--f-body);display:block">${esc(fullName(p))}</span>
+      <span class="meta small muted">${ROLES[p.role]} · ${p.age} anni · ${p.nat}</span><br>
+      <span class="small muted">${c ? `<span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}` : 'Svincolato'}</span></span>
+      <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>OVR</span></span></div>
+      <div class="kv"><div><span>Potenziale</span><b>${potText(p)}</b></div><div><span>Valore</span><b>${eur(value(p))}</b></div><div><span>Commiss.</span><b>${p.fee}%</b></div></div>
+      ${p.refused ? `<div class="refused">Ha scelto un'altra agenzia.</div>` :
+      `<div class="btns"><button class="btn green" data-a="recruit" data-v="${p.id}" data-m="1" ${full || S.money < b1 ? 'disabled' : ''}>${eur(b1)} · ${Math.round(c1 * 100)}%</button>
+      <button class="btn ghost" data-a="recruit" data-v="${p.id}" data-m="2" ${full || S.money < b1 * 2 ? 'disabled' : ''}>${eur(b1 * 2)} · ${Math.round(c2 * 100)}%</button></div>`}</div>`;
+  }).join('');
+  const tripCost = 2500 * S.up.scout;
+  return `<div class="panel pad" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:180px"><b>Rapporto osservatori</b><div class="small muted">Prossimo tra ${6 - S.mktAge} sett. · offri un premio alla firma: se rifiuta non paghi nulla.</div></div>
+    <button class="btn ghost" data-a="trip" ${S.money < tripCost ? 'disabled' : ''}>Nuovo giro · ${eur(tripCost)}</button></div>
+  ${full ? `<div class="warn">Scuderia al completo (${CAP[S.up.office]}). Amplia l'ufficio per firmare altri giocatori.</div>` : ''}
+  <div class="h2">Talenti segnalati <span class="count">${S.market.length}</span></div>${cards || '<div class="panel empty"><b>Nessuno in lista</b>Manda gli osservatori in giro.</div>'}`;
+}
+
+function dealsView() {
+  if (!S.offers.length) return `<div class="h2">Trattative</div><div class="panel empty"><b>Tavolo vuoto</b>${inWindow() ? 'Proponi i tuoi assistiti ai club dalla loro scheda: le offerte arrivano nelle prossime giornate.' : 'Il mercato è chiuso. Arrivano solo rinnovi e offerte per gli svincolati.'}</div>`;
+  return `<div class="h2">Offerte sul tavolo <span class="count">${S.offers.length}</span></div><div class="panel list">${S.offers.map(o => {
+    const p = P(o.pid), k = CLUBS[o.club];
+    const label = { transfer: `Trasferimento · ${eur(o.fee)}`, free: 'Svincolato', renew: 'Rinnovo' }[o.type];
+    return `<button class="row-p" data-a="nego" data-v="${o.id}"><span class="mini">${portrait(p)}</span>
+    <span class="mid"><span class="nm">${esc(fullName(p))}</span><span class="meta"><span class="clubdot" style="background:${k.c1}"></span>${esc(k.name)} · ${label}</span>
+    <span class="meta">${eur(o.cur)}/anno · ${o.years} anni · scade ${o.exp - S.week <= 0 ? 'questa settimana' : `tra ${o.exp - S.week + 1} sett.`}</span></span><span aria-hidden="true" class="muted">›</span></button>`;
+  }).join('')}</div><p class="small muted" style="margin:0">Guadagni il 5% del cartellino nei trasferimenti, il 10% del primo anno di stipendio sugli svincolati e la tua percentuale sullo stipendio ogni settimana.</p>`;
+}
+
+function officeView() {
+  const ups = ['office', 'scout', 'legal'].map(k => {
+    const u = UPG[k], l = S.up[k], maxed = l >= u.max, cost = maxed ? 0 : u.cost[k === 'legal' ? l : l + 1];
+    return `<div class="panel up"><div class="hd"><h4>${u.name}</h4><span class="lv">${Array.from({ length: u.max }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div>
+    <div class="small muted">${u.desc(l)}</div>
+    ${maxed ? '<div class="tiny" style="color:var(--gold)">Livello massimo</div>' : `<div class="small">Prossimo: ${u.desc(l + 1)}</div><button class="btn green full" data-a="upg" data-v="${k}" ${S.money < cost ? 'disabled' : ''}>Investi ${eur(cost)}</button>`}</div>`;
+  }).join('');
+  return `<div class="h2">Investimenti</div>${ups}
+  <div class="h2">Carriera</div><div class="panel season"><div><b>${S.season}</b><span>Stagione</span></div><div><b>${S.stats.deals}</b><span>Affari</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.earned)}</b><span>Guadagni</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.fees)}</b><span>Cartellini</span></div></div>
+  <div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
+  <div class="small muted">Il salvataggio è automatico su questo dispositivo, a ogni giornata.</div>
+  <button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
+}
+
+/* ---------- sheets ---------- */
+function sheetView() {
+  const s = ui.sheet; if (!s) return '';
+  if (s.k === 'event' && S.event && S.event.pid != null && !P(S.event.pid)) { S.event = null; ui.sheet = null; return ''; }
+  let inner = '', closable = true;
+  if (s.k === 'player') inner = playerSheet(P(s.id));
+  if (s.k === 'nego') inner = negoSheet(S.offers.find(o => o.id === s.id));
+  if (s.k === 'event' && S.event) { closable = false; const v = eventView(S.event);
+    inner = `<h3>${v.title}</h3><p class="lead">${v.text}</p>${S.event.pid != null ? `<div class="panel list">${playerRow(P(S.event.pid), 'noop')}</div>` : ''}
+    <div class="body">${v.ch.map(([l, a, dis]) => `<button class="btn ${a === v.ch[0][1] ? 'pri' : 'ghost'} full" data-a="ev" data-v="${a}" ${dis ? 'disabled' : ''}>${esc(l)}</button>`).join('')}</div>`; }
+  if (s.k === 'season' && S.sum) { const m = S.sum;
+    inner = `<h3>Fine stagione ${m.label}</h3><p class="lead">Si chiude un altro anno in giacca e cravatta.</p><div class="body">
+    <div class="panel season" style="grid-template-columns:repeat(3,1fr)"><div><b class="num" style="font-size:18px;line-height:26px">${eur(m.earned)}</b><span>Incassati</span></div><div><b>${m.deals}</b><span>Affari</span></div><div><b>${m.rep >= 0 ? '+' : ''}${Math.round(m.rep)}</b><span>Reputazione</span></div></div>
+    ${m.lines.length ? `<div class="panel list">${m.lines.map(l => `<div class="news"><span class="t">${l}</span></div>`).join('')}</div>` : ''}
+    <button class="btn pri full" data-a="close">Via alla nuova stagione</button></div>`; }
+  if (s.k === 'over') { closable = false;
+    inner = `<h3>Studio chiuso</h3><p class="lead">Otto settimane in rosso: la banca ha chiuso i rubinetti. Hai chiuso ${S.stats.deals} affari e incassato ${eur(S.stats.earned)} in carriera.</p><button class="btn pri full" data-a="hardreset">Ricomincia</button>`; }
+  if (!inner) return '';
+  return `<div class="scrim" ${closable ? 'data-a="close" data-self="1"' : ''}><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${inner}</div></div>`;
+}
+
+function playerSheet(p) {
+  if (!p) return '';
+  const c = club(p), mine = S.clients.includes(p.id);
+  const avg = p.apps ? (p.rsum / p.apps).toFixed(2) : '–';
+  const hasRenew = S.offers.some(o => o.pid === p.id && o.type === 'renew');
+  const canRenew = c && p.contract <= 2 && !hasRenew && !p.renewReq;
+  return `<div class="card-wrap">
+  <div class="tcard" style="--cb:${c ? c.c1 : '#1F4D3A'};--cf:${c ? (c.c2 === c.c1 ? '#2A241C' : c.c2) : '#F2EDDE'}"><div class="frame">${portrait(p)}<div class="o">${p.ovr}<small>${p.role}</small></div></div>
+  <div class="nb">${esc(p.last.replace(/_/g, ' '))}</div><div class="cl">${c ? esc(c.name) : 'Svincolato'}</div></div>
+  <div class="facts"><div class="wide"><span>Nome</span><b style="font-family:var(--f-body);font-weight:700;font-size:16px;white-space:normal">${esc(fullName(p))}</b></div>
+  <div><span>Età</span><b>${p.age}</b></div><div><span>Nazione</span><b>${p.nat}</b></div>
+  <div><span>Potenziale</span><b>${potText(p)}</b></div><div><span>Valore</span><b>${eur(value(p))}</b></div>
+  <div><span>Stipendio</span><b>${c ? eur(p.wage) : '–'}</b></div><div><span>Contratto</span><b>${c ? (p.contract <= 0 ? '–' : 'fino al ' + (2025 + S.season + p.contract)) : '–'}</b></div>
+  <div><span>Tua quota</span><b>${p.fee}%</b></div><div><span>Ti rende</span><b>${eur(p.wage * p.fee / 100)}/a</b></div></div></div>
+  <div class="body" style="margin-top:16px">
+  <div class="panel season"><div><b>${p.apps}</b><span>Presenze</span></div><div><b>${p.goals}</b><span>Gol</span></div><div><b>${p.assists}</b><span>Assist</span></div><div><b>${avg}</b><span>Media</span></div></div>
+  <div class="panel pad" style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between"><b>${moraleWord(p.morale)}</b><span class="num small">${Math.round(p.morale)}%</span></div>
+  <div class="mbar" style="width:100%;height:6px"><i style="width:${p.morale}%;background:${moraleColor(p.morale)}"></i></div>
+  <div class="small muted"><b style="color:var(--ink)">${p.trait}.</b> ${TRAITS[p.trait]}${p.inj ? ` Infortunato: rientra tra ${p.inj} settimane.` : ''}</div></div>
+  ${mine ? `<div class="btns">
+    ${c ? `<button class="btn ${p.listed ? 'ghost' : 'green'}" data-a="list" data-v="${p.id}">${p.listed ? 'Togli dal mercato' : 'Proponi ai club'}</button>` : ''}
+    ${canRenew ? `<button class="btn ghost" data-a="renew" data-v="${p.id}">Chiedi il rinnovo</button>` : ''}
+  </div>
+  ${c && !inWindow() && p.listed ? '<div class="small muted">Mercato chiuso: le offerte arriveranno alla riapertura.</div>' : ''}
+  ${p.renewReq ? '<div class="small muted">Hai chiesto un rinnovo: il club risponderà nelle prossime settimane.</div>' : ''}
+  <button class="btn danger full" data-a="release" data-v="${p.id}">${ui.confirm === 'rel' + p.id ? 'Confermi? Perdi reputazione' : 'Termina la procura'}</button>` : ''}
+  </div>`;
+}
+
+function negoSheet(o) {
+  if (!o) return '';
+  const p = P(o.pid), k = CLUBS[o.club], prev = club(p);
+  const lo = o.cur, hi = Math.max(o.cur + 1000, Math.round(o.wage * 2 / 1000) * 1000);
+  if (!ui.ask || ui.ask < lo || ui.ask > hi) ui.ask = Math.round(Math.min(hi, lo * 1.15) / 1000) * 1000;
+  const type = { transfer: 'Trasferimento', free: 'Firma da svincolato', renew: 'Rinnovo di contratto' }[o.type];
+  const warn = o.type === 'transfer' && prev && k.level < prev.level ? `<div class="warn">${esc(fullName(p))} scenderebbe in un club meno prestigioso.${p.trait === 'Ambizioso' ? ' Da ambizioso, la prenderà male.' : ''}</div>` : '';
+  const oneoff = o.type === 'transfer' ? `5% del cartellino: <b>${eur(o.fee * 0.05)}</b>` : o.type === 'free' ? 'bonus firma 10% del primo anno' : 'bonus rinnovo 3% del primo anno';
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="mini">${portrait(p)}</span>
+  <div style="min-width:0"><div class="tiny muted">${type}</div><h3 style="margin:2px 0 0">${esc(k.name)}</h3><div class="small muted">${esc(fullName(p))} · ${TIERNAME[k.tier]}</div></div></div>
+  <div class="body">
+  <div class="deal"><div><span>${o.type === 'transfer' ? 'Cartellino' : 'Durata'}</span><b>${o.type === 'transfer' ? eur(o.fee) : o.years + ' anni'}</b></div>
+  <div><span>Offerta attuale</span><b>${eur(o.cur)}/a</b></div>
+  ${o.type === 'transfer' ? `<div><span>Durata</span><b>${o.years} anni</b></div>` : ''}<div><span>Pazienza del ds</span><b class="pat">${[0, 1, 2].map(i => `<i class="${i < o.pat ? '' : 'off'}"></i>`).join('')}</b></div>
+  ${o.type !== 'transfer' ? `<div><span>Stip. attuale</span><b>${p.wage ? eur(p.wage) : '–'}</b></div>` : ''}</div>
+  ${warn}
+  <div class="ask"><div class="tiny" style="opacity:.75">La tua richiesta di stipendio</div>
+    <div class="v num" id="askV" style="font-family:var(--f-display)">${eur(ui.ask)}<span style="font-size:18px;opacity:.7"> /anno</span></div>
+    <div class="c" id="askC">Per te: ${eur(ui.ask * p.fee / 100)} l'anno (${p.fee}%) + ${oneoff}</div>
+    <input type="range" id="askR" min="${lo}" max="${hi}" step="1000" value="${ui.ask}" aria-label="Richiesta di stipendio">
+    ${S.up.legal ? `<div class="c">Il tuo legale stima il tetto del club tra <b>${eur(o.hLo)}</b> e <b>${eur(o.hHi)}</b>.</div>` : '<div class="c">Senza un legale non sai fin dove si spinge il club.</div>'}</div>
+  ${o.log.length ? `<div class="log">${o.log.slice(-4).map(l => `<div class="${l.me ? 'me' : ''}">${esc(l.t)}</div>`).join('')}</div>` : ''}
+  <button class="btn pri full" data-a="ask" data-v="${o.id}">Chiedi questa cifra</button>
+  <div class="btns"><button class="btn green" data-a="accept" data-v="${o.id}">Accetta ${eur(o.cur)}</button><button class="btn ghost" data-a="decline" data-v="${o.id}">Rifiuta</button></div>
+  </div>`;
+}
+
+/* ---------- input ---------- */
+document.addEventListener('input', e => {
+  if (e.target.id !== 'askR') return;
+  ui.ask = +e.target.value;
+  const o = ui.sheet && S.offers.find(x => x.id === ui.sheet.id); if (!o) return;
+  const p = P(o.pid);
+  document.getElementById('askV').innerHTML = `${eur(ui.ask)}<span style="font-size:18px;opacity:.7"> /anno</span>`;
+  const c = document.getElementById('askC'); c.innerHTML = c.innerHTML.replace(/Per te: [^ ]+/, 'Per te: ' + eur(ui.ask * p.fee / 100));
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ['player', 'nego', 'season'].includes(ui.sheet.k)) { ui.sheet = null; render(); } });
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  if (el.dataset.self && e.target !== el) return;
+  const a = el.dataset.a, v = el.dataset.v;
+  if (a !== 'reset' && a !== 'release') ui.confirm = null;
+  switch (a) {
+    case 'start': { const n = (document.getElementById('agencyName').value || '').trim() || 'Studio Bellavista'; newGame(n); ui.tab = 'home'; render(); window.scrollTo(0, 0); break; }
+    case 'continue': S = load(); if (S && S.event) ui.sheet = { k: 'event' }; render(); break;
+    case 'tab': ui.tab = v; ui.sheet = null; render(); window.scrollTo(0, 0); break;
+    case 'advance': advance(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+    case 'player': ui.sheet = { k: 'player', id: +v }; render(); break;
+    case 'nego': ui.sheet = { k: 'nego', id: +v }; ui.ask = 0; render(); break;
+    case 'close': if (ui.sheet && ui.sheet.k === 'season') S.sum = null; ui.sheet = null; save(); render(); break;
+    case 'ev': resolveEvent(v); break;
+    case 'recruit': {
+      const p = P(+v), m = +el.dataset.m, cost = p.bonus * m;
+      if (S.clients.length >= CAP[S.up.office] || S.money < cost) return;
+      if (R() < recruitChance(p, m)) {
+        S.money -= cost; S.clients.push(p.id); S.market = S.market.filter(id => id !== p.id); p.morale = ri(68, 85);
+        news(`<b>${fullName(p)}</b> firma la procura con te. Premio pagato: ${eur(cost)}.`, 'good'); toast(`${shortName(p)} è dei tuoi`);
+      } else { p.refused = true; toast(`${shortName(p)} ha detto no`); }
+      save(); render(); break;
+    }
+    case 'trip': { const c = 2500 * S.up.scout; if (S.money < c) return; S.money -= c; genMarket(); toast('Nuovo rapporto in arrivo'); save(); render(); break; }
+    case 'upg': {
+      const u = UPG[v], l = S.up[v], cost = u.cost[v === 'legal' ? l : l + 1];
+      if (l >= u.max || S.money < cost) return;
+      S.money -= cost; S.up[v]++;
+      if (v === 'scout') for (const id of S.market) scoutRange(P(id));
+      news(`Investimento: ${u.name} al livello ${S.up[v]}.`, 'good'); toast(`${u.name} · livello ${S.up[v]}`); save(); render(); break;
+    }
+    case 'list': { const p = P(+v); p.listed = !p.listed; if (p.listed) { p.morale += p.trait === 'Leale' ? -3 : 3; news(`Hai proposto <b>${fullName(p)}</b> ai club.`); } save(); render(); break; }
+    case 'renew': { const p = P(+v); p.renewReq = true; news(`Hai chiesto a ${club(p).name} di parlare del rinnovo di <b>${fullName(p)}</b>.`); save(); render(); break; }
+    case 'release': {
+      if (ui.confirm !== 'rel' + v) { ui.confirm = 'rel' + v; render(); return; }
+      const p = P(+v); ui.confirm = null; ui.sheet = null; S.rep = Math.max(0, S.rep - 1);
+      dropClient(p, `Hai interrotto la procura con <b>${fullName(p)}</b>.`); save(); render(); break;
+    }
+    case 'ask': { const o = S.offers.find(x => x.id === +v); if (o) pushAsk(o, ui.ask); break; }
+    case 'accept': { const o = S.offers.find(x => x.id === +v); if (o) finalize(o, o.cur); break; }
+    case 'decline': { S.offers = S.offers.filter(x => x.id !== +v); ui.sheet = null; save(); render(); toast('Offerta rifiutata'); break; }
+    case 'reset': if (ui.confirm !== 'reset') { ui.confirm = 'reset'; render(); return; } /* falls through */
+    case 'hardreset': try { localStorage.removeItem(SAVE); } catch (err) {} S = null; ui.sheet = null; ui.confirm = null; ui.tab = 'home'; render(); break;
+  }
+});
+
+/* ---------- boot ---------- */
+function start(data) {
+  S = (data && data.S) || null;
+  if (S && S.event) ui.sheet = { k: 'event' };
+  render();
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
