@@ -36,4 +36,4 @@ calcio, manageriale, calciomercato, simulazione, procuratore
 ## Grafica
 - Icona 512×512: `store/icona-512.png`
 - Screenshot telefono 1080×1920: `store/1-intro.png` … `store/7-album.png`
-- Grafica in evidenza 1024×500: da preparare
+- Grafica in evidenza 1024×500: `store/grafica-1024x500.png`
