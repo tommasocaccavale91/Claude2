@@ -12,3 +12,10 @@ Tutto in un solo file: apri `index.html` nel browser del telefono. Il salvataggi
 - **Ufficio**: amplia lo studio, la rete osservatori e lo studio legale.
 
 Il mercato è aperto dalla G1 alla G5 e dalla G21 alla G24. Gli svincolati possono firmare in qualsiasi momento.
+
+## Sfide e progressi
+- **Sfide di stagione**: tre obiettivi nuovi ogni anno, con premio in denaro e reputazione.
+- **Classifica procuratori**: gareggi con cinque agenzie rivali sulle commissioni della stagione. Chi chiude primo diventa procuratore dell'anno.
+- **Traguardi**: 14 medaglie permanenti da sbloccare e ritirare in Ufficio.
+- **Caffè del mattino**: un bonus al giorno, che cresce se torni tutti i giorni. Al settimo giorno arriva anche una soffiata su un talento.
+- **Ultimo giorno di mercato**: alla G5 e alla G24 arrivano più offerte, ma scadono la sera stessa.

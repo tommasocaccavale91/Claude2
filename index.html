@@ -240,6 +240,32 @@ input[type=range]{width:100%;margin:14px 0 4px;accent-color:var(--gold-bg);heigh
   box-shadow:var(--shadow);animation:up .25s}
 .empty{padding:22px 16px;text-align:center;color:var(--muted)}
 .empty b{display:block;color:var(--ink);font:800 20px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.chip.dead{background:var(--red);color:#fff}
+.obj{display:flex;gap:12px;align-items:center;padding:12px 14px}
+.ck{width:24px;height:24px;flex:none;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent}
+.ck svg{width:14px;height:14px}
+.obj.done .ck{background:var(--good);border-color:var(--good);color:#fff}
+.obj .mid,.ach .mid{flex:1;min-width:0}
+.obj .tx{font-weight:600;font-size:14.5px;line-height:1.3}
+.obj.done .tx{color:var(--muted)}
+.prog{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:7px}
+.prog i{display:block;height:100%;background:var(--gold-bg);border-radius:2px}
+.obj .pv{font:600 11.5px/1.2 var(--f-mono);color:var(--muted);margin-top:4px}
+.rw{flex:none;text-align:right;font:600 12px/1.35 var(--f-mono);color:var(--gold)}
+.br{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:14px}
+.br .pos{width:22px;flex:none;font:800 19px/1 var(--f-display);color:var(--muted)}
+.br.me{background:var(--surface2)}
+.br.me .pos,.br.me .bn{color:var(--ink);font-weight:700}
+.br .bn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coffee{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border:1.5px dashed var(--gold);border-radius:var(--r)}
+.coffee svg{width:40px;height:40px;flex:none;color:var(--gold)}
+.cups{display:flex;gap:5px;margin-top:6px}
+.cups i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--gold)}
+.cups i.on{background:var(--gold-bg);border-color:var(--gold-bg)}
+.ach{display:flex;gap:12px;align-items:center;padding:12px 14px}
+.ach .medal{width:36px;height:42px;flex:none}
+.ach.locked .medal,.ach.locked .mid{opacity:.5}
+.ach .btn{min-height:38px;padding:0 14px;font-size:15px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tcard{width:128px}.big{font-size:40px}}
 </style>
@@ -305,12 +331,12 @@ const TRAITS = { Ambizioso: 'Vuole giocare ad alto livello. Soffre se resta in u
 const MONTHS = ['Ago', 'Ago', 'Ago', 'Ago', 'Set', 'Set', 'Set', 'Set', 'Ott', 'Ott', 'Ott', 'Ott', 'Nov', 'Nov', 'Nov', 'Nov', 'Dic', 'Dic', 'Dic', 'Dic', 'Gen', 'Gen', 'Gen', 'Gen', 'Feb', 'Feb', 'Feb', 'Feb', 'Mar', 'Mar', 'Mar', 'Mar', 'Apr', 'Apr', 'Apr', 'Apr', 'Mag', 'Mag'];
 const WEEKS = 38;
 const UPG = {
-  office: { name: 'Ufficio', max: 5, cost: [0, 0, 40000, 120000, 350000, 900000], desc: l => `Fino a ${CAP[l]} assistiti · spese ${eur(OFFICE_COST[l])}/sett.` },
-  scout: { name: 'Rete osservatori', max: 5, cost: [0, 0, 25000, 80000, 220000, 600000], desc: l => `${4 + l * 2} talenti per rapporto · stima potenziale ±${Math.round(errFor(l) / 2)}` },
-  legal: { name: 'Studio legale', max: 4, cost: [30000, 100000, 300000, 700000], desc: l => l ? `Tetto dei club più alto del ${l * 5}% · stima del tetto ${['', 'larga', 'buona', 'precisa', 'esatta'][l]}` : 'Nessun legale: tratti alla cieca.' }
+  office: { name: 'Ufficio', max: 5, cost: [0, 0, 60000, 200000, 600000, 1500000], desc: l => `Fino a ${CAP[l]} assistiti · spese ${eur(OFFICE_COST[l])}/sett.` },
+  scout: { name: 'Rete osservatori', max: 5, cost: [0, 0, 40000, 150000, 400000, 1000000], desc: l => `${4 + l * 2} talenti per rapporto · stima potenziale ±${Math.round(errFor(l) / 2)}` },
+  legal: { name: 'Studio legale', max: 4, cost: [50000, 180000, 500000, 1200000], desc: l => l ? `Tetto dei club più alto del ${l * 5}% · stima del tetto ${['', 'larga', 'buona', 'precisa', 'esatta'][l]}` : 'Nessun legale: tratti alla cieca.' }
 };
 const CAP = [0, 3, 5, 8, 12, 16];
-const OFFICE_COST = [0, 300, 900, 2200, 4800, 9000];
+const OFFICE_COST = [0, 400, 1200, 3000, 6500, 12000];
 const errFor = l => Math.max(1, 13 - l * 2.4);
 
 /* ---------- state ---------- */
@@ -328,6 +354,14 @@ const shortName = p => `${p.first[0]}. ${p.last.replace(/_/g, ' ')}`;
 const inWindow = (w = S.week) => (w >= 1 && w <= 5) || (w >= 21 && w <= 24);
 const seasonLabel = () => `${2025 + S.season}/${String(26 + S.season).padStart(2, '0')}`;
 const weekLabel = (w = S.week) => w > WEEKS ? 'Fine campionato' : `G${w} · ${MONTHS[w - 1]}`;
+const isDeadline = (w = S.week) => w === 5 || w === 24;
+const addRep = x => { S.rep = clamp(S.rep + (x > 0 ? x * (1 - S.rep / 125) : x), 0, 100); };
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+const dayKey = (t = Date.now()) => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+const RIVALS = [['Global Sport Management', 1.6e6], ['Stellar Calcio', 7.5e5], ['Agenzia Ferraresi', 3.2e5], ['Dal Monte & Figli', 1.3e5], ['Prime Talent Group', 5e4]];
+const seasonMult = () => Math.pow(1.4, S.season - 1);
+const board = () => [...S.rivals.map(x => ({ n: x.n, s: x.s })), { n: S.name, s: S.sEarn, me: true }].sort((a, b) => b.s - a.s);
+const myRank = () => board().findIndex(x => x.me) + 1;
 const repTitle = r => r < 15 ? 'Procuratore di provincia' : r < 30 ? 'Agente emergente' : r < 50 ? 'Nome conosciuto' : r < 75 ? 'Super agente' : 'Leggenda del mercato';
 
 function value(p) {
@@ -398,7 +432,7 @@ function genMarket(extra) {
 }
 const stature = p => Math.max(p.ovr, p.pot - 8);
 const signBonus = p => Math.round((value(p) * 0.015 + 2000) / 500) * 500;
-const recruitChance = (p, mult) => clamp(0.55 + (S.rep - (stature(p) - 50) * 1.5) * 0.025 + (mult - 1) * 0.22, 0.05, 0.95);
+const recruitChance = (p, mult) => clamp(0.55 + (S.rep - (stature(p) - 50) * 1.8) * 0.025 + (mult - 1) * 0.22, 0.05, 0.95);
 
 function news(t, k = '') { S.news.unshift({ w: weekLabel(), t, k }); if (S.news.length > 40) S.news.length = 40; }
 function toast(t) { ui.toast = t; renderToast(); clearTimeout(toast.h); toast.h = setTimeout(() => { ui.toast = null; renderToast(); }, 2600); }
@@ -406,15 +440,114 @@ function toast(t) { ui.toast = t; renderToast(); clearTimeout(toast.h); toast.h 
 function newGame(name) {
   S = { v: 1, name, season: 1, week: 1, money: 40000, rep: 10, nid: 1, oid: 1, players: {}, clients: [], market: [], offers: [], news: [],
     up: { scout: 1, office: 1, legal: 0 }, stats: { earned: 0, deals: 0, fees: 0 }, sEarn: 0, sDeals: 0, sRep: 10, debt: 0,
-    event: null, mktAge: 0, report: [], over: false, sum: null };
+    event: null, mktAge: 0, report: [], over: false, sum: null,
+    rivals: RIVALS.map(([n, t]) => ({ n, t, s: 0 })), ach: {}, daily: { last: null, streak: 0, best: 0 },
+    rec: { maxFee: 0, tier1: false, wonder: false, award: false, top1: false, deadline: false, grow: 0 }, sRec: { tier1: false, youth: false, maxFee: 0 } };
   const t4 = CLUBS.filter(c => c.tier === 4), t3 = CLUBS.filter(c => c.tier === 3);
   const a = makePlayer({ age: 18, ovr: 55, pot: 77, club: pick(t4).id, role: 'ATT' }); a.contract = 2; a.fee = 8; a.morale = 72; a.trait = 'Ambizioso';
   const b = makePlayer({ age: 27, ovr: 65, pot: 66, club: pick(t3).id, role: 'CEN' }); b.contract = 1; b.fee = 7; b.trait = 'Professionista';
-  for (const p of [a, b]) { scoutRange(p, true); S.players[p.id] = p; S.clients.push(p.id); }
+  for (const p of [a, b]) { scoutRange(p, true); p.ovr0 = p.ovr; S.players[p.id] = p; S.clients.push(p.id); }
   genMarket();
   news(`Apri lo studio con due assistiti: <b>${fullName(a)}</b>, talento grezzo, e <b>${fullName(b)}</b>, in scadenza a fine stagione.`);
   news('Il mercato estivo è aperto fino alla G5. Proponi i tuoi giocatori ai club o cerca nuovi talenti.');
+  genObjectives();
   save();
+}
+
+/* ---------- challenges, achievements, rivals ---------- */
+const OBJ = {
+  deals:  { txt: o => `Chiudi ${o.target} affari in stagione`, prog: () => S.sDeals },
+  earn:   { txt: o => `Incassa ${eur(o.target)} in stagione`, prog: () => S.sEarn, money: 1 },
+  fee:    { txt: o => `Chiudi un trasferimento da almeno ${eur(o.target)}`, prog: () => S.sRec.maxFee, money: 1 },
+  tier1:  { txt: () => 'Porta un assistito in un club di prima fascia', prog: () => S.sRec.tier1 ? 1 : 0 },
+  youth:  { txt: () => 'Trasferisci un under 21 in un club di prima o seconda fascia', prog: () => S.sRec.youth ? 1 : 0 },
+  roster: { txt: o => `Arriva a ${o.target} assistiti`, prog: () => S.clients.length },
+  goals:  { txt: o => `Un tuo assistito segna ${o.target} gol in stagione`, prog: () => Math.max(0, ...clients().map(p => p.goals)) },
+  rating: { txt: () => 'Un assistito con media voto 7.0+ (min. 10 presenze)', prog: () => clients().some(p => p.apps >= 10 && p.rsum / p.apps >= 7) ? 1 : 0 },
+  rank:   { txt: o => `Chiudi la stagione tra i primi ${o.target} procuratori`, prog: () => myRank(), end: 1 }
+};
+function genObjectives() {
+  const m = seasonMult();
+  const pool = [
+    { t: 'deals', target: 2 + Math.min(S.season - 1, 3) + Math.floor(S.rep / 30), w: 1.2 },
+    { t: 'earn', target: Math.round(45000 * m / 1000) * 1000, w: 1.2 },
+    { t: 'fee', target: Math.round(1.5e6 * m / 1e5) * 1e5, w: 1.4 },
+    { t: 'tier1', target: 1, w: S.rep < 20 ? 1.8 : 1.2 },
+    { t: 'youth', target: 1, w: 1.3 },
+    { t: 'goals', target: 10, w: 1 },
+    { t: 'rating', target: 1, w: 1 },
+    { t: 'rank', target: S.season === 1 ? 4 : 3, w: 1.5 }
+  ];
+  if (S.clients.length + 2 <= CAP[S.up.office]) pool.push({ t: 'roster', target: S.clients.length + 2, w: 0.8 });
+  S.obj = [];
+  while (S.obj.length < 3) { const o = pick(pool); if (!S.obj.some(x => x.t === o.t)) S.obj.push({ t: o.t, target: o.target, money: Math.round(14000 * m * o.w / 1000) * 1000, rep: +(o.w).toFixed(1), done: false }); }
+}
+function completeObj(o) {
+  o.done = true; S.money += o.money; addRep(o.rep);
+  news(`Sfida completata: <b>${OBJ[o.t].txt(o)}</b>. Premio ${eur(o.money)}.`, 'good');
+  toast(`Sfida completata · +${eur(o.money)}`); buzz([30, 60, 30]);
+}
+const ACH = [
+  ['first', 'Prima stretta di mano', 'Chiudi il primo affare', () => S.stats.deals >= 1, 5000, 0.5],
+  ['wonder', 'Occhio lungo', 'Firma un talento con potenziale reale 85+', () => S.rec.wonder, 15000, 1],
+  ['tier1', 'Salotto buono', 'Porta un assistito in un club di prima fascia', () => S.rec.tier1, 20000, 1],
+  ['deadline', 'Sul gong', "Chiudi un trasferimento nell'ultimo giorno di mercato", () => S.rec.deadline, 15000, 1],
+  ['grow', 'Bottega artigiana', "Un assistito migliora di 12 punti da quando l'hai firmato", () => S.rec.grow >= 12, 25000, 1],
+  ['streak7', 'Abitudinario', 'Sette caffè del mattino di fila', () => S.daily.best >= 7, 10000, 1],
+  ['squad8', 'Scuderia piena', 'Rappresenta 8 giocatori nello stesso momento', () => S.clients.length >= 8, 30000, 1],
+  ['fee10', 'Colpo da dieci', 'Un trasferimento da almeno €10M', () => S.rec.maxFee >= 1e7, 50000, 2],
+  ['award', 'Notte dei premi', 'Un assistito vince il premio di miglior giocatore', () => S.rec.award, 30000, 2],
+  ['million', 'Primo milione', 'Raggiungi €1M in cassa', () => S.money >= 1e6, 0, 3],
+  ['top1', "Procuratore dell'anno", 'Chiudi una stagione primo in classifica', () => S.rec.top1, 150000, 3],
+  ['fee40', 'Affare del secolo', 'Un trasferimento da almeno €40M', () => S.rec.maxFee >= 4e7, 250000, 3],
+  ['vet', 'Lunga carriera', 'Completa cinque stagioni', () => S.season >= 6, 80000, 2],
+  ['legend', 'Leggenda', 'Raggiungi 75 di reputazione', () => S.rep >= 75, 300000, 0]
+];
+function progress() {
+  for (const o of S.obj || []) if (!o.done && !OBJ[o.t].end && OBJ[o.t].prog() >= o.target) completeObj(o);
+  for (const [id, name] of ACH) {
+    const a = ACH.find(x => x[0] === id);
+    if (!S.ach[id] && a[3]()) { S.ach[id] = 1; news(`Traguardo sbloccato: <b>${name}</b>. Ritira il premio in Ufficio.`, 'good'); }
+  }
+}
+const achReady = () => Object.values(S.ach).filter(v => v === 1).length;
+function rivalsWeek() {
+  const before = S.prevRank || myRank(), m = seasonMult();
+  for (const x of S.rivals) {
+    let w = x.t * m / WEEKS * rnd(0.3, 1.4);
+    if (R() < 0.05) { const big = x.t * m * rnd(0.08, 0.18); w += big; if (x.t >= 3e5) news(`${esc(x.n)} chiude un colpo e incassa ${eur(big)}.`); }
+    x.s += Math.round(w);
+  }
+  const after = myRank();
+  if (after < before) news(`Sorpasso! Sali al <b>${after}° posto</b> nella classifica dei procuratori.`, 'good');
+  else if (after > before && after <= 3) news(`Ti hanno superato: scendi al ${after}° posto in classifica.`, 'bad');
+  S.prevRank = after;
+}
+function migrate(d) {
+  if (!d) return d;
+  d.rivals = d.rivals || RIVALS.map(([n, t]) => ({ n, t, s: 0 }));
+  d.ach = d.ach || {}; d.daily = d.daily || { last: null, streak: 0, best: 0 };
+  d.rec = d.rec || { maxFee: 0, tier1: false, wonder: false, award: false, top1: false, deadline: false, grow: 0 };
+  d.sRec = d.sRec || { tier1: false, youth: false, maxFee: 0 };
+  S = d; if (!S.obj) genObjectives();
+  for (const p of clients()) if (p.ovr0 == null) p.ovr0 = p.ovr;
+  return S;
+}
+function claimDaily() {
+  if (S.daily.last === dayKey()) return;
+  S.daily.streak = S.daily.last === dayKey(Date.now() - 864e5) ? S.daily.streak + 1 : 1;
+  S.daily.best = Math.max(S.daily.best, S.daily.streak); S.daily.last = dayKey();
+  const day = ((S.daily.streak - 1) % 7) + 1;
+  const g = Math.round(1200 * day * (1 + (S.season - 1) * 0.5) / 100) * 100;
+  S.money += g;
+  if (day === 7) {
+    const age = ri(16, 18), ovr = ri(50, 58);
+    const k = makePlayer({ age, ovr, pot: Math.min(93, ovr + ri(26, 34)), club: pick(CLUBS.filter(c => c.tier >= 3)).id });
+    k.bonus = signBonus(k); S.players[k.id] = k; S.market.unshift(k.id);
+    news(`Settimo caffè: il barista ti parla di <b>${fullName(k)}</b>, ${age} anni. Lo trovi nel Mercato.`, 'good');
+  }
+  toast(`Caffè del mattino · +${eur(g)}`); buzz(25);
+  progress(); save(); render();
 }
 
 /* ---------- weekly simulation ---------- */
@@ -465,6 +598,8 @@ function advance() {
     return true;
   });
   genOffers();
+  rivalsWeek();
+  if (isDeadline()) news('<b>Ultimo giorno di mercato.</b> Le offerte di trasferimento scadono stasera: più club si fanno avanti.', 'bad');
   if (S.week === 21) news('Si apre la sessione invernale di mercato (fino alla G24).');
   if (S.week === 6 || S.week === 25) news('Mercato chiuso. Solo gli svincolati possono firmare.');
 
@@ -473,6 +608,7 @@ function advance() {
   if (S.debt === 1) news('Conto in rosso. Hai 8 settimane per rientrare prima della chiusura dello studio.', 'bad');
   if (S.debt >= 8) { S.over = true; ui.sheet = { k: 'over' }; }
   maybeEvent();
+  progress();
   if (S.event) ui.sheet = { k: 'event' };
   save(); render();
 }
@@ -486,6 +622,7 @@ function develop(p, played) {
   else if (p.age >= 31) d = -rnd(0, 0.035) * (p.age - 29);
   p.ovrF = clamp(p.ovrF + d, 30, 95);
   const before = p.ovr; p.ovr = Math.round(p.ovrF);
+  if (p.ovr0 != null) S.rec.grow = Math.max(S.rec.grow, p.ovr - p.ovr0);
   if (p.ovr > before && p.ovr % 3 === 0) news(`<b>${fullName(p)}</b> cresce: ora è valutato <b>${p.ovr}</b>.`, 'good');
 }
 
@@ -500,8 +637,8 @@ function genOffers() {
     }
     if (mine.filter(o => o.type !== 'renew').length >= 2) continue;
     let ch = 0;
-    if (!c) ch = 0.3 + S.rep * 0.002;
-    else if (inWindow()) ch = 0.07 + S.rep * 0.002 + (p.listed ? 0.28 : 0) + Math.max(0, p.ovr - c.level) * 0.025 + p.form * 0.04;
+    if (!c) ch = 0.16 + S.rep * 0.0015;
+    else if (inWindow()) ch = (0.035 + S.rep * 0.0012 + (p.listed ? 0.16 : 0) + Math.max(0, p.ovr - c.level) * 0.02 + p.form * 0.03) * (isDeadline() ? 1.8 : 1);
     if (R() >= ch) continue;
     const ceil = p.ovr + 5 + (p.age <= 21 ? (p.pot - p.ovr) * 0.35 : 0);
     const cands = CLUBS.filter(k => k.id !== p.club && k.level <= ceil && k.level >= p.ovr - 12 && !mine.some(o => o.club === k.id));
@@ -516,10 +653,10 @@ function addOffer(p, k, type) {
   if (type === 'renew') wage = Math.max(Math.round(p.wage * rnd(1.02, 1.12) / 1000) * 1000, wage);
   const fee = type === 'transfer' ? Math.round(value(p) * rnd(0.85, 1.3) / 1e4) * 1e4 : 0;
   const years = p.age < 24 ? ri(4, 5) : p.age < 30 ? ri(3, 4) : ri(1, 2);
-  const max = Math.round(wage * (1.08 + R() * 0.32 + S.up.legal * 0.05 + S.rep * 0.0015) / 1000) * 1000;
+  const max = Math.round(wage * (1.04 + R() * 0.24 + S.up.legal * 0.05 + S.rep * 0.001) / 1000) * 1000;
   const spread = max * [0.5, 0.3, 0.18, 0.08, 0][S.up.legal];
   const lo = Math.round((max - spread * R()) / 1000) * 1000;
-  S.offers.push({ id: S.oid++, pid: p.id, club: k.id, type, fee, wage, cur: wage, max, years, exp: S.week + 2, pat: 3, log: [], hLo: lo, hHi: Math.round((lo + spread) / 1000) * 1000 });
+  S.offers.push({ id: S.oid++, pid: p.id, club: k.id, type, fee, wage, cur: wage, max, years, exp: type === 'transfer' ? Math.min(S.week + 2, S.week <= 5 ? 5 : 24) : S.week + 2, pat: 3, log: [], hLo: lo, hHi: Math.round((lo + spread) / 1000) * 1000 });
   const what = type === 'renew' ? 'propone il rinnovo a' : type === 'free' ? 'vuole tesserare lo svincolato' : `offre ${eur(fee)} per`;
   news(`<b>${k.name}</b> ${what} <b>${fullName(p)}</b>. Vai a Trattative.`, 'good');
 }
@@ -539,6 +676,8 @@ function maybeEvent() {
   const stars = cl.filter(p => p.ovr >= 64 || p.pot >= 78); if (stars.length) opts.push(['poach', pick(stars)]);
   const sad = cl.filter(p => p.morale < 40 && p.club != null); if (sad.length) opts.push(['unhappy', pick(sad)], ['unhappy', pick(sad)]);
   const fam = cl.filter(p => p.ovr >= 68 && p.club != null); if (fam.length) opts.push(['sponsor', pick(fam)]);
+  const owned = cl.filter(p => p.club != null && p.wage > 0); if (owned.length) opts.push(['bung', pick(owned)]);
+  const far = cl.filter(p => p.nat !== 'ITA' && p.age <= 22 && p.club != null); if (far.length) opts.push(['homesick', pick(far)]);
   opts.push(['press', pick(cl)], ['tip', null]);
   const [t, p] = pick(opts);
   S.event = { t, pid: p ? p.id : null };
@@ -558,6 +697,13 @@ function eventView(ev) {
       ch: [[`Firma · +${eur(Math.round(p.wage * 0.05 / 500) * 500)} per te`, 'sponsor'], ['Rifiuta: deve pensare al campo', 'nosponsor']] };
     case 'press': return { title: 'Il giornalista chiama', text: `Un quotidiano sportivo vuole un tuo commento sul futuro di ${n}.`,
       ch: [['«Merita un palcoscenico più grande»', 'hype'], ['«Parliamo solo di campo»', 'humble']] };
+    case 'bung': {
+      const x = Math.max(3000, Math.round(p.wage * 0.08 / 500) * 500);
+      return { title: 'Una busta sotto il tavolo', text: `Il ds di ${esc(club(p).name)} ti offre ${eur(x)} in contanti se convinci ${n} ad accettare un taglio dello stipendio. Nessuno lo saprà. Forse.`,
+        ch: [[`Intasca la busta · +${eur(x)}`, 'bung'], ['Rifiuta e avvisa il giocatore', 'clean']], cost: x };
+    }
+    case 'homesick': return { title: 'Nostalgia di casa', text: `${n} fatica ad ambientarsi: chiama casa ogni sera e in campo si vede.`,
+      ch: [['Fai arrivare la famiglia · €3k', 'family', S.money < 3000], ['Portalo a cena e parlaci tu', 'talk']] };
     case 'tip': return { title: 'La soffiata', text: 'Un vecchio osservatore di fiducia ti chiama: ha visto un ragazzo di cui nessuno parla ancora. Vuole un rimborso spese per il dossier.',
       ch: [['Compra il dossier · €1.5k', 'tip', S.money < 1500], ['Non ora', 'none']] };
   }
@@ -578,15 +724,24 @@ function resolveEvent(act) {
     }
     case 'list': p.listed = true; p.morale += 12; news(`Hai messo <b>${fullName(p)}</b> sul mercato.${inWindow() ? '' : ' Le offerte arriveranno alla riapertura.'}`); break;
     case 'calm': if (p.trait === 'Leale' || p.trait === 'Professionista') { p.morale += 8; news(`<b>${fullName(p)}</b> ti dà fiducia.`); } else { p.morale -= 6; news(`<b>${fullName(p)}</b> non l'ha presa bene.`, 'bad'); } break;
-    case 'sponsor': { const g = Math.round(p.wage * 0.05 / 500) * 500; S.money += g; S.sEarn += g; S.stats.earned += g; S.rep += 0.5; p.morale += 4; news(`Accordo con lo sponsor per <b>${fullName(p)}</b>: +${eur(g)}.`, 'good'); break; }
+    case 'sponsor': { const g = Math.round(p.wage * 0.05 / 500) * 500; S.money += g; S.sEarn += g; S.stats.earned += g; addRep(0.3); p.morale += 4; news(`Accordo con lo sponsor per <b>${fullName(p)}</b>: +${eur(g)}.`, 'good'); break; }
     case 'nosponsor': p.form = clamp(p.form + 0.4, -1.5, 1.5); p.morale += 2; break;
-    case 'hype': S.rep += 1; p.listed = p.club != null; p.morale += p.trait === 'Leale' ? -4 : 5; news(`La tua intervista su <b>${fullName(p)}</b> fa rumore. I club prendono nota.`); break;
-    case 'humble': S.rep += 0.4; p.morale += 3; break;
+    case 'hype': addRep(0.6); p.listed = p.club != null; p.morale += p.trait === 'Leale' ? -4 : 5; news(`La tua intervista su <b>${fullName(p)}</b> fa rumore. I club prendono nota.`); break;
+    case 'humble': addRep(0.2); p.morale += 3; break;
+    case 'bung':
+      S.money += v.cost; p.morale -= 10; p.wage = Math.round(p.wage * 0.92 / 1000) * 1000;
+      if (R() < 0.35) { addRep(-6); news(`<b>Scandalo:</b> un giornale pubblica la storia della busta. ${fullName(p)} è furioso e la tua reputazione crolla.`, 'bad'); p.morale -= 25; }
+      else news(`Busta intascata. ${fullName(p)} ha accettato il taglio senza sapere niente.`);
+      break;
+    case 'clean': p.morale += 12; addRep(0.8); news(`Hai rifiutato la busta e l'hai detto a <b>${fullName(p)}</b>. Si fida di te più che mai.`, 'good'); break;
+    case 'family': S.money -= 3000; p.morale += 18; p.form = clamp(p.form + 0.3, -1.5, 1.5); news(`La famiglia di <b>${fullName(p)}</b> lo ha raggiunto. Torna a sorridere.`, 'good'); break;
+    case 'talk': if (R() < 0.55) { p.morale += 8; news(`La cena con <b>${fullName(p)}</b> è servita.`, 'good'); } else { p.morale -= 4; news(`<b>${fullName(p)}</b> resta giù di morale.`, 'bad'); } break;
     case 'tip': {
       S.money -= 1500;
       const age = ri(16, 18), ovr = ri(50, 58);
       const k = makePlayer({ age, ovr, pot: Math.min(93, ovr + ri(24, 34)), club: pick(CLUBS.filter(c => c.tier >= 3)).id });
       k.bonus = signBonus(k); S.players[k.id] = k; S.market.unshift(k.id);
+      progress();
       news(`Dossier ricevuto: <b>${fullName(k)}</b>, ${age} anni. Lo trovi in cima al Mercato.`, 'good');
       break;
     }
@@ -599,29 +754,33 @@ function finalize(o, wage) {
   const p = P(o.pid), k = CLUBS[o.club], prev = club(p);
   let gain = 0, msg;
   if (o.type === 'transfer') {
-    gain = Math.round(o.fee * 0.05);
+    gain = Math.round(o.fee * 0.03);
     p.morale += (k.level > prev.level ? 16 : -4) + (wage > p.wage * 1.3 ? 6 : 0);
     if (p.trait === 'Ambizioso' && k.level < prev.level) p.morale -= 14;
-    S.rep += clamp(1 + o.fee / 1.5e6, 1, 8);
+    addRep(clamp(0.4 + o.fee / 4e6, 0.4, 4));
     S.stats.fees += o.fee;
+    S.rec.maxFee = Math.max(S.rec.maxFee, o.fee); S.sRec.maxFee = Math.max(S.sRec.maxFee, o.fee);
+    if (isDeadline()) S.rec.deadline = true;
+    if (p.age <= 20 && k.tier <= 2) S.sRec.youth = true;
     msg = `Affare chiuso: <b>${fullName(p)}</b> passa a <b>${k.name}</b> per ${eur(o.fee)}. Commissione: ${eur(gain)}.`;
   } else if (o.type === 'free') {
     gain = Math.round(wage * 0.1);
-    p.morale += 15; S.rep += 1;
+    p.morale += 15; addRep(0.5);
     msg = `<b>${fullName(p)}</b> firma con <b>${k.name}</b> da svincolato. Bonus alla firma per te: ${eur(gain)}.`;
   } else {
     gain = Math.round(wage * 0.03);
-    p.morale += 8; S.rep += 0.5;
+    p.morale += 8; addRep(0.25);
     msg = `Rinnovo firmato: <b>${fullName(p)}</b> resta a <b>${k.name}</b> fino al ${2025 + S.season + o.years}. Bonus: ${eur(gain)}.`;
   }
+  if (o.type !== 'renew' && k.tier === 1) { S.rec.tier1 = true; S.sRec.tier1 = true; }
   p.club = k.id; p.wage = wage; p.contract = o.years; p.listed = false; p.renewReq = false;
   p.morale = clamp(p.morale, 0, 100);
   S.money += gain; S.sEarn += gain; S.stats.earned += gain; S.stats.deals++; S.sDeals++;
   S.rep = clamp(S.rep, 0, 100);
   S.offers = S.offers.filter(x => x.id !== o.id && !(x.pid === p.id && (o.type !== 'renew' || x.type === 'renew')));
   news(msg, 'good');
-  ui.sheet = null; save(); render();
-  toast(`Firmato · +${eur(gain)}`);
+  ui.sheet = null; buzz(40); progress(); save(); render();
+  if (!ui.toast) toast(`Firmato · +${eur(gain)}`);
 }
 function pushAsk(o, ask) {
   o.log.push({ me: true, t: `Chiedi ${eur(ask)} l'anno.` });
@@ -646,13 +805,20 @@ function seasonEnd() {
   const cl = clients();
   const ranked = cl.filter(p => p.apps >= 12).sort((a, b) => b.rsum / b.apps - a.rsum / a.apps);
   if (ranked[0] && ranked[0].rsum / ranked[0].apps >= 7.0) {
-    const b = ranked[0]; S.rep += 3; b.morale += 10;
+    const b = ranked[0]; addRep(2); b.morale += 10; S.rec.award = true;
     sum.lines.push(`<b>${fullName(b)}</b> vince il premio di miglior giocatore della stagione (media ${(b.rsum / b.apps).toFixed(2)}).`);
   }
   const yng = cl.filter(p => p.age <= 21 && p.apps >= 10).sort((a, b) => b.rsum / b.apps - a.rsum / a.apps)[0];
-  if (yng && yng !== ranked[0] && yng.rsum / yng.apps >= 6.8) { S.rep += 2; sum.lines.push(`<b>${fullName(yng)}</b> è il miglior giovane del campionato.`); }
+  if (yng && yng !== ranked[0] && yng.rsum / yng.apps >= 6.8) { addRep(1.2); sum.lines.push(`<b>${fullName(yng)}</b> è il miglior giovane del campionato.`); }
   const top = cl.filter(p => p.role === 'ATT').sort((a, b) => b.goals - a.goals)[0];
   if (top && top.goals >= 12) sum.lines.push(`<b>${fullName(top)}</b> chiude con ${top.goals} gol.`);
+  const rank = myRank(), m = seasonMult();
+  sum.rank = rank;
+  if (rank === 1) { const prize = Math.round(60000 * m / 1000) * 1000; S.money += prize; addRep(3); S.rec.top1 = true; sum.lines.unshift(`<b>Procuratore dell'anno!</b> Chiudi primo in classifica: premio ${eur(prize)}.`); }
+  else if (rank <= 3) { addRep(1); sum.lines.unshift(`Chiudi ${rank}° nella classifica dei procuratori.`); }
+  else sum.lines.unshift(`Chiudi ${rank}° nella classifica dei procuratori. ${board()[0].n} resta davanti a tutti.`);
+  for (const o of S.obj) if (!o.done && OBJ[o.t].end && OBJ[o.t].prog() <= o.target) completeObj(o);
+  sum.obj = S.obj.filter(o => o.done).length;
   for (const p of cl) {
     p.age++; p.yrs++; p.apps = p.goals = p.assists = p.rsum = 0; p.form = 0;
     if (p.age >= 33 && R() < (p.age - 32) * 0.22) { sum.lines.push(`<b>${fullName(p)}</b> si ritira a ${p.age} anni. Grazie di tutto.`); dropClient(p); continue; }
@@ -664,9 +830,12 @@ function seasonEnd() {
   }
   S.offers = S.offers.filter(o => o.type !== 'renew' && P(o.pid) && (o.type !== 'transfer' || P(o.pid).club != null));
   S.rep = clamp(S.rep, 0, 100);
+  for (const x of S.rivals) x.s = 0;
+  S.prevRank = 0;
+  S.sRec = { tier1: false, youth: false, maxFee: 0 };
   S.season++; S.week = 1; S.sEarn = 0; S.sDeals = 0; S.sRep = S.rep; S.report = [];
-  genMarket();
-  news(`Inizia la stagione ${seasonLabel()}. Mercato estivo aperto.`);
+  genMarket(); genObjectives(); progress();
+  news(`Inizia la stagione ${seasonLabel()}. Mercato estivo aperto e tre nuove sfide sul tavolo.`);
   S.sum = sum; ui.sheet = { k: 'season' };
   save(); render();
 }
@@ -714,6 +883,10 @@ const ICONS = {
   deals: '<path d="M7 3h8l4 4v14H7z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 11h6M10 14.5h6M10 18h3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
   office: '<path d="M4 20V8l8-4 8 4v12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M2.5 20h19M8 11v6M12 11v6M16 11v6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>'
 };
+const CHECK = '<svg viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CUP = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 16h20v8a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8z" fill="currentColor" opacity=".22"/><path d="M8 16h20v8a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8zM28 19h2.5a3.5 3.5 0 0 1 0 7H27M6 35h24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 6c-1.5 2 1.5 3 0 6M19 5c-1.5 2 1.5 3 0 6M24 6c-1.5 2 1.5 3 0 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+const medal = (on, tier) => { const c = on ? ['#B07A3A', '#B9BCC0', '#D9A23B', '#D9A23B'][tier > 2 ? 3 : Math.max(0, Math.ceil(tier) - 1)] : '#9AA39C';
+  return `<svg class="medal" viewBox="0 0 36 42" aria-hidden="true"><path d="M10 2h6l4 12h-6zM26 2h-6l-4 12h6z" fill="${on ? '#1F4D3A' : '#9AA39C'}"/><circle cx="18" cy="27" r="12" fill="${c}"/><circle cx="18" cy="27" r="8.5" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/><path d="M18 21.5l1.7 3.5 3.8.5-2.8 2.6.7 3.8-3.4-1.8-3.4 1.8.7-3.8-2.8-2.6 3.8-.5z" fill="#fff" fill-opacity=".85"/></svg>`; };
 const moraleColor = m => m >= 60 ? 'var(--good)' : m >= 35 ? 'var(--gold-bg)' : 'var(--red)';
 const moraleWord = m => m >= 80 ? 'Entusiasta' : m >= 60 ? 'Sereno' : m >= 35 ? 'Inquieto' : m >= 15 ? 'Scontento' : 'Furioso';
 
@@ -731,9 +904,9 @@ function render() {
   <div class="cash"><b class="${S.money < 0 ? 'neg' : ''}">${eur(S.money)}</b><span>in cassa</span></div></div></header>
 <main class="wrap">${body}</main>
 <nav class="dock">
-  <div class="adv"><div class="wrap"><div class="when"><b>${weekLabel()}</b><span>${inWindow() ? 'Mercato aperto' : 'Mercato chiuso'} · ${S.lastNet == null ? 'stagione al via' : (S.lastNet >= 0 ? '+' : '') + eur(S.lastNet) + ' ultima sett.'}</span></div>
+  <div class="adv"><div class="wrap"><div class="when"><b>${weekLabel()}</b><span>${isDeadline() ? 'Chiusura mercato!' : inWindow() ? 'Mercato aperto' : 'Mercato chiuso'} · ${S.lastNet == null ? 'stagione al via' : (S.lastNet >= 0 ? '+' : '') + eur(S.lastNet) + ' ultima sett.'}</span></div>
   <button class="btn pri" data-a="advance">${next} ›</button></div></div>
-  <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${ui.tab === k ? 'on' : ''}" data-a="tab" data-v="${k}" aria-label="${l}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}${k === 'deals' && S.offers.length ? `<span class="badge">${S.offers.length}</span>` : ''}</button>`).join('')}</div>
+  <div class="tabs">${tabs.map(([k, l]) => `<button class="tab ${ui.tab === k ? 'on' : ''}" data-a="tab" data-v="${k}" aria-label="${l}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${l}${k === 'deals' && S.offers.length ? `<span class="badge">${S.offers.length}</span>` : ''}${k === 'office' && achReady() ? `<span class="badge">${achReady()}</span>` : ''}</button>`).join('')}</div>
 </nav>
 ${sheetView()}<div id="toastSlot"></div>`;
   renderToast();
@@ -766,7 +939,7 @@ function homeView() {
 <section class="hero"><div class="lines"></div><div class="in">
   <div class="row"><div><div class="label">Stagione ${seasonLabel()} · ${S.week > WEEKS ? 'campionato concluso' : `giornata ${S.week} di ${WEEKS}`}</div>
   <div class="big num" style="font-family:var(--f-display)">${eur(S.money)}</div></div>
-  <span class="chip ${open ? 'open' : 'closed'}"><span class="dot"></span>${open ? `Mercato aperto · ${left} sett.` : `Riapre tra ${reopen} sett.`}</span></div>
+  <span class="chip ${isDeadline() ? 'dead' : open ? 'open' : 'closed'}"><span class="dot"></span>${isDeadline() ? 'Ultimo giorno di mercato' : open ? `Mercato aperto · ${left} sett.` : `Riapre tra ${reopen} sett.`}</span></div>
   <div style="margin-top:14px"><div class="label" style="display:flex;justify-content:space-between"><span>Reputazione · ${repTitle(S.rep)}</span><span class="num">${Math.floor(S.rep)}/100</span></div>
   <div class="repbar"><i style="width:${clamp(S.rep, 2, 100)}%"></i></div></div>
 </div>
@@ -775,7 +948,20 @@ function homeView() {
 ${S.offers.length ? `<button class="panel pad" data-a="tab" data-v="deals" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)">
   <span class="ovr hi"><b>${S.offers.length}</b><span>OFF.</span></span><span style="flex:1"><b>${S.offers.length === 1 ? 'Un club ti aspetta al tavolo' : S.offers.length + ' offerte sul tavolo'}</b><br><span class="small muted">Scadono in fretta: tratta prima di giocare la giornata.</span></span><span aria-hidden="true">›</span></button>` : ''}
 
+${S.daily.last !== dayKey() ? (() => { const day = (S.daily.last === dayKey(Date.now() - 864e5) ? S.daily.streak : 0) % 7 + 1; const g = Math.round(1200 * day * (1 + (S.season - 1) * 0.5) / 100) * 100;
+  return `<div class="coffee">${CUP}<div style="flex:1;min-width:0"><b>Il caffè del mattino</b><div class="small muted">Giorno ${day} di 7${day === 7 ? ' · più una soffiata sul mercato' : ''}</div><div class="cups">${[1, 2, 3, 4, 5, 6, 7].map(i => `<i class="${i <= day ? 'on' : ''}"></i>`).join('')}</div></div><button class="btn pri" data-a="daily">+${eur(g)}</button></div>`; })() : ''}
+
+<div class="h2">Sfide di stagione <span class="count">${S.obj.filter(o => o.done).length}/3</span></div>
+<div class="panel list">${S.obj.map(o => { const d = OBJ[o.t], pr = d.prog();
+  const bin = o.target === 1 && !d.end && !d.money;
+  const pv = d.end ? `Valutata a fine stagione · ora sei ${pr}°` : bin ? (o.done ? 'Completata' : 'Da fare') : d.money ? `${eur(Math.min(pr, o.target))} / ${eur(o.target)}` : `${Math.min(pr, o.target)} / ${o.target}`;
+  const pct = o.done ? 100 : d.end ? clamp((7 - pr) / (7 - o.target) * 100, 5, 100) : clamp(pr / o.target * 100, 0, 100);
+  return `<div class="obj ${o.done ? 'done' : ''}"><span class="ck">${CHECK}</span><div class="mid"><div class="tx">${d.txt(o)}</div>${o.done ? '' : `<div class="prog"><i style="width:${pct}%"></i></div>`}<div class="pv">${pv}</div></div><div class="rw">+${eur(o.money)}<br>+${o.rep} rep</div></div>`; }).join('')}</div>
+
 ${S.report.length ? `<div class="h2">Ultima giornata</div><div class="panel list">${rep}</div>` : ''}
+<div class="h2">Classifica procuratori</div>
+<div class="panel list">${board().map((x, i) => `<div class="br ${x.me ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="bn">${esc(x.n)}</span><span class="num small">${eur(x.s)}</span></div>`).join('')}</div>
+<p class="small muted" style="margin:-8px 0 0">Commissioni incassate in stagione. Chi chiude primo a maggio diventa procuratore dell'anno.</p>
 <div class="h2">Notiziario</div>
 <div class="panel list">${S.news.slice(0, 14).map(n => `<div class="news ${n.k}"><span class="w">${n.w}</span><span class="t">${n.t}</span></div>`).join('')}</div>`;
 }
@@ -830,7 +1016,7 @@ function dealsView() {
     return `<button class="row-p" data-a="nego" data-v="${o.id}"><span class="mini">${portrait(p)}</span>
     <span class="mid"><span class="nm">${esc(fullName(p))}</span><span class="meta"><span class="clubdot" style="background:${k.c1}"></span>${esc(k.name)} · ${label}</span>
     <span class="meta">${eur(o.cur)}/anno · ${o.years} anni · scade ${o.exp - S.week <= 0 ? 'questa settimana' : `tra ${o.exp - S.week + 1} sett.`}</span></span><span aria-hidden="true" class="muted">›</span></button>`;
-  }).join('')}</div><p class="small muted" style="margin:0">Guadagni il 5% del cartellino nei trasferimenti, il 10% del primo anno di stipendio sugli svincolati e la tua percentuale sullo stipendio ogni settimana.</p>`;
+  }).join('')}</div><p class="small muted" style="margin:0">Guadagni il 3% del cartellino nei trasferimenti, il 10% del primo anno di stipendio sugli svincolati e la tua percentuale sullo stipendio ogni settimana.</p>`;
 }
 
 function officeView() {
@@ -841,6 +1027,10 @@ function officeView() {
     ${maxed ? '<div class="tiny" style="color:var(--gold)">Livello massimo</div>' : `<div class="small">Prossimo: ${u.desc(l + 1)}</div><button class="btn green full" data-a="upg" data-v="${k}" ${S.money < cost ? 'disabled' : ''}>Investi ${eur(cost)}</button>`}</div>`;
   }).join('');
   return `<div class="h2">Investimenti</div>${ups}
+  <div class="h2">Traguardi <span class="count">${Object.keys(S.ach).length}/${ACH.length}</span></div>
+  <div class="panel list">${ACH.map(([id, name, desc, , money, rep]) => { const st = S.ach[id];
+    return `<div class="ach ${st ? '' : 'locked'}">${medal(!!st, rep)}<div class="mid"><b>${name}</b><div class="small muted">${desc}</div><div class="rw" style="text-align:left;margin-top:3px">${money ? '+' + eur(money) : ''}${money && rep ? ' · ' : ''}${rep ? '+' + rep + ' rep' : ''}</div></div>
+    ${st === 1 ? `<button class="btn pri" data-a="claim" data-v="${id}">Ritira</button>` : st === 2 ? `<span class="ck" style="background:var(--good);border-color:var(--good);color:#fff">${CHECK}</span>` : ''}</div>`; }).join('')}</div>
   <div class="h2">Carriera</div><div class="panel season"><div><b>${S.season}</b><span>Stagione</span></div><div><b>${S.stats.deals}</b><span>Affari</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.earned)}</b><span>Guadagni</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.fees)}</b><span>Cartellini</span></div></div>
   <div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
   <div class="small muted">Il salvataggio è automatico su questo dispositivo, a ogni giornata.</div>
@@ -859,7 +1049,8 @@ function sheetView() {
     <div class="body">${v.ch.map(([l, a, dis]) => `<button class="btn ${a === v.ch[0][1] ? 'pri' : 'ghost'} full" data-a="ev" data-v="${a}" ${dis ? 'disabled' : ''}>${esc(l)}</button>`).join('')}</div>`; }
   if (s.k === 'season' && S.sum) { const m = S.sum;
     inner = `<h3>Fine stagione ${m.label}</h3><p class="lead">Si chiude un altro anno in giacca e cravatta.</p><div class="body">
-    <div class="panel season" style="grid-template-columns:repeat(3,1fr)"><div><b class="num" style="font-size:18px;line-height:26px">${eur(m.earned)}</b><span>Incassati</span></div><div><b>${m.deals}</b><span>Affari</span></div><div><b>${m.rep >= 0 ? '+' : ''}${Math.round(m.rep)}</b><span>Reputazione</span></div></div>
+    <div class="panel season" style="grid-template-columns:repeat(3,1fr)"><div><b class="num" style="font-size:18px;line-height:26px">${eur(m.earned)}</b><span>Commissioni</span></div><div><b>${m.deals}</b><span>Affari</span></div><div><b>${m.rep >= 0 ? '+' : ''}${Math.round(m.rep)}</b><span>Reputazione</span></div></div>
+    <div class="panel season" style="grid-template-columns:repeat(2,1fr)"><div><b>${m.rank}°</b><span>In classifica</span></div><div><b>${m.obj}/3</b><span>Sfide vinte</span></div></div>
     ${m.lines.length ? `<div class="panel list">${m.lines.map(l => `<div class="news"><span class="t">${l}</span></div>`).join('')}</div>` : ''}
     <button class="btn pri full" data-a="close">Via alla nuova stagione</button></div>`; }
   if (s.k === 'over') { closable = false;
@@ -904,7 +1095,7 @@ function negoSheet(o) {
   if (!ui.ask || ui.ask < lo || ui.ask > hi) ui.ask = Math.round(Math.min(hi, lo * 1.15) / 1000) * 1000;
   const type = { transfer: 'Trasferimento', free: 'Firma da svincolato', renew: 'Rinnovo di contratto' }[o.type];
   const warn = o.type === 'transfer' && prev && k.level < prev.level ? `<div class="warn">${esc(fullName(p))} scenderebbe in un club meno prestigioso.${p.trait === 'Ambizioso' ? ' Da ambizioso, la prenderà male.' : ''}</div>` : '';
-  const oneoff = o.type === 'transfer' ? `5% del cartellino: <b>${eur(o.fee * 0.05)}</b>` : o.type === 'free' ? 'bonus firma 10% del primo anno' : 'bonus rinnovo 3% del primo anno';
+  const oneoff = o.type === 'transfer' ? `3% del cartellino: <b>${eur(o.fee * 0.03)}</b>` : o.type === 'free' ? 'bonus firma 10% del primo anno' : 'bonus rinnovo 3% del primo anno';
   return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><span class="mini">${portrait(p)}</span>
   <div style="min-width:0"><div class="tiny muted">${type}</div><h3 style="margin:2px 0 0">${esc(k.name)}</h3><div class="small muted">${esc(fullName(p))} · ${TIERNAME[k.tier]}</div></div></div>
   <div class="body">
@@ -942,21 +1133,23 @@ document.addEventListener('click', e => {
   if (a !== 'reset' && a !== 'release') ui.confirm = null;
   switch (a) {
     case 'start': { const n = (document.getElementById('agencyName').value || '').trim() || 'Studio Bellavista'; newGame(n); ui.tab = 'home'; render(); window.scrollTo(0, 0); break; }
-    case 'continue': S = load(); if (S && S.event) ui.sheet = { k: 'event' }; render(); break;
+    case 'continue': migrate(load()); if (S && S.event) ui.sheet = { k: 'event' }; render(); break;
     case 'tab': ui.tab = v; ui.sheet = null; render(); window.scrollTo(0, 0); break;
     case 'advance': advance(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
     case 'player': ui.sheet = { k: 'player', id: +v }; render(); break;
     case 'nego': ui.sheet = { k: 'nego', id: +v }; ui.ask = 0; render(); break;
     case 'close': if (ui.sheet && ui.sheet.k === 'season') S.sum = null; ui.sheet = null; save(); render(); break;
     case 'ev': resolveEvent(v); break;
+    case 'daily': claimDaily(); break;
+    case 'claim': { const a = ACH.find(x => x[0] === v); if (!a || S.ach[v] !== 1) return; S.ach[v] = 2; S.money += a[4]; addRep(a[5]); toast(`${a[1]} · premio ritirato`); buzz([30, 50, 30]); progress(); save(); render(); break; }
     case 'recruit': {
       const p = P(+v), m = +el.dataset.m, cost = p.bonus * m;
       if (S.clients.length >= CAP[S.up.office] || S.money < cost) return;
       if (R() < recruitChance(p, m)) {
-        S.money -= cost; S.clients.push(p.id); S.market = S.market.filter(id => id !== p.id); p.morale = ri(68, 85);
+        S.money -= cost; S.clients.push(p.id); S.market = S.market.filter(id => id !== p.id); p.morale = ri(68, 85); p.ovr0 = p.ovr; scoutRange(p); if (p.pot >= 85) S.rec.wonder = true;
         news(`<b>${fullName(p)}</b> firma la procura con te. Premio pagato: ${eur(cost)}.`, 'good'); toast(`${shortName(p)} è dei tuoi`);
       } else { p.refused = true; toast(`${shortName(p)} ha detto no`); }
-      save(); render(); break;
+      progress(); save(); render(); break;
     }
     case 'trip': { const c = 2500 * S.up.scout; if (S.money < c) return; S.money -= c; genMarket(); toast('Nuovo rapporto in arrivo'); save(); render(); break; }
     case 'upg': {
@@ -984,6 +1177,7 @@ document.addEventListener('click', e => {
 /* ---------- boot ---------- */
 function start(data) {
   S = (data && data.S) || null;
+  if (S) migrate(S);
   if (S && S.event) ui.sheet = { k: 'event' };
   render();
 }
