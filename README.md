@@ -19,3 +19,9 @@ Il mercato è aperto dalla G1 alla G5 e dalla G21 alla G24. Gli svincolati posso
 - **Traguardi**: 14 medaglie permanenti da sbloccare e ritirare in Ufficio.
 - **Caffè del mattino**: un bonus al giorno, che cresce se torni tutti i giorni. Al settimo giorno arriva anche una soffiata su un talento.
 - **Ultimo giorno di mercato**: alla G5 e alla G24 arrivano più offerte, ma scadono la sera stessa.
+
+## Campionato, trattative e album
+- **Serie A a 20 squadre** con calendario, risultati e classifica. A fine stagione c'è lo scudetto e tre squadre retrocedono in Serie B (al loro posto ne salgono tre).
+- **Trattative a tre**: se il club che vende chiede più di quanto offre chi compra, fai da mediatore sul prezzo del cartellino. Poi si tratta lo stipendio.
+- **Clausole**: bonus presenze, clausola rescissoria e quota sulla rivendita. Valgono soldi per te, ma il club le fa pesare sulla trattativa.
+- **Album e crediti**: ogni giocatore che rappresenti diventa una figurina (bronzo, argento, oro, leggenda). Album, traguardi e sfide ti danno crediti da spendere in Bottega.
