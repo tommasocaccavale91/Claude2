@@ -101,7 +101,7 @@ main.wrap{padding-block:16px calc(var(--bar)*2 + 28px + env(safe-area-inset-bott
 .row-p .meta{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .ovr{flex:none;width:44px;text-align:center;border-radius:8px;padding:5px 0 4px;background:var(--surface2);border:1px solid var(--line)}
 .ovr b{display:block;font:800 22px/1 var(--f-display)}
-.ovr span{font:700 9px/1 var(--f-body);letter-spacing:.14em;color:var(--muted)}
+.ovr span{font:700 8px/1 var(--f-body);letter-spacing:.06em;color:var(--muted)}
 .ovr.hi{background:var(--gold-bg);border-color:transparent;color:#1C2922}
 .ovr.hi span{color:#1C2922;opacity:.7}
 .mbar{height:4px;width:70px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:6px}
@@ -319,6 +319,34 @@ table.tbl{width:100%;border-collapse:collapse}
 .cup{width:34px;height:34px;flex:none;color:var(--gold)}
 .codebox{width:100%;min-height:140px;font:500 11px/1.4 var(--f-mono);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px;word-break:break-all;resize:vertical}
 .btn.busy{opacity:.6;pointer-events:none}
+.status{background:var(--pitch);color:var(--on-pitch);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.status .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.status .wk{font:800 22px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.status .lbl{font:600 11px/1.2 var(--f-body);letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.status .big2{font:800 40px/.9 var(--f-display)}
+.todo{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left}
+.todo .ic{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--surface2);font:800 16px/1 var(--f-display);color:var(--gold)}
+.todo.hot .ic{background:var(--gold-bg);color:#1C2922}
+.todo .mid{flex:1;min-width:0}
+.todo b{display:block;font-size:15px;line-height:1.25}
+.todo span.d{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.todo .go{color:var(--muted);font-size:20px}
+.linkrow{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left;font-weight:600}
+.linkrow .mid{flex:1;min-width:0}
+.linkrow .d{display:block;font-weight:500;font-size:12.5px;color:var(--muted);margin-top:2px}
+.linkrow svg{width:24px;height:24px;flex:none;color:var(--gold)}
+.linkrow .bdg{min-width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;font:700 11px/20px var(--f-mono);text-align:center;padding:0 5px}
+.back{display:inline-flex;align-items:center;gap:6px;font:700 13px/1 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 0}
+.coach{background:var(--surface);border:2px solid var(--gold-bg);border-radius:var(--r);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow)}
+.coach .who{width:40px;height:40px;flex:none;border-radius:50%;background:var(--pitch);display:grid;place-items:center;color:var(--gold-bg);font:800 18px/1 var(--f-display)}
+.coach .tx{flex:1;min-width:0;font-size:14.5px;line-height:1.45}
+.coach .tx b.n{display:block;font:800 13px/1 var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.coach .act{display:flex;gap:14px;align-items:center;margin-top:8px}
+.coach .skip{font-size:12.5px;color:var(--muted);text-decoration:underline}
+.pulse{position:relative;z-index:1;animation:pulse2 1.4s ease-in-out infinite}
+@keyframes pulse2{0%,100%{box-shadow:0 0 0 0 rgba(217,162,59,.85)}50%{box-shadow:0 0 0 7px rgba(217,162,59,0)}}
+.tab.pulse{border-radius:10px}
+.adv-toggle{font-size:13.5px;font-weight:600;color:var(--muted);text-align:left;padding:4px 0}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.tcard{width:128px}.big{font-size:40px}}
 </style>
@@ -626,7 +654,7 @@ function progress() {
   for (const o of S.obj || []) if (!o.done && !OBJ[o.t].end && OBJ[o.t].prog() >= o.target) completeObj(o);
   for (const [id, name] of ACH) {
     const a = ACH.find(x => x[0] === id);
-    if (!S.ach[id] && a[3]()) { S.ach[id] = 1; news(`Traguardo sbloccato: <b>${name}</b>. Ritira il premio in Ufficio.`, 'good'); }
+    if (!S.ach[id] && a[3]()) { S.ach[id] = 1; news(`Traguardo sbloccato: <b>${name}</b>. Ritira il premio in Menu › Carriera.`, 'good'); }
   }
   albumProgress();
 }
@@ -923,9 +951,9 @@ function buy(id) {
 /* ---------- career & club management ---------- */
 const ROLE_NAME = { agent: 'Procuratore', ds: 'Direttore sportivo', ad: 'Amministratore delegato', pres: 'Presidente', none: 'Senza incarico' };
 const TABS = {
-  agent: [['home', 'Agenzia'], ['clients', 'Assistiti'], ['market', 'Mercato'], ['deals', 'Trattative'], ['album', 'Album'], ['office', 'Ufficio']],
-  club: [['home', 'Club'], ['squad', 'Rosa'], ['market', 'Mercato'], ['deals', 'Trattative'], ['album', 'Album'], ['office', 'Carriera']],
-  none: [['home', 'Notizie'], ['album', 'Album'], ['office', 'Carriera']]
+  agent: [['home', 'Scrivania'], ['clients', 'Giocatori'], ['market', 'Mercato'], ['deals', 'Trattative'], ['menu', 'Menu']],
+  club: [['home', 'Club'], ['squad', 'Rosa'], ['market', 'Mercato'], ['deals', 'Trattative'], ['menu', 'Menu']],
+  none: [['home', 'Scrivania'], ['menu', 'Menu']]
 };
 const LADDER = [
   ['Procuratore', 'Scopri talenti e vivi di commissioni.'],
@@ -1009,7 +1037,7 @@ function sellClub() {
   const k = myClub(), gross = r5(clubValue(k) * S.own.pct / 100 * rnd(0.95, 1.08)), net = gross - S.own.loan;
   S.money += net;
   news(`Vendi la tua quota di <b>${esc(k.name)}</b> per ${eur(gross)}${S.own.loan ? `, ${eur(S.own.loan)} vanno alla banca` : ''}.`, 'good');
-  S.own = null; leaveClub(); S.role = 'none'; ui.tab = 'office'; toast(`Club venduto · ${eur(net)}`); progress(); save(); render();
+  S.own = null; leaveClub(); S.role = 'none'; ui.tab = 'menu'; ui.page = 'office'; toast(`Club venduto · ${eur(net)}`); progress(); save(); render();
 }
 const salaryFor = (role, k) => { const b = Math.round(50000 * Math.exp((TIER_LV[k.tier] - 62) * 0.09) / 1000) * 1000; return role === 'ds' ? b : role === 'ad' ? b * 4 : 0; };
 const wagesTotal = () => squad().reduce((t, p) => t + p.wage, 0);
@@ -1078,7 +1106,7 @@ function offerJob(role, tiers, allowSame) {
   if (!cands.length) return;
   const k = pick(cands);
   S.jobs.push({ club: k.id, role, exp: absW() + 8 });
-  news(`<b>${esc(k.name)}</b> ti offre il ruolo di ${ROLE_NAME[role].toLowerCase()}. Rispondi in Carriera.`, 'good');
+  news(`<b>${esc(k.name)}</b> ti offre il ruolo di ${ROLE_NAME[role].toLowerCase()}. Rispondi in Menu › Carriera.`, 'good');
   if (!S.event) S.event = { t: 'job', club: k.id };
 }
 function jobsWeek() {
@@ -1394,6 +1422,7 @@ function advance() {
     return true;
   });
   genOffers();
+  if (S.tut === 4) { S.offers = S.offers.filter(o => o.type === 'renew'); tutOffer(); }
   rivalsWeek();
   if (isDeadline()) news('<b>Ultimo giorno di mercato.</b> Le offerte di trasferimento scadono stasera: più club si fanno avanti.', 'bad');
   if (S.week === 21) news('Si apre la sessione invernale di mercato (fino alla G24).');
@@ -1483,6 +1512,7 @@ function dropClient(p, msg) {
 
 /* ---------- events ---------- */
 function maybeEvent() {
+  if (S.tut != null) return;
   const cl = clients();
   if (!cl.length || R() > 0.17) return;
   const opts = [];
@@ -1747,6 +1777,7 @@ const ICONS = {
   deals: '<path d="M7 3h8l4 4v14H7z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M10 11h6M10 14.5h6M10 18h3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
   squad: '<circle cx="9" cy="8.5" r="3.3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 20c.6-3.8 3-5.8 6-5.8s5.4 2 6 5.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M15.5 5.6a3 3 0 0 1 0 5.8M17.6 14.6c1.8.7 3 2.5 3.4 5.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
   album: '<rect x="3.5" y="5" width="11" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M17.6 6.6l3 .8-3.3 12.3-6-1.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M6.5 16.5h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>',
+  menu: '<path d="M4 6.5h16M4 12h16M4 17.5h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
   office: '<path d="M4 20V8l8-4 8 4v12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M2.5 20h19M8 11v6M12 11v6M16 11v6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>'
 };
 const CHECK = '<svg viewBox="0 0 16 16"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1765,23 +1796,25 @@ function render() {
   const mode = S.role === 'agent' ? 'agent' : isClub() ? 'club' : 'none', agent = mode === 'agent';
   const tabs = TABS[mode];
   if (!tabs.some(t => t[0] === ui.tab)) ui.tab = 'home';
+  tutCheck();
   const views = { home: agent ? homeView : mode === 'club' ? clubHomeView : noneHomeView, clients: clientsView, squad: squadView,
-    market: agent ? marketView : clubMarketView, deals: agent ? dealsView : clubDealsView, album: albumView, office: agent ? officeView : careerView };
-  const body = views[ui.tab]();
+    market: agent ? marketView : clubMarketView, deals: agent ? dealsView : clubDealsView, menu: menuView };
+  const body = (ui.sheet ? '' : coachCard()) + views[ui.tab]();
   const next = S.week > WEEKS ? 'Chiudi la stagione' : 'Gioca la giornata';
   const k = mode === 'club' ? myClub() : null;
   const sub = `${seasonLabel()} · ${agent ? repTitle(S.rep) : (S.lega ? 'Presidente della Lega' : ROLE_NAME[S.role])}`;
-  const cash = k ? `<b class="${S.budget < 0 ? 'neg' : ''}">${eur(S.budget)}</b><span>budget · ${S.cr} cr.</span>` : `<b class="${S.money < 0 ? 'neg' : ''}">${eur(S.money)}</b><span>${agent ? 'in cassa' : 'patrimonio'} · ${S.cr} cr.</span>`;
+  const cash = k ? `<b class="${S.budget < 0 ? 'neg' : ''}">${eur(S.budget)}</b><span>budget del club</span>` : `<b class="${S.money < 0 ? 'neg' : ''}">${eur(S.money)}</b><span>${agent ? 'in cassa' : 'patrimonio'}</span>`;
   const offBadge = achReady() + S.jobs.length;
+  setTimeout(tutHighlight, 0);
   $app.innerHTML = `
 <header class="mast"><div class="wrap">${k ? clubCrest(k) : crest}
   <div class="id"><h1>${esc(k ? k.name : S.name)}</h1><div class="sub">${sub}</div></div>
   <div class="cash">${cash}</div></div></header>
 <main class="wrap">${body}</main>
 <nav class="dock">
-  <div class="adv"><div class="wrap"><div class="when"><b>${weekLabel()}</b><span>${isDeadline() ? 'Chiusura mercato!' : inWindow() ? 'Mercato aperto' : 'Mercato chiuso'} · ${S.lastNet == null ? 'stagione al via' : (S.lastNet >= 0 ? '+' : '') + eur(S.lastNet) + ' ultima sett.'}</span></div>
+  <div class="adv"><div class="wrap"><div class="when"><b>${weekLabel()}</b><span>${isDeadline() ? 'Ultimo giorno di mercato!' : inWindow() ? `Mercato aperto · ${windowLeft()} sett.` : 'Mercato chiuso'}</span></div>
   <button class="btn pri" data-a="advance">${next} ›</button></div></div>
-  <div class="tabs" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(([t, l]) => `<button class="tab ${ui.tab === t ? 'on' : ''}" data-a="tab" data-v="${t}" aria-label="${l}"><svg viewBox="0 0 24 24">${ICONS[t]}</svg>${l}${t === 'deals' && S.offers.length ? `<span class="badge">${S.offers.length}</span>` : ''}${t === 'office' && offBadge ? `<span class="badge">${offBadge}</span>` : ''}</button>`).join('')}</div>
+  <div class="tabs" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(([t, l]) => `<button class="tab ${ui.tab === t ? 'on' : ''}" data-a="tab" data-v="${t}" aria-label="${l}"><svg viewBox="0 0 24 24">${ICONS[t]}</svg>${l}${t === 'deals' && S.offers.length ? `<span class="badge">${S.offers.length}</span>` : ''}${t === 'menu' && offBadge ? `<span class="badge">${offBadge}</span>` : ''}</button>`).join('')}</div>
 </nav>
 ${sheetView()}<div id="toastSlot"></div>`;
   renderToast();
@@ -1800,48 +1833,180 @@ function introView() {
 </div></section>`;
 }
 
-function homeView() {
-  const open = inWindow();
-  const left = S.week <= 5 ? 6 - S.week : S.week <= 24 && S.week >= 21 ? 25 - S.week : 0;
-  const reopen = S.week < 21 ? 21 - S.week : Math.max(1, WEEKS + 2 - S.week);
-  const inc = Math.round(weeklyIncome()), cost = OFFICE_COST[S.up.office];
-  const rep = S.report.map(r => {
+const chanceWord = c => c >= 0.75 ? `Quasi certo (${Math.round(c * 100)}%)` : c >= 0.5 ? `Probabile (${Math.round(c * 100)}%)` : c >= 0.25 ? `Possibile (${Math.round(c * 100)}%)` : `Difficile (${Math.round(c * 100)}%)`;
+const windowLeft = () => S.week <= 5 ? 6 - S.week : S.week >= 21 && S.week <= 24 ? 25 - S.week : 0;
+function objList() {
+  return S.obj.map(o => { const d = OBJ[o.t], pr = d.prog();
+    const bin = o.target === 1 && !d.end && !d.money;
+    const pv = d.end ? `Si decide a fine stagione · ora sei ${pr}°` : bin ? (o.done ? 'Completata' : 'Da fare') : d.money ? `${eur(Math.min(pr, o.target))} su ${eur(o.target)}` : `${Math.min(pr, o.target)} su ${o.target}`;
+    const pct = o.done ? 100 : d.end ? clamp((7 - pr) / (7 - o.target) * 100, 5, 100) : clamp(pr / o.target * 100, 0, 100);
+    return `<div class="obj ${o.done ? 'done' : ''}"><span class="ck">${CHECK}</span><div class="mid"><div class="tx">${d.txt(o)}</div>${o.done ? '' : `<div class="prog"><i style="width:${pct}%"></i></div>`}<div class="pv">${pv}</div></div><div class="rw">+${eur(o.money)}</div></div>`; }).join('');
+}
+function weekRows() {
+  return S.report.slice(0, 4).map(r => {
     const p = P(r.id); if (!p) return '';
-    const right = r.s === 'play' ? `<span class="small muted">${r.g ? r.g + (r.g > 1 ? ' gol' : ' gol') : ''}${r.g && r.a ? ' · ' : ''}${r.a ? r.a + ' assist' : ''}</span><span class="rate ${r.r >= 7.5 ? 'g' : r.r < 5.8 ? 'b' : ''}">${r.r.toFixed(1)}</span>`
-      : `<span class="small muted">${{ bench: 'In panchina', inj: 'Infortunato', free: 'Senza squadra' }[r.s]}</span>`;
+    const right = r.s === 'play' ? `<span class="small muted">${r.g ? r.g + ' gol' : ''}${r.g && r.a ? ' · ' : ''}${r.a ? r.a + ' assist' : ''}</span><span class="rate ${r.r >= 7.5 ? 'g' : r.r < 5.8 ? 'b' : ''}">${r.r.toFixed(1)}</span>`
+      : `<span class="small muted">${{ bench: 'In panchina', inj: 'Infortunato', free: 'Senza squadra' }[r.s] || ''}</span>`;
     return `<div class="rep-row"><span class="mid"><b>${esc(shortName(p))}</b> <span class="muted small">${r.m || (club(p) ? esc(club(p).name) : '')}</span></span>${right}</div>`;
   }).join('');
-  return `
-<section class="hero"><div class="lines"></div><div class="in">
-  <div class="row"><div><div class="label">Stagione ${seasonLabel()} · ${S.week > WEEKS ? 'campionato concluso' : `giornata ${S.week} di ${WEEKS}`}</div>
-  <div class="big num" style="font-family:var(--f-display)">${eur(S.money)}</div></div>
-  <span class="chip ${isDeadline() ? 'dead' : open ? 'open' : 'closed'}"><span class="dot"></span>${isDeadline() ? 'Ultimo giorno di mercato' : open ? `Mercato aperto · ${left} sett.` : `Riapre tra ${reopen} sett.`}</span></div>
-  <div style="margin-top:14px"><div class="label" style="display:flex;justify-content:space-between"><span>Reputazione · ${repTitle(S.rep)}</span><span class="num">${Math.floor(S.rep)}/100</span></div>
-  <div class="repbar"><i style="width:${clamp(S.rep, 2, 100)}%"></i></div></div>
-</div>
-<div class="stats3"><div><b>+${eur(inc)}</b><span>Commissioni/sett.</span></div><div><b>−${eur(cost)}</b><span>Spese/sett.</span></div><div><b>${S.clients.length}/${CAP[S.up.office]}</b><span>Assistiti</span></div></div></section>
-
-${jobsBanner()}
-${S.offers.length ? `<button class="panel pad" data-a="tab" data-v="deals" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)">
-  <span class="ovr hi"><b>${S.offers.length}</b><span>OFF.</span></span><span style="flex:1"><b>${S.offers.length === 1 ? 'Un club ti aspetta al tavolo' : S.offers.length + ' offerte sul tavolo'}</b><br><span class="small muted">Scadono in fretta: tratta prima di giocare la giornata.</span></span><span aria-hidden="true">›</span></button>` : ''}
-
-${coffeeCard()}
-
-<div class="h2">Sfide di stagione <span class="count">${S.obj.filter(o => o.done).length}/3</span></div>
-<div class="panel list">${S.obj.map(o => { const d = OBJ[o.t], pr = d.prog();
-  const bin = o.target === 1 && !d.end && !d.money;
-  const pv = d.end ? `Valutata a fine stagione · ora sei ${pr}°` : bin ? (o.done ? 'Completata' : 'Da fare') : d.money ? `${eur(Math.min(pr, o.target))} / ${eur(o.target)}` : `${Math.min(pr, o.target)} / ${o.target}`;
-  const pct = o.done ? 100 : d.end ? clamp((7 - pr) / (7 - o.target) * 100, 5, 100) : clamp(pr / o.target * 100, 0, 100);
-  return `<div class="obj ${o.done ? 'done' : ''}"><span class="ck">${CHECK}</span><div class="mid"><div class="tx">${d.txt(o)}</div>${o.done ? '' : `<div class="prog"><i style="width:${pct}%"></i></div>`}<div class="pv">${pv}</div></div><div class="rw">+${eur(o.money)}<br>+${o.rep} rep</div></div>`; }).join('')}</div>
-
-${S.report.length ? `<div class="h2">Ultima giornata</div><div class="panel list">${rep}</div>` : ''}
-${euroPanel()}
-${leaguePanel()}
-<div class="h2">Classifica procuratori</div>
-<div class="panel list">${board().map((x, i) => `<div class="br ${x.me ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="bn">${esc(x.n)}</span><span class="num small">${eur(x.s)}</span></div>`).join('')}</div>
-<p class="small muted" style="margin:-8px 0 0">Commissioni incassate in stagione. Chi chiude primo a maggio diventa procuratore dell'anno.</p>
-<div class="h2">Notiziario</div>
-<div class="panel list">${S.news.slice(0, 14).map(n => `<div class="news ${n.k}"><span class="w">${n.w}</span><span class="t">${n.t}</span></div>`).join('')}</div>`;
+}
+/* --- "Da fare": the next sensible moves, in plain words --- */
+function todos() {
+  const T = [], add = (id, title, desc, hot) => T.push({ id, title, desc, hot, g: id === 'page:career' ? '★' : { offer: '€', jobs: '★', deals: '€', player: '›', clients: '›', market: '+', page: '▲' }[id.split(':')[0]] || '›' });
+  if (S.jobs.length) add('jobs', `${CLUBS[S.jobs[0].club].name} ti offre un lavoro`, `${ROLE_NAME[S.jobs[0].role]}. Valuta l'offerta.`, true);
+  for (const o of S.offers.slice(0, 2)) { const p = P(o.pid), k = o.club != null ? CLUBS[o.club] : null; if (!p) continue;
+    add('offer:' + o.id, o.type === 'buy' ? `Chiudi l'acquisto di ${shortName(p)}` : o.type === 'sell' ? `${k.name} vuole ${shortName(p)}` : o.type === 'renew' ? `Rinnovo per ${shortName(p)}` : `${k.name} vuole ${shortName(p)}`,
+      `Scade ${o.exp - S.week <= 0 ? 'questa settimana' : `tra ${o.exp - S.week + 1} settimane`}.`, true); }
+  if (S.offers.length > 2) add('deals', `Altre ${S.offers.length - 2} trattative aperte`, 'Le trovi tutte in Trattative.');
+  if (S.role === 'agent') {
+    const unlisted = clients().filter(p => p.club != null && !p.listed && p.ovr >= club(p).level - 2);
+    if (inWindow() && unlisted.length) add(unlisted.length === 1 ? 'player:' + unlisted[0].id : 'clients', unlisted.length === 1 ? `Proponi ${shortName(unlisted[0])} ai club` : `Proponi i tuoi giocatori ai club`, `Il mercato chiude tra ${windowLeft()} settimane: è il momento di trovare offerte.`, isDeadline());
+    const exp = clients().find(p => p.club != null && p.contract <= 1 && !p.renewReq && !S.offers.some(o => o.pid === p.id && o.type === 'renew'));
+    if (exp) add('player:' + exp.id, `Il contratto di ${shortName(exp)} scade`, 'Chiedi un rinnovo, o rischia di restare senza squadra.');
+    const free = CAP[S.up.office] - S.clients.length;
+    const good = S.market.map(P).filter(p => p && !p.refused && p.bonus <= S.money && recruitChance(p, 1) >= 0.4);
+    if (free > 0 && good.length) add('market', `Firma un nuovo talento`, `Hai ${free} ${free === 1 ? 'posto libero' : 'posti liberi'} nello studio e ${good.length} ${good.length === 1 ? 'ragazzo disponibile' : 'ragazzi disponibili'}.`);
+    const cheap = ['office', 'scout', 'legal'].map(k => { const u = UPG[k], l = S.up[k]; return l >= u.max ? Infinity : u.cost[k === 'legal' ? l : l + 1]; });
+    if (Math.min(...cheap) * 1.3 <= S.money && T.length < 3) add('page:office', 'Puoi investire nello studio', 'Più posti, osservatori migliori o un legale.');
+  } else if (isClub()) {
+    if (inWindow() && S.budget > 0) add('market', 'Rinforza la squadra', `Mercato aperto · budget ${eur(S.budget)}.`);
+    const exp = squad().filter(p => p.contract <= 1).sort((a, b) => b.ovr - a.ovr)[0];
+    if (exp && bestXI().some(x => x.id === exp.id)) add('player:' + exp.id, `Rinnova ${shortName(exp)}`, 'È un titolare e il contratto scade a fine stagione.');
+  }
+  if (achReady()) add('page:career', achReady() === 1 ? 'Hai un premio da ritirare' : `Hai ${achReady()} premi da ritirare`, 'Traguardi raggiunti: crediti e soldi ti aspettano.');
+  return T.slice(0, 3);
+}
+function todoBlock() {
+  if (S.tut != null && S.tut < 8) return '';
+  const T = todos();
+  const rows = T.length ? T.map(t => `<button class="todo ${t.hot ? 'hot' : ''}" data-a="todo" data-v="${t.id}"><span class="ic">${t.g}</span><span class="mid"><b>${esc(t.title)}</b><span class="d">${esc(t.desc)}</span></span><span class="go" aria-hidden="true">›</span></button>`).join('')
+    : `<div class="todo"><span class="ic">${CHECK}</span><span class="mid"><b>Tutto in ordine</b><span class="d">Gioca la giornata con il pulsante in basso.</span></span></div>`;
+  return `<div class="h2">Da fare</div><div class="panel list">${rows}</div>`;
+}
+function runTodo(id) {
+  const [k, v] = id.split(':');
+  if (k === 'offer') { ui.sheet = { k: 'nego', id: +v }; ui.ask = 0; ui.fee = 0; }
+  else if (k === 'player') { ui.tab = S.role === 'agent' ? 'clients' : 'squad'; ui.sheet = { k: 'player', id: +v }; }
+  else if (k === 'page') { ui.tab = 'menu'; ui.page = v; }
+  else if (k === 'jobs') { ui.tab = 'menu'; ui.page = 'career'; }
+  else ui.tab = k;
+  render(); if (!ui.sheet) window.scrollTo(0, 0);
+}
+function homeView() {
+  const open = inWindow();
+  return `<section class="status">
+  <div class="top"><div><div class="lbl">Stagione ${seasonLabel()}</div><div class="wk">${S.week > WEEKS ? 'Campionato concluso' : `Giornata ${S.week} di ${WEEKS}`}</div></div>
+  <span class="chip ${isDeadline() ? 'dead' : open ? 'open' : 'closed'}"><span class="dot"></span>${isDeadline() ? 'Ultimo giorno di mercato' : open ? `Mercato aperto · ${windowLeft()} sett.` : `Mercato chiuso`}</span></div>
+  <div><div class="lbl" style="display:flex;justify-content:space-between"><span>Reputazione · ${repTitle(S.rep)}</span><span class="num">${Math.floor(S.rep)}/100</span></div><div class="repbar"><i style="width:${clamp(S.rep, 2, 100)}%"></i></div></div>
+  <div class="small" style="opacity:.85">${S.clients.length} ${S.clients.length === 1 ? 'giocatore' : 'giocatori'} · guadagni circa ${eur(weeklyIncome())} a settimana</div></section>
+  ${todoBlock()}
+  ${S.report.length ? `<div class="h2">Ultima giornata</div><div class="panel list">${weekRows()}</div>` : ''}
+  ${coffeeCard()}
+  <div class="panel list">
+    <button class="linkrow" data-a="obj"><span class="mid">Sfide di stagione<span class="d">${S.obj.filter(o => o.done).length} su 3 completate</span></span><span class="go muted">›</span></button>
+    <button class="linkrow" data-a="page" data-v="news"><span class="mid">Notizie<span class="d">${S.news[0] ? S.news[0].t.replace(/<[^>]+>/g, '').slice(0, 70) + '…' : ''}</span></span><span class="go muted">›</span></button>
+  </div>`;
+}
+/* --- menu and its pages --- */
+const MI = {
+  tables: '<path d="M5 20V10M12 20V4M19 20v-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  album: '<rect x="4" y="4" width="11" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M18 7l2 .6-3 11.4-5-1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  office: '<path d="M4 20V8l8-4 8 4v12M2.5 20h19M8 11v6M12 11v6M16 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  career: '<path d="M4 20h4v-5h4v-5h4V5h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  news: '<path d="M5 5h11v14H6a1 1 0 0 1-1-1zM16 9h3v9a1 1 0 0 1-1 1h-2M8 9h5M8 12.5h5M8 16h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  settings: '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+};
+function menuItems() {
+  const club = isClub(), it = [['tables', 'Classifiche', 'Campionati, Coppa d\'Europa' + (S.role === 'agent' ? ', procuratori' : '')], ['album', 'Album e negozio', 'Figurine, crediti e Bottega']];
+  if (S.role === 'agent') it.push(['office', 'Il tuo studio', 'Più posti, osservatori, legale']);
+  else if (club) it.push(['office', S.role === 'ds' ? 'Il tuo incarico' : 'Il club', S.role === 'ds' ? 'Stipendio, patrimonio' : 'Strutture, finanze, proprietà']);
+  it.push(['career', 'Carriera', 'La scalata, traguardi, albo d\'oro'], ['news', 'Notizie', 'Tutto quello che è successo'], ['settings', 'Impostazioni', 'Salvataggi, tutorial, privacy']);
+  return it;
+}
+function menuView() {
+  if (ui.page) return `<button class="back" data-a="menuback">‹ Menu</button>` + ({ tables: tablesPage, album: albumView, office: officePage, career: careerPage, news: newsPage, settings: settingsPage }[ui.page] || (() => ''))();
+  return `<div class="h2">Menu</div><div class="panel list">${menuItems().map(([id, t, d]) => { const b = id === 'career' ? achReady() + S.jobs.length : 0;
+    return `<button class="linkrow" data-a="page" data-v="${id}"><svg viewBox="0 0 24 24" aria-hidden="true">${MI[id]}</svg><span class="mid">${t}<span class="d">${d}</span></span>${b ? `<span class="bdg">${b}</span>` : ''}<span class="go muted">›</span></button>`; }).join('')}</div>`;
+}
+function tablesPage() {
+  return `${euroPanel()}${leaguePanel()}${S.role === 'agent' ? `<div class="h2">Classifica procuratori</div><div class="panel list">${board().map((x, i) => `<div class="br ${x.me ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="bn">${esc(x.n)}</span><span class="num small">${eur(x.s)}</span></div>`).join('')}</div><p class="small muted" style="margin:-8px 0 0">Soldi incassati in stagione. Chi chiude primo diventa procuratore dell'anno.</p>` : ''}`;
+}
+function newsPage() { return `<div class="h2">Notizie</div><div class="panel list">${S.news.map(n => `<div class="news ${n.k}"><span class="w">${n.w}</span><span class="t">${n.t}</span></div>`).join('')}</div>`; }
+function settingsPage() {
+  return `<div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">La partita si salva da sola su questo telefono. Per cambiare telefono, esportala e poi importala sul nuovo.</div>${saveTools()}</div>
+  <div class="h2">Aiuto</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Rivedi i consigli del Commendatore dall'inizio.</div><button class="btn ghost" data-a="tutagain">Rifai il tutorial</button></div>
+  <div class="h2">Zona pericolosa</div><div class="panel pad"><button class="btn danger full" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
+}
+function upgradesBlock() {
+  return ['office', 'scout', 'legal'].map(k => {
+    const u = UPG[k], l = S.up[k], maxed = l >= u.max, cost = maxed ? 0 : u.cost[k === 'legal' ? l : l + 1];
+    return `<div class="panel up"><div class="hd"><h4>${u.name}</h4><span class="lv">${Array.from({ length: u.max }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div>
+    <div class="small muted">${u.desc(l)}</div>
+    ${maxed ? '<div class="tiny" style="color:var(--gold)">Livello massimo</div>' : `<div class="small">Prossimo livello: ${u.desc(l + 1)}</div><button class="btn green full" data-a="upg" data-v="${k}" ${S.money < cost ? 'disabled' : ''}>Investi ${eur(cost)}</button>`}</div>`;
+  }).join('');
+}
+function officePage() {
+  if (S.role === 'agent') return `<div class="h2">Il tuo studio</div><p class="small muted" style="margin:0">Le spese dello studio si pagano ogni settimana. Investi solo quando i guadagni lo permettono.</p>${upgradesBlock()}`;
+  const k = isClub() ? myClub() : null;
+  let h = `<div class="panel pad"><div class="tiny muted">Patrimonio personale</div><div class="big" style="font-size:40px;font-family:var(--f-display)">${eur(S.money)}</div>
+  <div class="small muted">${S.salary ? `Stipendio ${eur(S.salary)} l'anno, più un premio se centri l'obiettivo.` : S.role === 'pres' ? 'Sei il proprietario: niente stipendio, il club è tuo.' : 'Nessuno stipendio.'}</div></div>`;
+  if (S.role === 'none') h += `<div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><b>Torna a fare il procuratore</b><div class="small muted">Riapri uno studio senza giocatori. Perdi un po' di reputazione.</div><button class="btn green full" data-a="backagent">Riapri lo studio</button></div>`;
+  if (k && S.role !== 'ds') h += `<div class="h2">Strutture del club</div>` + Object.entries(FAC).map(([key, [name, desc]]) => { const l = S.fac[key], c = l < 5 ? facCost(l + 1) : 0;
+    return `<div class="panel up"><div class="hd"><h4>${name}</h4><span class="lv">${[0, 1, 2, 3, 4].map(i => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div><div class="small muted">${desc}.</div>${l < 5 ? `<button class="btn green full" data-a="fac" data-v="${key}" ${S.budget < c ? 'disabled' : ''}>Investi ${eur(c)} dal budget</button>` : '<div class="tiny" style="color:var(--gold)">Livello massimo</div>'}</div>`; }).join('');
+  if (S.role === 'pres') h += `<div class="h2">Finanzia il club</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Sposta soldi dal tuo patrimonio alle casse del club.</div><div class="btns">${[1e6, 5e6, 2e7].map(x => `<button class="btn ghost" data-a="inject" data-v="${x}" ${S.money < x ? 'disabled' : ''}>${eur(x)}</button>`).join('')}</div></div>`;
+  if (S.role === 'pres' || canOwn() || (S.stakes || []).length) h += ownershipBlock();
+  return h;
+}
+function careerPage() {
+  return `${careerBlock()}${S.role === 'agent' && (canOwn() || (S.stakes || []).length) ? ownershipBlock() : ''}${honorsBlock()}${achBlock()}
+  <div class="h2">Numeri della carriera</div><div class="panel season"><div><b>${S.season}</b><span>Stagione</span></div><div><b>${S.stats.deals}</b><span>Affari</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.earned)}</b><span>Guadagni</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.fees)}</b><span>Cartellini</span></div></div>`;
+}
+/* --- tutorial: Il Commendatore --- */
+const TUT = [
+  null,
+  { tab: 'home', target: '[data-a=tab][data-v=clients]', text: 'Prima di tutto, conosci i tuoi due giocatori. Tocca <b>Giocatori</b> qui sotto.' },
+  { tab: 'clients', target: '[data-a=player]', text: 'Ecco la tua scuderia. Tocca un giocatore per vedere la sua figurina.' },
+  { sheet: 'player', target: '[data-a=list]', text: 'Il mercato estivo è aperto fino alla <b>giornata 5</b>. Tocca <b>Proponi ai club</b>: le squadre interessate ti faranno un\'offerta.' },
+  { tab: 'any', target: '[data-a=advance]', text: 'Ora gioca la giornata: ogni tocco è una settimana. Le offerte arrivano mentre il tempo passa.' },
+  { tab: 'any', target: '[data-a=tab][data-v=deals]', text: 'È arrivata un\'offerta! Aprila da <b>Trattative</b>.' },
+  { tab: 'deals', target: '[data-a=nego]', text: 'Tocca l\'offerta per sederti al tavolo.' },
+  { sheet: 'nego', text: 'Sposta la barra per chiedere uno stipendio più alto: tu prendi una percentuale. Ma se esageri, il direttore sportivo perde la pazienza (le barrette gialle) e se ne va. Se l\'offerta ti va bene, <b>accettala</b>.' },
+  { tab: 'any', text: 'Ottimo lavoro. L\'ultimo consiglio: nel <b>Mercato</b> trovi ragazzi da far firmare, e il riquadro <b>Da fare</b> ti suggerisce sempre la prossima mossa. Il resto è in <b>Menu</b>. Da qui in poi, lo studio è tuo.', done: true }
+];
+function tutCheck() {
+  if (S.tut == null || S.tut === 0) return;
+  const t = S.tut, sh = ui.sheet && ui.sheet.k;
+  if (t === 1 && ui.tab === 'clients') S.tut = 2;
+  else if (t === 2 && sh === 'player') S.tut = 3;
+  else if (t === 3 && clients().some(p => p.listed)) S.tut = 4;
+  else if (t === 4 && S.offers.length) S.tut = 5;
+  else if (t === 5 && ui.tab === 'deals') S.tut = 6;
+  else if (t === 5 && !S.offers.length && S.week > 6) S.tut = 8;
+  else if (t === 6 && sh === 'nego') S.tut = 7;
+  else if (t === 7 && (S.stats.deals > 0 || (!S.offers.length && sh !== 'nego'))) S.tut = 8;
+  if (S.role !== 'agent' && S.tut != null) S.tut = null;
+}
+function coachCard(where) {
+  if (S.tut == null || S.tut === 0) return '';
+  const st = TUT[S.tut]; if (!st) return '';
+  if (where) { if (st.sheet !== where) return ''; }
+  else if (st.sheet || (st.tab !== 'any' && st.tab !== ui.tab)) return '';
+  return `<div class="coach" style="${where ? 'margin-bottom:14px' : ''}"><span class="who">C</span><div class="tx"><b class="n">Il Commendatore</b>${st.text}
+  <div class="act">${st.done ? '<button class="btn pri" style="min-height:38px;font-size:15px" data-a="tutdone">Grazie, Commendatore</button>' : '<button class="skip" data-a="tutskip">Salta il tutorial</button>'}</div></div></div>`;
+}
+function tutHighlight() {
+  document.querySelectorAll('.pulse').forEach(e => e.classList.remove('pulse'));
+  if (!S || S.tut == null) return;
+  const st = TUT[S.tut]; if (!st || !st.target) return;
+  if (st.sheet && !(ui.sheet && ui.sheet.k === st.sheet)) return;
+  const el = document.querySelector((st.sheet ? '.sheet ' : '') + st.target); if (el) el.classList.add('pulse');
+}
+function tutOffer() {
+  const p = clients().find(x => x.listed && x.club != null) || clients().find(x => x.club != null); if (!p) return;
+  const c = club(p), cands = CLUBS.filter(k => k.id !== c.id && k.co === c.co && k.level > c.level && k.level <= c.level + 8);
+  if (!cands.length) return;
+  addOffer(p, pick(cands), 'transfer');
+  const o = S.offers[S.offers.length - 1]; o.stage = 'wage'; o.fee = Math.max(o.fee, o.sMin || 0); o.exp = Math.max(o.exp, S.week + 2);
 }
 
 function playerRow(p, action = 'player', starter = false) {
@@ -1853,7 +2018,7 @@ function playerRow(p, action = 'player', starter = false) {
   <span class="mid"><span class="nm">${esc(fullName(p))}${pills}</span>
   <span class="meta">${p.role} · ${p.age} anni · ${c ? `<span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}` : 'nessun club'}</span>
   <span class="mbar"><i style="width:${p.morale}%;background:${moraleColor(p.morale)}"></i></span></span>
-  <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>OVR</span></span></button>`;
+  <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>FORZA</span></span></button>`;
 }
 
 function clientsView() {
@@ -1872,15 +2037,15 @@ function marketView() {
       <span style="flex:1;min-width:0"><span class="nm" style="font:700 16px/1.15 var(--f-body);display:block">${esc(fullName(p))}</span>
       <span class="meta small muted">${ROLES[p.role]} · ${p.age} anni · ${p.nat}</span><br>
       <span class="small muted">${c ? `<span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}<span class="cc">${CC[c.co]}</span>` : 'Svincolato'}</span></span>
-      <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>OVR</span></span></div>
-      <div class="kv"><div><span>Potenziale</span><b>${potText(p)}</b></div><div><span>Valore</span><b>${eur(value(p))}</b></div><div><span>Commiss.</span><b>${p.fee}%</b></div></div>
+      <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>FORZA</span></span></div>
+      <div class="kv"><div><span>Potenziale</span><b>${potText(p)}</b></div><div><span>Valore</span><b>${eur(value(p))}</b></div><div><span>Tua %</span><b>${p.fee}%</b></div></div>
       ${p.refused ? `<div class="refused">Ha scelto un'altra agenzia.</div>` :
-      `<div class="btns"><button class="btn green" data-a="recruit" data-v="${p.id}" data-m="1" ${full || S.money < b1 ? 'disabled' : ''}>${eur(b1)} · ${Math.round(c1 * 100)}%</button>
-      <button class="btn ghost" data-a="recruit" data-v="${p.id}" data-m="2" ${full || S.money < b1 * 2 ? 'disabled' : ''}>${eur(b1 * 2)} · ${Math.round(c2 * 100)}%</button></div>`}</div>`;
+      `<div class="btns"><button class="btn green" style="flex-direction:column;gap:3px;min-height:56px" data-a="recruit" data-v="${p.id}" data-m="1" ${full || S.money < b1 ? 'disabled' : ''}>Offri ${eur(b1)}<span style="font:600 11px/1 var(--f-body);letter-spacing:.04em;text-transform:none;opacity:.85">${chanceWord(c1)}</span></button>
+      <button class="btn ghost" style="flex-direction:column;gap:3px;min-height:56px" data-a="recruit" data-v="${p.id}" data-m="2" ${full || S.money < b1 * 2 ? 'disabled' : ''}>Offri ${eur(b1 * 2)}<span style="font:600 11px/1 var(--f-body);letter-spacing:.04em;text-transform:none;opacity:.8">${chanceWord(c2)}</span></button></div>`}</div>`;
   }).join('');
   const tripCost = 2500 * S.up.scout;
   return `<div class="panel pad" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-    <div style="flex:1;min-width:180px"><b>Rapporto osservatori</b><div class="small muted">Prossimo tra ${6 - S.mktAge} sett. · offri un premio alla firma: se rifiuta non paghi nulla.</div></div>
+    <div style="flex:1;min-width:180px"><b>Ragazzi da far firmare</b><div class="small muted">Offri un premio per convincerli a sceglierti come procuratore. Se rifiutano non paghi nulla. Nuovi nomi tra ${6 - S.mktAge} settimane.</div></div>
     <button class="btn ghost" data-a="trip" ${S.money < tripCost ? 'disabled' : ''}>Nuovo giro · ${eur(tripCost)}</button></div>
   ${full ? `<div class="warn">Scuderia al completo (${CAP[S.up.office]}). Amplia l'ufficio per firmare altri giocatori.</div>` : ''}
   <div class="h2">Talenti segnalati <span class="count">${S.market.length}</span></div>${cards || '<div class="panel empty"><b>Nessuno in lista</b>Manda gli osservatori in giro.</div>'}`;
@@ -1897,24 +2062,6 @@ function dealsView() {
   }).join('')}</div><p class="small muted" style="margin:0">Guadagni il 3% del cartellino nei trasferimenti, il 10% del primo anno di stipendio sugli svincolati e la tua percentuale sullo stipendio ogni settimana.</p>`;
 }
 
-function officeView() {
-  const ups = ['office', 'scout', 'legal'].map(k => {
-    const u = UPG[k], l = S.up[k], maxed = l >= u.max, cost = maxed ? 0 : u.cost[k === 'legal' ? l : l + 1];
-    return `<div class="panel up"><div class="hd"><h4>${u.name}</h4><span class="lv">${Array.from({ length: u.max }, (_, i) => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div>
-    <div class="small muted">${u.desc(l)}</div>
-    ${maxed ? '<div class="tiny" style="color:var(--gold)">Livello massimo</div>' : `<div class="small">Prossimo: ${u.desc(l + 1)}</div><button class="btn green full" data-a="upg" data-v="${k}" ${S.money < cost ? 'disabled' : ''}>Investi ${eur(cost)}</button>`}</div>`;
-  }).join('');
-  return `${careerBlock()}${canOwn() || (S.stakes || []).length ? ownershipBlock() : ''}<div class="h2">Investimenti</div>${ups}
-  <div class="h2">Traguardi <span class="count">${Object.keys(S.ach).length}/${ACH.length}</span></div>
-  <div class="panel list">${ACH.map(([id, name, desc, , money, rep]) => { const st = S.ach[id];
-    return `<div class="ach ${st ? '' : 'locked'}">${medal(!!st, rep)}<div class="mid"><b>${name}</b><div class="small muted">${desc}</div><div class="rw" style="text-align:left;margin-top:3px">${money ? '+' + eur(money) : ''}${money && rep ? ' · ' : ''}${rep ? '+' + rep + ' rep' : ''}</div></div>
-    ${st === 1 ? `<button class="btn pri" data-a="claim" data-v="${id}">Ritira</button>` : st === 2 ? `<span class="ck" style="background:var(--good);border-color:var(--good);color:#fff">${CHECK}</span>` : ''}</div>`; }).join('')}</div>
-  <div class="h2">Carriera</div><div class="panel season"><div><b>${S.season}</b><span>Stagione</span></div><div><b>${S.stats.deals}</b><span>Affari</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.earned)}</b><span>Guadagni</span></div><div><b class="num" style="font-size:18px;line-height:26px">${eur(S.stats.fees)}</b><span>Cartellini</span></div></div>
-  <div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px">
-  <div class="small muted">Il salvataggio è automatico su questo dispositivo, a ogni giornata. Per cambiare telefono, esporta la partita.</div>
-  ${saveTools()}
-  <button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
-}
 
 /* ---------- sheets ---------- */
 function sheetView() {
@@ -1926,6 +2073,10 @@ function sheetView() {
   if (s.k === 'ending') inner = endingSheet();
   if (s.k === 'own') inner = ownSheet(s.id);
   if (s.k === 'euro') inner = euroSheet();
+  if (s.k === 'obj') inner = `<h3>Sfide di stagione</h3><p class="lead">Tre obiettivi per questa stagione. Ognuno vale soldi e reputazione.</p><div class="panel list">${objList()}</div>`;
+  if (s.k === 'tut') { closable = false; inner = `<div class="coach" style="border:0;box-shadow:none;padding:0;background:none"><span class="who">C</span><div class="tx"><b class="n">Il Commendatore</b>Benvenuto nel mestiere, ragazzo. Io ho fatto il procuratore per quarant'anni: ti insegno le basi.<br><br>Un procuratore <b>guadagna una percentuale</b> sugli stipendi e sui trasferimenti dei suoi giocatori. Più bravi sono e più grandi i club in cui li porti, più guadagni. Un giorno, chissà, potresti diventare presidente di un club.</div></div>
+    <div class="body" style="margin-top:16px"><button class="btn pri full" data-a="tutstart">Iniziamo</button><button class="btn ghost full" data-a="tutskip2">So già giocare, salta</button></div>`; }
+  if (inner && s.k !== 'tut') inner = coachCard(s.k) + inner;
   if (s.k === 'export') inner = exportSheet(s.code);
   if (s.k === 'import') inner = importSheet();
   if (s.k === 'table') inner = tableSheet();
@@ -1959,7 +2110,7 @@ function playerSheet(p) {
   <div><span>Età</span><b>${p.age}</b></div><div><span>Nazione</span><b>${p.nat}</b></div>
   <div><span>Potenziale</span><b>${potText(p)}</b></div><div><span>Valore</span><b>${eur(value(p))}</b></div>
   <div><span>Stipendio</span><b>${c ? eur(p.wage) : '–'}</b></div><div><span>Contratto</span><b>${c ? (p.contract <= 0 ? '–' : 'fino al ' + (2025 + S.season + p.contract)) : '–'}</b></div>
-  ${mine ? `<div><span>Tua quota</span><b>${p.fee}%</b></div><div><span>Ti rende</span><b>${eur(p.wage * p.fee / 100)}/a</b></div>` : `<div class="wide"><span>Agente</span><b style="font-family:var(--f-body);font-weight:600;white-space:normal">${esc(p.ag || 'Indipendente')}</b></div>`}</div></div>
+  ${mine ? `<div><span>Tua percentuale</span><b>${p.fee}%</b></div><div><span>Ti rende</span><b>${eur(p.wage * p.fee / 100)} l'anno</b></div>` : `<div class="wide"><span>Agente</span><b style="font-family:var(--f-body);font-weight:600;white-space:normal">${esc(p.ag || 'Indipendente')}</b></div>`}</div></div>
   <div class="body" style="margin-top:16px">
   <div class="panel season"><div><b>${p.apps}</b><span>Presenze</span></div><div><b>${p.goals}</b><span>Gol</span></div><div><b>${p.assists}</b><span>Assist</span></div><div><b>${avg}</b><span>Media</span></div></div>
   <div class="panel pad" style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between"><b>${moraleWord(p.morale)}</b><span class="num small">${Math.round(p.morale)}%</span></div>
@@ -2029,7 +2180,7 @@ function negoSheet(o) {
     <input type="range" id="askR" min="${lo}" max="${hi}" step="1000" value="${ui.ask}" aria-label="Richiesta di stipendio">
     ${pen ? `<div class="c">Le clausole costano al club il ${Math.round(pen * 100)}% in più sulla tua richiesta.</div>` : ''}
     ${S.up.legal ? `<div class="c">Il tuo legale stima il tetto del club tra <b>${eur(o.hLo / (1 + pen))}</b> e <b>${eur(o.hHi / (1 + pen))}</b>.</div>` : '<div class="c">Senza un legale non sai fin dove si spinge il club.</div>'}</div>
-  <div class="clauses"><div class="tiny muted">Clausole nel contratto</div>${CLAUSES.map(([key, label, desc, pc]) => `<button class="cla ${o.cl && o.cl[key] ? 'on' : ''}" data-a="cla" data-v="${o.id}" data-k="${key}" aria-pressed="${!!(o.cl && o.cl[key])}"><b>${label}</b><span>${desc(p)}</span><i>+${Math.round(pc * 100)}%</i></button>`).join('')}</div>
+  ${!ui.clauses && !pen ? `<button class="adv-toggle" data-a="clausetoggle">+ Aggiungi clausole al contratto (avanzato)</button>` : `<div class="clauses"><div class="tiny muted">Clausole nel contratto · <button class="adv-toggle" data-a="clausetoggle" style="display:inline">nascondi</button></div>${CLAUSES.map(([key, label, desc, pc]) => `<button class="cla ${o.cl && o.cl[key] ? 'on' : ''}" data-a="cla" data-v="${o.id}" data-k="${key}" aria-pressed="${!!(o.cl && o.cl[key])}"><b>${label}</b><span>${desc(p)}</span><i>+${Math.round(pc * 100)}%</i></button>`).join('')}</div>`}
   ${log}
   <button class="btn pri full" data-a="ask" data-v="${o.id}">Chiedi questa cifra</button>
   <div class="btns"><button class="btn green" data-a="accept" data-v="${o.id}">Accetta ${eur(o.cur)}</button><button class="btn ghost" data-a="decline" data-v="${o.id}">Rifiuta</button></div>
@@ -2038,40 +2189,41 @@ function negoSheet(o) {
 function jobsBanner() {
   if (!S.jobs.length) return '';
   const j = S.jobs[0], k = CLUBS[j.club];
-  return `<button class="panel pad" data-a="tab" data-v="office" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)">
-  <span class="ovr hi"><b>${S.jobs.length}</b><span>LAV.</span></span><span style="flex:1"><b>Ti cerca ${esc(k.name)}</b><br><span class="small muted">${ROLE_NAME[j.role]} · rispondi in Carriera</span></span><span aria-hidden="true">›</span></button>`;
+  return `<button class="panel pad" data-a="page" data-v="career" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)">
+  <span class="ovr hi"><b>${S.jobs.length}</b><span>LAV.</span></span><span style="flex:1"><b>Ti cerca ${esc(k.name)}</b><br><span class="small muted">${ROLE_NAME[j.role]} · rispondi in Menu › Carriera</span></span><span aria-hidden="true">›</span></button>`;
 }
 function coffeeCard() {
   if (S.daily.last === dayKey()) return '';
   const day = (S.daily.last === dayKey(Date.now() - 864e5) ? S.daily.streak : 0) % 7 + 1, g = Math.round(1200 * day * (1 + (S.season - 1) * 0.5) / 100) * 100;
-  return `<div class="coffee">${CUP}<div style="flex:1;min-width:0"><b>Il caffè del mattino</b><div class="small muted">Giorno ${day} di 7${day === 7 ? ' · più una soffiata' : ''}</div><div class="cups">${[1, 2, 3, 4, 5, 6, 7].map(i => `<i class="${i <= day ? 'on' : ''}"></i>`).join('')}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn pri" data-a="daily">+${eur(g)}</button>${NAT() ? `<button class="btn ghost" style="min-height:34px;font-size:13px;padding:0 10px" data-a="dailyx2">Doppio con video</button>` : ''}</div></div>`;
+  return `<div class="coffee">${CUP}<div style="flex:1;min-width:0"><b>Il caffè del mattino</b><div class="small muted">Un regalo ogni giorno che torni · giorno ${day} di 7</div><div class="cups">${[1, 2, 3, 4, 5, 6, 7].map(i => `<i class="${i <= day ? 'on' : ''}"></i>`).join('')}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn pri" data-a="daily">+${eur(g)}</button>${NAT() ? `<button class="btn ghost" style="min-height:34px;font-size:13px;padding:0 10px" data-a="dailyx2">Doppio con video</button>` : ''}</div></div>`;
 }
 const newsList = () => `<div class="h2">Notiziario</div><div class="panel list">${S.news.slice(0, 14).map(n => `<div class="news ${n.k}"><span class="w">${n.w}</span><span class="t">${n.t}</span></div>`).join('')}</div>`;
 function clubHomeView() {
-  const k = myClub(), pos = standings(lgOf(k)).indexOf(S.my) + 1, t = S.tab[S.my] || { pts: 0, p: 0 };
-  const m = S.res && S.res[S.my], open = inWindow();
-  const third = S.role === 'ds' ? `<b>${Math.round(wagesTotal() / S.wcap * 100)}%</b><span>Monte ingaggi</span>` : (() => { const f = finWeek(); return `<b>${f.net >= 0 ? '+' : ''}${eur(f.net)}</b><span>Bilancio/sett.</span>`; })();
-  const rows = S.report.map(r => { const p = P(r.id); if (!p) return '';
-    return `<div class="rep-row"><span class="mid"><b>${esc(shortName(p))}</b> <span class="muted small">${ROLES[p.role]}</span></span><span class="small muted">${r.g ? r.g + ' gol' : ''}${r.g && r.a ? ' · ' : ''}${r.a ? r.a + ' assist' : ''}</span><span class="rate ${r.r >= 7.5 ? 'g' : r.r < 5.8 ? 'b' : ''}">${r.r.toFixed(1)}</span></div>`; }).join('');
-  return `<section class="hero"><div class="lines"></div><div class="in">
-  <div class="row"><div><div class="label">${S.lega ? 'Presidente del club e della Lega' : ROLE_NAME[S.role]} · ${CO[k.co].name}</div>
-  <div class="big" style="font-family:var(--f-display)">${pos}°</div><div class="small" style="opacity:.8;margin-top:4px">${t.pts} punti dopo ${t.p} giornate · ${esc(lgName(lgOf(k)))}</div></div>
-  <span class="chip ${isDeadline() ? 'dead' : open ? 'open' : 'closed'}"><span class="dot"></span>${isDeadline() ? 'Ultimo giorno di mercato' : open ? 'Mercato aperto' : 'Mercato chiuso'}</span></div>
-  <div style="margin-top:14px"><div class="label">Obiettivo · ${S.goal.t}</div>
-  ${S.role !== 'pres' ? `<div class="label" style="display:flex;justify-content:space-between;margin-top:12px"><span>Fiducia della società</span><span class="num">${Math.round(S.conf)}/100</span></div><div class="repbar"><i style="width:${clamp(S.conf, 2, 100)}%;${S.conf < 30 ? 'background:#E07A63' : ''}"></i></div>` : ''}</div></div>
-  <div class="stats3"><div><b>${eur(S.budget)}</b><span>Budget</span></div><div><b>${k.level}</b><span>Forza titolari</span></div><div>${third}</div></div></section>
-  ${jobsBanner()}
-  ${S.offers.length ? `<button class="panel pad" data-a="tab" data-v="deals" style="display:flex;align-items:center;gap:12px;text-align:left;border-color:var(--gold-bg)"><span class="ovr hi"><b>${S.offers.length}</b><span>TRAT.</span></span><span style="flex:1"><b>Trattative aperte</b><br><span class="small muted">Rispondi prima che scadano.</span></span><span aria-hidden="true">›</span></button>` : ''}
+  const k = myClub(), pos = standings(lgOf(k)).indexOf(S.my) + 1, t = S.tab[S.my] || { pts: 0, p: 0 }, open = inWindow();
+  const m = S.res && S.res[S.my], e = S.eres && S.eres[S.my];
+  const rows = S.report.slice(0, 3).map(r => { const p = P(r.id); if (!p) return '';
+    return `<div class="rep-row"><span class="mid"><b>${esc(shortName(p))}</b> <span class="muted small">${ROLES[p.role]}</span></span><span class="small muted">${r.g ? r.g + ' gol' : ''}</span><span class="rate ${r.r >= 7.5 ? 'g' : r.r < 5.8 ? 'b' : ''}">${r.r.toFixed(1)}</span></div>`; }).join('');
+  const cup = e ? (() => { const o = e.w === S.my || (e.stage === 'g' && e.f > e.g) ? 'V' : e.f < e.g || (e.w != null && e.w !== S.my) ? 'S' : 'P'; return `<div class="rep-row"><span class="mid"><b>Coppa d'Europa</b> <span class="res ${o}">${e.f}–${e.g}</span>${esc(CLUBS[e.o].name)}</span></div>`; })() : '';
+  return `<section class="status">
+  <div class="top"><div><div class="lbl">${S.lega ? 'Presidente del club e della Lega' : ROLE_NAME[S.role]} · ${esc(lgName(lgOf(k)))}</div><div class="wk">${pos}° posto · ${t.pts} punti</div></div>
+  <span class="chip ${isDeadline() ? 'dead' : open ? 'open' : 'closed'}"><span class="dot"></span>${isDeadline() ? 'Ultimo giorno' : open ? `Mercato · ${windowLeft()} sett.` : 'Mercato chiuso'}</span></div>
+  <div class="small" style="opacity:.9"><b>Obiettivo:</b> ${S.goal.t}</div>
+  ${S.role !== 'pres' ? `<div><div class="lbl" style="display:flex;justify-content:space-between"><span>Fiducia della società</span><span class="num">${Math.round(S.conf)}/100</span></div><div class="repbar"><i style="width:${clamp(S.conf, 2, 100)}%;${S.conf < 30 ? 'background:#E07A63' : ''}"></i></div></div>` : ''}
+  <div class="small" style="opacity:.85">Forza della squadra ${k.level} · ${S.role === 'ds' ? `stipendi al ${Math.round(wagesTotal() / S.wcap * 100)}% del tetto` : (() => { const f = finWeek(); return `bilancio ${f.net >= 0 ? '+' : ''}${eur(f.net)} a settimana`; })()}</div></section>
+  ${todoBlock()}
+  ${m || e ? `<div class="h2">Ultima giornata</div><div class="panel list">${m ? `<div class="rep-row"><span class="mid"><b>${esc(k.name)}</b> ${resText(S.my)}</span></div>` : ''}${cup}${rows}</div>` : ''}
   ${coffeeCard()}
-  ${m || (S.eres && S.eres[S.my]) ? `<div class="h2">Ultima giornata</div><div class="panel list">${m ? `<div class="rep-row"><span class="mid"><b>${esc(k.name)}</b> ${resText(S.my)}</span></div>` : ''}${S.eres && S.eres[S.my] ? (() => { const e = S.eres[S.my], o = e.w === S.my || (e.stage === 'g' && e.f > e.g) ? 'V' : e.f < e.g || (e.w != null && e.w !== S.my) ? 'S' : 'P'; return `<div class="rep-row"><span class="mid"><b>Coppa d'Europa</b> <span class="res ${o}">${e.f}–${e.g}</span>${esc(CLUBS[e.o].name)}${e.pen ? ' · rigori' : ''}</span></div>`; })() : ''}${rows}</div>` : ''}
-  ${euroPanel()}
-  ${leaguePanel()}
-  ${newsList()}`;
+  <div class="panel list">
+    <button class="linkrow" data-a="page" data-v="tables"><span class="mid">Classifica e coppa<span class="d">${esc(lgName(lgOf(k)))}${euroIn(S.my) ? ` · Coppa d'Europa: ${euroStatus(S.my)}` : ''}</span></span><span class="go muted">›</span></button>
+    <button class="linkrow" data-a="page" data-v="news"><span class="mid">Notizie<span class="d">${S.news[0] ? S.news[0].t.replace(/<[^>]+>/g, '').slice(0, 70) + '…' : ''}</span></span><span class="go muted">›</span></button>
+  </div>`;
 }
 function noneHomeView() {
-  return `<section class="hero"><div class="lines"></div><div class="in"><div class="label">Stagione ${seasonLabel()}</div><div class="big" style="font-family:var(--f-display)">Senza incarico</div>
-  <p style="margin:10px 0 0;opacity:.85">Segui il campionato dalla tribuna. Le offerte arrivano in base alla tua reputazione (${Math.floor(S.rep)}/100). Dalla Carriera puoi anche tornare a fare il procuratore.</p></div></section>
-  ${jobsBanner()}${coffeeCard()}${euroPanel()}${leaguePanel()}${newsList()}`;
+  return `<section class="status"><div class="lbl">Stagione ${seasonLabel()}</div><div class="wk">Senza incarico</div>
+  <div class="small" style="opacity:.85">Segui il campionato dalla tribuna. Le offerte di lavoro arrivano in base alla tua reputazione (${Math.floor(S.rep)}/100). Da Menu › Il tuo incarico puoi anche tornare a fare il procuratore.</div></section>
+  ${todoBlock()}${coffeeCard()}
+  <div class="panel list"><button class="linkrow" data-a="page" data-v="tables"><span class="mid">Classifiche<span class="d">Campionati e Coppa d'Europa</span></span><span class="go muted">›</span></button>
+  <button class="linkrow" data-a="page" data-v="news"><span class="mid">Notizie</span><span class="go muted">›</span></button></div>`;
 }
 function squadView() {
   const xi = new Set(bestXI().map(p => p.id));
@@ -2087,7 +2239,7 @@ function clubMarketView() {
       <span style="flex:1;min-width:0"><span class="nm" style="font:700 16px/1.15 var(--f-body);display:block">${esc(fullName(p))}</span>
       <span class="meta small muted">${ROLES[p.role]} · ${p.age} anni · ${p.nat}</span><br>
       <span class="small muted">${c ? `<span class="clubdot" style="background:${c.c1}"></span>${esc(c.name)}<span class="cc">${CC[c.co]}</span>` : 'Svincolato'}</span></span>
-      <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>OVR</span></span></div>
+      <span class="ovr ${p.ovr >= 75 ? 'hi' : ''}"><b>${p.ovr}</b><span>FORZA</span></span></div>
       <div class="kv"><div><span>Potenziale</span><b>${potText(p)}</b></div><div><span>Valore</span><b>${eur(value(p))}</b></div><div><span>Agente</span><b style="font-family:var(--f-body);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">${esc(p.ag || '–')}</b></div></div>
       ${p.refused ? '<div class="refused">Trattativa fallita: non vuole più parlarti.</div>' : `<button class="btn ${ex ? 'pri' : 'green'} full" data-a="bstart" data-v="${p.id}" ${can || ex ? '' : 'disabled'}>${ex ? 'Riprendi la trattativa' : !open && c ? 'Mercato chiuso' : 'Tratta'}</button>`}</div>`;
   }).join('');
@@ -2182,21 +2334,6 @@ function ownSheet(id) {
   ${S.role === 'pres' ? '<div class="warn">Sei già presidente di un club: per comprarne un altro devi prima vendere il tuo. Le quote di minoranza puoi comprarle comunque.</div>' : ''}
   <div class="panel list">${buyOptions(k).map((o, i) => `<div class="shop"><div class="mid"><b>${o.t}</b><div class="small muted">${o.d}</div></div><button class="btn ${S.money >= o.pay ? 'pri' : 'ghost'}" data-a="ownbuy" data-v="${id}" data-i="${i}" ${S.money < o.pay || (o.m !== 'stake' && S.role === 'pres') ? 'disabled' : ''}>${eur(o.pay)}</button></div>`).join('')}</div>
   <p class="small muted" style="margin:0">Il tuo patrimonio: ${eur(S.money)}.</p></div>`;
-}
-function careerView() {
-  const k = isClub() ? myClub() : null;
-  let h = `<div class="panel pad"><div class="tiny muted">Patrimonio personale</div><div class="big" style="font-size:40px;font-family:var(--f-display)">${eur(S.money)}</div>
-  <div class="small muted">${S.salary ? `Stipendio ${eur(S.salary)} l'anno, più un premio se centri l'obiettivo.` : S.role === 'pres' ? 'Sei il proprietario: niente stipendio, il club è tuo.' : 'Nessuno stipendio.'} Reputazione ${Math.floor(S.rep)}/100.</div></div>`;
-  h += careerBlock();
-  if (S.role === 'none') h += `<div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><b>Torna a fare il procuratore</b><div class="small muted">Riapri uno studio senza assistiti. Perdi un po' di reputazione.</div><button class="btn green full" data-a="backagent">Riapri lo studio</button></div>`;
-  if (k && S.role !== 'ds') h += `<div class="h2">Strutture del club</div>` + Object.entries(FAC).map(([key, [name, desc]]) => { const l = S.fac[key], c = l < 5 ? facCost(l + 1) : 0;
-    return `<div class="panel up"><div class="hd"><h4>${name}</h4><span class="lv">${[0, 1, 2, 3, 4].map(i => `<i class="${i < l ? 'on' : ''}"></i>`).join('')}</span></div><div class="small muted">${desc}.</div>${l < 5 ? `<button class="btn green full" data-a="fac" data-v="${key}" ${S.budget < c ? 'disabled' : ''}>Investi ${eur(c)} dal budget</button>` : '<div class="tiny" style="color:var(--gold)">Livello massimo</div>'}</div>`; }).join('');
-  if (S.role === 'pres') h += `<div class="h2">Finanzia il club</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Sposta soldi dal tuo patrimonio alle casse del club.</div><div class="btns">${[1e6, 5e6, 2e7].map(x => `<button class="btn ghost" data-a="inject" data-v="${x}" ${S.money < x ? 'disabled' : ''}>${eur(x)}</button>`).join('')}</div></div>`;
-  h += ownershipBlock();
-  h += honorsBlock();
-  h += achBlock();
-  h += `<div class="h2">Partita</div><div class="panel pad" style="display:flex;flex-direction:column;gap:10px"><div class="small muted">Il salvataggio è automatico su questo dispositivo. Per cambiare telefono, esporta la partita.</div>${saveTools()}<button class="btn danger" data-a="reset">${ui.confirm === 'reset' ? 'Tocca ancora per cancellare tutto' : 'Ricomincia da zero'}</button></div>`;
-  return h;
 }
 function clubSeasonSheet(m) {
   return `<h3>Fine stagione ${m.label}</h3><p class="lead">${m.goal ? (m.met ? 'Obiettivo centrato.' : 'Obiettivo mancato.') : 'Una stagione dalla tribuna.'}</p><div class="body">
@@ -2321,9 +2458,20 @@ document.addEventListener('click', e => {
   const a = el.dataset.a, v = el.dataset.v;
   if (a !== 'reset' && a !== 'release' && a !== 'releasesq' && a !== 'sellclub') ui.confirm = null;
   switch (a) {
-    case 'start': { const n = (document.getElementById('agencyName').value || '').trim() || 'Studio Bellavista'; newGame(n); ui.tab = 'home'; render(); window.scrollTo(0, 0); break; }
+    case 'start': { const n = (document.getElementById('agencyName').value || '').trim() || 'Studio Bellavista'; newGame(n); S.tut = 0; ui.tab = 'home'; ui.sheet = { k: 'tut' }; save(); render(); window.scrollTo(0, 0); break; }
     case 'continue': migrate(load()); if (S && S.event) ui.sheet = { k: 'event' }; render(); break;
-    case 'tab': ui.tab = v; ui.sheet = null; render(); window.scrollTo(0, 0); break;
+    case 'tab': ui.tab = v; ui.page = null; ui.sheet = null; render(); window.scrollTo(0, 0); break;
+    case 'page': ui.tab = 'menu'; ui.page = v; ui.sheet = null; render(); window.scrollTo(0, 0); break;
+    case 'menuback': ui.page = null; render(); window.scrollTo(0, 0); break;
+    case 'todo': runTodo(v); break;
+    case 'obj': ui.sheet = { k: 'obj' }; render(); break;
+    case 'tutstart': S.tut = 1; ui.sheet = null; save(); render(); break;
+    case 'tutskip2': S.tut = null; ui.sheet = null; save(); render(); break;
+    case 'tutnext': S.tut = (S.tut || 0) + 1; save(); render(); break;
+    case 'tutskip': S.tut = null; save(); toast('Tutorial saltato. Lo ritrovi in Menu › Impostazioni.'); render(); break;
+    case 'tutdone': S.tut = null; S.cr += 2; save(); toast('+2 crediti di benvenuto'); render(); break;
+    case 'tutagain': S.tut = 1; ui.tab = 'home'; ui.page = null; save(); render(); window.scrollTo(0, 0); break;
+    case 'clausetoggle': ui.clauses = !ui.clauses; render(); break;
     case 'advance': advance(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
     case 'player': ui.sheet = { k: 'player', id: +v }; render(); break;
     case 'nego': ui.sheet = { k: 'nego', id: +v }; ui.ask = 0; ui.fee = 0; render(); break;
