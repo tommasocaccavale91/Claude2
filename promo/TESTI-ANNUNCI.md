@@ -6,14 +6,14 @@ Obiettivo campagne: installazioni app (Android, Google Play).
 | Cartella | Contenuto |
 |---|---|
 | `immagini/` | 3 angoli × 4 formati: `talento`, `tratta`, `scalata` in 1080×1080, 1080×1350, 1080×1920, 1200×628 |
-| `video/` | `il-procuratore_9x16_musica.mp4` (17 s, con sigla) e `il-procuratore_9x16_muto.mp4` (per usare musica delle librerie di TikTok/Meta) |
-| `musica/` | Sigla originale (`.mp3` e `.wav`, 18 s). Composta e sintetizzata da zero per questo gioco: nessun campione o brano di terzi, usabile liberamente negli annunci. |
+| `video/` | `il-procuratore_9x16_phonk.mp4` (17 s, con traccia phonk, montato a tempo) e `il-procuratore_9x16_muto.mp4` (stesso montaggio, per usare musica delle librerie di TikTok/Meta) |
+| `musica/` | Traccia phonk/trap originale (`.mp3` e `.wav`, 18 s, 140 BPM): intro di una battuta, drop a 1,71 s, colpo finale a 15,43 s. Composta e sintetizzata da zero per questo gioco: nessun campione o brano di terzi, usabile liberamente negli annunci. |
 
 ## Dove usare cosa
 | Piattaforma | Immagini | Video |
 |---|---|---|
-| Meta (Advantage+ app) | 1080×1080 e 1080×1350 nel feed, 1080×1920 in Storie e Reel | 9:16 con musica |
-| TikTok (App promotion) | 1080×1920 (solo dove sono ammesse immagini) | 9:16 con musica o muto + musica dalla Commercial Music Library |
+| Meta (Advantage+ app) | 1080×1080 e 1080×1350 nel feed, 1080×1920 in Storie e Reel | 9:16 phonk |
+| TikTok (App promotion) | 1080×1920 (solo dove sono ammesse immagini) | 9:16 phonk, oppure muto + un brano phonk di tendenza dalla Commercial Music Library (cambi di scena ogni 1,71 s: va bene qualsiasi brano a 140 BPM) |
 | Google (campagne per app) | 1200×628, 1080×1080, 1080×1350 | carica il 9:16 su YouTube (anche non in elenco) e collega il link |
 
 Nei formati 9:16 testi e pulsante stanno fuori dalle fasce alta e bassa coperte dall'interfaccia di TikTok e delle Storie.
