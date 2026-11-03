@@ -2,6 +2,8 @@
 
 Obiettivo campagne: installazioni app (Android, Google Play).
 
+> **⚠️ Licenze — da leggere prima di lanciare.** I video `il-procuratore_9x16_voce-musica.mp4` e `il-procuratore_9x16_solo-musica.mp4` usano voce e musica create con il **piano gratuito di ElevenLabs**, che **non consente l'uso commerciale** (annunci inclusi). **Non usarli negli annunci** finché voce e musica non vengono rigenerate con un piano a pagamento attivo. Liberi da vincoli: `il-procuratore_9x16_phonk.mp4` (traccia originale) e `il-procuratore_9x16_muto.mp4` (da abbinare alla Commercial Music Library di TikTok).
+
 ## File
 | Cartella | Contenuto |
 |---|---|
