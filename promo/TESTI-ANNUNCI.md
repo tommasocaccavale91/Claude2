@@ -6,7 +6,7 @@ Obiettivo campagne: installazioni app (Android, Google Play).
 | Cartella | Contenuto |
 |---|---|
 | `immagini/` | 3 angoli × 4 formati: `talento`, `tratta`, `scalata` in 1080×1080, 1080×1350, 1080×1920, 1200×628 |
-| `video/` | `il-procuratore_9x16_phonk.mp4` (17 s, con traccia phonk, montato a tempo) e `il-procuratore_9x16_muto.mp4` (stesso montaggio, per usare musica delle librerie di TikTok/Meta) |
+| `video/` | **`il-procuratore_9x16_voce-musica.mp4`** (18 s, voce ElevenLabs + brano "Riptide Riot", montato a 100 BPM) e **`il-procuratore_9x16_solo-musica.mp4`** (stesso montaggio, solo brano). Alternative: `il-procuratore_9x16_phonk.mp4` (traccia originale, montaggio a 140 BPM) e `il-procuratore_9x16_muto.mp4` |
 | `musica/` | Traccia phonk/trap originale (`.mp3` e `.wav`, 18 s, 140 BPM): intro di una battuta, drop a 1,71 s, colpo finale a 15,43 s. Composta e sintetizzata da zero per questo gioco: nessun campione o brano di terzi, usabile liberamente negli annunci. |
 
 ## Dove usare cosa
