@@ -681,6 +681,8 @@ function sheetBillForm(id) {
     <label class="field"><span>Note</span><input name="notes" maxlength="200" value="${esc(b ? b.notes : '')}" placeholder="es. codice cliente, IBAN, fornitore"></label>
     <div class="actions"><button class="btn primary">Salva</button></div></form>`);
 }
+/* dentro un riquadro incorporato (anteprima web) i download sono bloccati: resta solo la copia del testo */
+let canDownload = true; try { canDownload = window.top === window; } catch (e) { canDownload = false; }
 function sheetSettings() {
   const theme = pref.get('theme', 'auto');
   openSheet('Impostazioni', `<form data-form="settings">
@@ -690,7 +692,7 @@ function sheetSettings() {
     <div class="actions"><button class="btn primary">Salva impostazioni</button></div></form>
     <p class="h3" style="margin-top:22px">Copia di sicurezza</p>
     <p class="empty-s" style="margin:0 0 10px;font-size:14px">I dati restano solo su questo telefono. Fai ogni tanto una copia: serve anche per passarli a un altro telefono.</p>
-    <div class="actions two-c"><button class="btn" data-a="export">Scarica copia</button><button class="btn" data-a="copy">Copia testo</button></div>
+    ${canDownload ? `<div class="actions two-c"><button class="btn" data-a="export">Scarica copia</button><button class="btn" data-a="copy">Copia testo</button></div>` : `<div class="actions"><button class="btn" data-a="copy">Copia il testo della copia</button></div>`}
     <form data-form="import" style="margin-top:14px"><label class="field"><span>Ripristina da una copia</span><input type="file" name="file" accept="application/json,.json,text/plain"><small>Oppure incolla qui il testo della copia:</small></label><label class="field"><span class="vh">Testo della copia</span><textarea name="text" rows="3" placeholder='{"v":1, …}' style="min-height:80px"></textarea></label><div class="actions"><button class="btn ghost">Ripristina</button></div></form>
     <div class="actions" style="margin-top:22px"><button class="btn danger" data-a="reset">Cancella tutti i dati</button></div>`);
 }
@@ -748,7 +750,11 @@ const A = {
     try { await navigator.clipboard.writeText(txt); toast('Copia negli appunti: incollala in una nota o in una mail'); }
     catch (e) { const ta = document.querySelector('[data-form="import"] textarea'); if (ta) { ta.value = txt; ta.select(); } toast('Testo selezionato qui sotto: copialo a mano'); }
   },
-  reset: () => { if (!confirm('Cancellare ricette, spesa, menù e bollette da questo telefono?')) return; closeSheet(); withUndo('Dati cancellati', () => { S = fresh(false); }); }
+  /* conferma in due tocchi, senza finestre di sistema */
+  reset: (d, el) => {
+    if (el.dataset.armed !== '1') { el.dataset.armed = '1'; el.textContent = 'Tocca di nuovo per cancellare tutto'; setTimeout(() => { if (el.isConnected) { el.dataset.armed = ''; el.textContent = 'Cancella tutti i dati'; } }, 4000); return; }
+    closeSheet(); withUndo('Dati cancellati', () => { S = fresh(false); });
+  }
 };
 function setSlot(day, meal, v) {
   const m = S.menu[day] = S.menu[day] || {};
