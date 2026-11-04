@@ -1,0 +1,8 @@
+{
+  "appId": "app.casainordine.famiglia",
+  "appName": "Casa in Ordine",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#F6F1E7"
+  }
+}
