@@ -239,6 +239,41 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .toast button{color:var(--accent);font-weight:700;padding:6px 8px;filter:brightness(1.25)}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:360px){.top h1{font-size:24px}.stat .v{font-size:19px}}
+/* aggiunte: ricettario, frigo, assistente, conti */
+.nav-in{grid-template-columns:repeat(6,1fr)}
+.nav button{font-size:11px}
+.stat{text-align:left;width:100%;display:block}
+button.stat:active{transform:scale(.98)}
+.stats.three{grid-template-columns:repeat(3,1fr);gap:8px}
+.stats.three .stat{padding:10px 12px}
+.stats.three .v{font-size:17px}
+.seg.two{grid-template-columns:1fr 1fr}
+.seg button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.tag.nap{background:var(--accent-soft);color:var(--accent)}
+.tag.mine{background:var(--olive-soft);color:var(--olive)}
+.tag.ai{background:var(--olive-soft);color:var(--olive)}
+.count{font-size:13px;color:var(--muted);margin:0 2px 8px}
+.chipline.fridge{margin:4px 0 10px;align-items:center}
+.fchip{display:inline-flex;align-items:center;gap:4px;font-size:14px;padding:6px 10px;background:var(--ink);color:var(--bg)}
+.sugg{font-size:13.5px;padding:6px 10px;background:var(--surface);border:1px solid var(--line)}
+.ic.xs{width:14px;height:14px}
+.match{display:grid;gap:8px}
+.match .btn{justify-self:start}
+.mt{margin:8px 0 0;font-size:14px;color:var(--muted)}
+.ai-card{background:var(--olive-soft);box-shadow:none}
+.ai-card h2{display:flex;align-items:center;gap:6px;color:var(--olive)}
+.stepper b small{display:block;font-weight:400;font-size:12.5px;color:var(--muted)}
+.serv-q{margin:-4px 0 16px}
+.serv-q .chip{min-width:44px;padding:0 10px}
+.sec-row{display:flex;justify-content:space-between}
+.photo-btn{position:relative;cursor:pointer}
+.btn[disabled]{opacity:.5;cursor:default}
+.thinking{display:flex;gap:8px;justify-content:center;padding:28px 0 8px}
+.thinking .dot{width:10px;height:10px;border-radius:50%;background:var(--olive);animation:pulse 1.2s infinite ease-in-out}
+.thinking .dot:nth-child(2){animation-delay:.2s}.thinking .dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.thinking .dot{animation:none}}
+@media (max-width:380px){.stats.three .v{font-size:15px}.nav button{font-size:10.5px}}
 </style>
 </head>
 <body>
@@ -273,8 +308,11 @@ const fmtLong = s => { const d = parseD(s); return `${GIORNI[d.getDay()]} ${d.ge
 const fmtFull = s => { const d = parseD(s); return `${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`; };
 const EUR = new Intl.NumberFormat('it-IT', {style:'currency', currency:'EUR'});
 const euro = n => EUR.format(n || 0);
-const parseMoney = s => { s = String(s || '').trim().replace(/[€\s]/g, ''); if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = parseFloat(s); return isNaN(n) ? 0 : Math.round(n * 100) / 100; };
+const parseMoney = s => { s = String(s ?? '').trim().replace(/[€\s]/g, ''); if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = parseFloat(s); return isNaN(n) ? 0 : Math.round(n * 100) / 100; };
+/* importi di un estratto conto: "-1.234,56", "1.234,56-", "(12,00)" */
+const parseSigned = s => { s = String(s ?? '').trim().replace(/[€\s]/g, ''); if (!s) return 0; const neg = /^-|-$|^\(/.test(s); const v = parseMoney(s.replace(/^[-+(]|[-)]$/g, '')); return neg ? -v : v; };
 const moneyIn = n => n ? String(n).replace('.', ',') : '';
+const norm = s => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 const P = {
   home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -282,6 +320,7 @@ const P = {
   cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
   cart:'<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.7 12.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 7H6"/>',
   bill:'<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/>',
+  wallet:'<path d="M3 7a2 2 0 0 1 2-2h13v4"/><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   gear:'<path d="M4 6h9M18 6h2M4 12h3M12 12h8M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
@@ -292,21 +331,25 @@ const P = {
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
-  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  upload:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  fridge:'<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M5 10h14M8.5 6v2M8.5 13v3"/>'
 };
 const ic = (n, c = '') => `<svg viewBox="0 0 24 24" class="ic ${c}" aria-hidden="true">${P[n]}</svg>`;
 
 /* ---------- dati di riferimento ---------- */
 const AISLES = [['frutta','Frutta e verdura','🥬'],['pane','Pane e forno','🥖'],['carne','Carne e pesce','🥩'],['latte','Latticini e uova','🧀'],['dispensa','Dispensa','🥫'],['surgelati','Surgelati','🧊'],['bevande','Bevande','🧃'],['casa','Casa e igiene','🧽'],['altro','Altro','🛒']];
 const AISLE_KW = {
-  frutta:['mela','mele','pera','pere','banan','aranc','limon','mandarin','fragol','uva ','kiwi','pesch','albicoc','ciliegi','anguri','melone','insalat','lattug','rucola','spinac','pomodor','zucchin','melanzan','peperon','carot','cipoll','aglio','patat','sedano','finocch','broccol','cavol','zucca','funghi','basilico','prezzemol','rosmarin','salvia','menta','avocado','porr','fagiolin','asparag','carciof','cetriol','frutta','verdur','zenzero','scalogn','radicchi','bietol','prugn','ananas','lime'],
-  pane:['pane','panin','focacc','pizza','grissin','fette biscottate','piadin','brioche','cornett','pangrattato','pan grattato','pasta sfoglia','pasta brisé','pasta frolla'],
-  carne:['carne','pollo','manzo','maiale','vitello','tacchino','agnello','salsicc','macinat','prosciutt','salame','mortadell','speck','pancett','guancial','bresaola','wurstel','pesce','salmone','merluzz','orata','branzin','gamber','cozze','vongol','calamar','polpo','seppi','hamburger','fettine','bistecc','petto di','cotolett','spezzatino','tonno fresco'],
-  latte:['latte','yogurt','burro','panna','mozzarell','parmigian','grana','pecorin','ricott','stracchin','gorgonzol','formagg','mascarpon','scamorz','provola','fontina','emmental','uova','uovo','tuorl','album'],
+  frutta:['mela','mele','pera','pere','banan','aranc','limon','mandarin','fragol','uva ','kiwi','pesch','albicoc','ciliegi','anguri','melone','insalat','lattug','rucola','spinac','pomodor','zucchin','melanzan','peperon','carot','cipoll','aglio','patat','sedano','finocch','broccol','cavol','zucca','funghi','basilico','prezzemol','rosmarin','salvia','menta','avocado','porr','fagiolin','asparag','carciof','cetriol','frutta','verdur','zenzero','scalogn','radicchi','bietol','prugn','ananas','lime','scarola','friariell','cime di rapa','papaccell'],
+  pane:['pane','panin','focacc','pizza','grissin','fette biscottate','piadin','brioche','cornett','pangrattato','pan grattato','pasta sfoglia','pasta brisé','pasta frolla','savoiardi'],
+  carne:['carne','pollo','manzo','maiale','vitello','tacchino','agnello','salsicc','macinat','prosciutt','salame','mortadell','speck','pancett','guancial','bresaola','wurstel','pesce','salmone','merluzz','orata','branzin','gamber','cozze','vongol','calamar','polpo','seppi','hamburger','fettine','bistecc','petto di','cotolett','costolett','spezzatino','tonno fresco','muscolo','lacerto','girello','tracchie'],
+  latte:['latte','yogurt','burro','panna','mozzarell','fior di latte','parmigian','grana','pecorin','ricott','stracchin','gorgonzol','formagg','mascarpon','scamorz','provola','provolone','fontina','emmental','uova','uovo','tuorl','album'],
   surgelati:['surgelat','gelato','bastoncini','sofficini'],
-  bevande:['acqua','vino','birra','succo','bibita','coca','aranciata','tè freddo','spremuta','latte di soia','latte di mandorla'],
+  bevande:['acqua','vino','birra','succo','bibita','coca','aranciata','tè freddo','spremuta','latte di soia','latte di mandorla','caffè in'],
   casa:['detersiv','sapone','shampoo','bagnoschiuma','dentifric','spazzolin','carta igienic','scottex','carta da cucina','carta forno','tovagliol','sacchett','pellicol','alluminio','spugn','candeggin','ammorbident','pannolin','assorbent','deodorant','salviett','lavastovigl','pastiglie','sgrassator','anticalcare','crema mani','cotton fioc'],
-  dispensa:['pasta','spaghett','penne','fusill','rigaton','tagliatell','lasagn','riso','farina','zucchero','sale','pepe','olio','aceto','passata','passata di pomodoro','pomodori pelati','concentrato di pomodoro','olio extravergine','pelati','concentrato','fagioli','ceci','lenticch','tonno','sgombro','biscott','cereali','marmellat','miele','nutella','cioccolat','caffè','tè','camomill','lievito','brodo','dado','origano','curry','paprika','noce moscata','cannella','pinoli','noci','mandorl','olive','capperi','acciugh','maionese','ketchup','senape','cacao','vanillin','amido','fecola','polenta','couscous','orzo','farro','crackers','gallette','sugo','pesto','besciamella','vino bianco','vino rosso']
+  dispensa:['pasta','spaghett','penne','fusill','rigaton','tagliatell','lasagn','ziti','bucatin','tonnarell','trofie','orecchiett','ditalin','maccheron','riso','farina','zucchero','sale','pepe','olio','olio di semi','olio extravergine','aceto','passata','passata di pomodoro','pomodori pelati','concentrato di pomodoro','pelati','fagioli','ceci','lenticch','tonno','sgombro','biscott','cereali','marmellat','miele','nutella','cioccolat','caffè','tè','camomill','lievito','brodo','dado','origano','curry','paprika','noce moscata','cannella','pinoli','noci','mandorl','olive','capperi','acciugh','maionese','ketchup','senape','cacao','vanillin','amido','fecola','polenta','couscous','orzo','farro','crackers','gallette','sugo','pesto','besciamella','vino bianco','vino rosso','uvetta','zafferano','canditi','strutto','grano cotto','colla di pesce','peperoncino','diavolilli','aroma','gnocchi']
 };
 /* vince la parola chiave più lunga: "concentrato di pomodoro" va in dispensa, non in frutta e verdura */
 const guessAisle = name => { const n = ' ' + String(name).toLowerCase() + ' '; let best = 'altro', len = 0; for (const [k, list] of Object.entries(AISLE_KW)) for (const w of list) if (w.length > len && n.includes(w)) { best = k; len = w.length; } return best; };
@@ -317,57 +360,305 @@ const catOf = k => CATS.find(c => c[0] === k) || CATS[CATS.length - 1];
 const REC = {none:['Una tantum',0], m1:['Ogni mese',1], m2:['Ogni 2 mesi',2], m3:['Ogni 3 mesi',3], m6:['Ogni 6 mesi',6], m12:['Ogni anno',12]};
 const MEALS = [['pranzo','Pranzo'],['cena','Cena']];
 
+/* entrate e spese */
+const MCATS = [
+  ['spesa','Spesa alimentare','🛒','out'],['casa','Casa e bollette','🏠','out'],['auto','Auto e trasporti','🚗','out'],['ristoranti','Ristoranti e bar','🍕','out'],
+  ['salute','Salute','🩺','out'],['figli','Figli e scuola','🎒','out'],['shopping','Acquisti','🛍️','out'],['svago','Svago e viaggi','🎬','out'],
+  ['abbonamenti','Abbonamenti','📺','out'],['animali','Animali','🐾','out'],['tasse','Tasse e banca','🧾','out'],['uscite','Altre spese','📌','out'],
+  ['stipendio','Stipendio','💼','in'],['pensione','Pensione','🧓','in'],['rimborsi','Rimborsi','↩️','in'],['entrate','Altre entrate','✨','in']
+];
+const mcatOf = k => MCATS.find(c => c[0] === k) || MCATS[11];
+const BILL_TO_MCAT = {auto:'auto', tasse:'tasse', abbonamenti:'abbonamenti', scuola:'figli', salute:'salute', altro:'uscite'};
+/* parole che compaiono nelle descrizioni dei movimenti delle banche italiane */
+const MOVE_KW = {
+  spesa:['esselunga','conad','coop','lidl','eurospin','carrefour','despar','eurospar','interspar','penny','aldi','tigre','sigma','crai','deco ','todis','famila','iper','bennet','unes','naturasi','supermerc','market','alimentari','macelleria','panificio','ortofrutta','pescheria','tuodi','md spa','pam ','sole 365','dok ','gros '],
+  casa:['enel','a2a','hera','iren','edison','plenitude','acea','sorgenia','iberdrola','engie','illumia','abc napoli','gori ','acquedotto','tari','condominio','affitto','mutuo','tim ','telecom','vodafone','windtre','wind tre','fastweb','iliad','ikea','leroy','brico','obi '],
+  auto:['q8','enilive','eni station','tamoil','esso','carburant','autostrad','telepass','parcheggio','trenitalia','italo','atm ','anm ','unico campania','eav ','taxi','uber','freenow','officina','gommista','bollo auto'],
+  ristoranti:['ristorante','pizzeria','trattoria','osteria','bar ','caffe','mcdonald','burger king','deliveroo','just eat','glovo','kfc','sushi','gelateria','pasticceria','rosticceria'],
+  salute:['farmacia','parafarmacia','ospedale','asl ','ticket','medic','dentist','ottica','analisi','poliambulatorio'],
+  figli:['scuola','asilo','libreria','cartoleria','mensa','giocattol','toys'],
+  shopping:['amazon','zalando','zara','h&m','ovs','decathlon','mediaworld','unieuro','euronics','shein','primark','coin ','calzedonia','tezenis','temu','ebay','paypal'],
+  svago:['cinema','teatro','booking','airbnb','ryanair','easyjet','ita airways','palestra','museo','ticketone','steam','playstation'],
+  abbonamenti:['netflix','spotify','disney','dazn','prime video','amazon prime','now tv','youtube','apple.com','icloud','google one','audible','sky '],
+  animali:['veterinar','arcaplanet','zooplus','isola dei tesori'],
+  tasse:['f24','agenzia entrate','imposta','commission','canone','bollo','interessi','pagopa','spese tenuta'],
+  stipendio:['stipend','emolument','retribu','busta paga','salario'],
+  pensione:['pension','inps'],
+  rimborsi:['rimbors','storno','reso ']
+};
+function guessMcat(desc, kind) {
+  const n = ' ' + norm(desc) + ' ';
+  let best = null, len = 0;
+  for (const [k, list] of Object.entries(MOVE_KW)) {
+    if (mcatOf(k)[3] !== kind) continue;
+    for (const w of list) if (w.length > len && n.includes(w)) { best = k; len = w.length; }
+  }
+  return best || (kind === 'in' ? 'entrate' : 'uscite');
+}
+
 /* ingredienti: "200 g farina" -> {qty:200, unit:'g', name:'farina'} */
-const UNITS = 'kg|gr|g|hg|mg|lt|l|dl|cl|ml|cucchiai|cucchiaio|cucchiaini|cucchiaino|pz|pezzi|pezzo|spicchi|spicchio|bicchieri|bicchiere|tazze|tazza|fette|fetta|confezioni|confezione|scatole|scatola|barattoli|barattolo|bottiglie|bottiglia|vasetti|vasetto|mazzi|mazzo|rametti|rametto|foglie|pizzico|pizzichi|bustine|bustina|panetti|panetto|vaschette|vaschetta|buste|busta|lattine|lattina|rotoli|rotolo';
+const UNITS = 'kg|gr|g|hg|mg|lt|l|dl|cl|ml|cucchiai|cucchiaio|cucchiaini|cucchiaino|pz|pezzi|pezzo|spicchi|spicchio|bicchieri|bicchiere|tazze|tazza|fette|fetta|confezioni|confezione|scatole|scatola|barattoli|barattolo|bottiglie|bottiglia|vasetti|vasetto|mazzi|mazzo|rametti|rametto|foglie|pizzico|pizzichi|bustine|bustina|panetti|panetto|vaschette|vaschetta|buste|busta|lattine|lattina|rotoli|rotolo|fiale|fiala|cespi|cespo|filetti|filetto|coste|costa|bacche|bacca|croste|crosta';
 const ING_RE = new RegExp(`^\\s*(\\d+(?:[.,]\\d+)?(?:\\s*\\/\\s*\\d+)?)?\\s*(?:(${UNITS})\\.?\\s+)?(?:(?:di|d')\\s*)?(.+?)\\s*$`, 'i');
-function parseQty(t) { if (!t) return null; t = t.replace(',', '.').replace(/\s/g, ''); if (t.includes('/')) { const [a, b] = t.split('/').map(Number); return b ? a / b : null; } const n = parseFloat(t); return isNaN(n) ? null : n; }
+function parseQty(t) { if (!t) return null; t = String(t).replace(',', '.').replace(/\s/g, ''); if (t.includes('/')) { const [a, b] = t.split('/').map(Number); return b ? a / b : null; } const n = parseFloat(t); return isNaN(n) ? null : n; }
 function parseIng(line) { const m = String(line).match(ING_RE); if (!m) return null; const name = (m[3] || '').trim(); if (!name) return null; const qty = parseQty(m[1]); return {qty, unit: qty == null ? '' : (m[2] || '').toLowerCase(), name}; }
-const fmtQty = n => { if (n == null || n === '') return ''; const r = n >= 10 ? Math.round(n) : n >= 1 ? Math.round(n * 10) / 10 : Math.round(n * 100) / 100; return String(r).replace('.', ','); };
+const fmtQty = n => { if (n == null || n === '') return ''; if (Math.abs(n - 0.5) < 0.001) return '½'; const r = n >= 10 ? Math.round(n) : n >= 1 ? Math.round(n * 10) / 10 : Math.round(n * 100) / 100; return String(r).replace('.', ','); };
 /* le cose che si contano (uova, zucchine, spicchi…) restano intere quando si ricalcolano le dosi */
-const COUNT_UNITS = new Set(['', 'pz', 'pezzi', 'pezzo', 'spicchi', 'spicchio', 'fette', 'fetta', 'confezioni', 'confezione', 'scatole', 'scatola', 'barattoli', 'barattolo', 'bottiglie', 'bottiglia', 'vasetti', 'vasetto', 'mazzi', 'mazzo', 'bustine', 'bustina', 'panetti', 'panetto', 'vaschette', 'vaschetta', 'buste', 'busta', 'lattine', 'lattina', 'rotoli', 'rotolo']);
+const COUNT_UNITS = new Set(['', 'pz', 'pezzi', 'pezzo', 'spicchi', 'spicchio', 'fette', 'fetta', 'confezioni', 'confezione', 'scatole', 'scatola', 'barattoli', 'barattolo', 'bottiglie', 'bottiglia', 'vasetti', 'vasetto', 'mazzi', 'mazzo', 'bustine', 'bustina', 'panetti', 'panetto', 'vaschette', 'vaschetta', 'buste', 'busta', 'lattine', 'lattina', 'rotoli', 'rotolo', 'fiale', 'fiala', 'cespi', 'cespo', 'filetti', 'filetto', 'coste', 'costa', 'bacche', 'bacca', 'croste', 'crosta']);
 const SPOON_UNITS = new Set(['cucchiai', 'cucchiaio', 'cucchiaini', 'cucchiaino', 'pizzico', 'pizzichi', 'foglie', 'rametti', 'rametto']);
-const scaleQty = (i, f, up) => { if (i.qty == null) return null; const q = i.qty * f; if (f === 1 || !COUNT_UNITS.has(i.unit || '')) return Math.round(q * 100) / 100; return Math.max(1, up ? Math.ceil(q - 0.05) : Math.round(q)); };
+const HALF_UNITS = new Set(['bicchieri', 'bicchiere', 'tazze', 'tazza']);
+const scaleQty = (i, f, up) => {
+  if (i.qty == null) return null; const q = i.qty * f;
+  if (f === 1) return i.qty;
+  if (COUNT_UNITS.has(i.unit || '')) return Math.max(1, up ? Math.ceil(q - 0.05) : Math.round(q));
+  if (SPOON_UNITS.has(i.unit) || HALF_UNITS.has(i.unit)) return Math.max(0.5, Math.round(q * 2) / 2);
+  if (['g', 'gr', 'ml'].includes(i.unit)) { const st = q >= 1000 ? 50 : q >= 200 ? 10 : q >= 50 ? 5 : 1; return Math.round(q / st) * st; }
+  return Math.round(q * 100) / 100;
+};
 const ingText = (i, f = 1) => [i.qty != null ? fmtQty(scaleQty(i, f)) : '', i.unit, i.name].filter(Boolean).join(' ');
+
+/* ---------- ricettario: classici napoletani e italiani ----------
+   Formato: [categoria, origine, nome, porzioni, minuti, etichette, ingredienti separati da |, passaggi separati da |] */
+const LIB_RAW = [
+/* ===== Napoletane ===== */
+['Pizze e lievitati','Napoletana','Pizza Margherita',4,90,'forno,classico',
+ '1 kg farina 00|600 ml acqua|25 g sale|3 g lievito di birra fresco|400 g pomodori pelati|500 g fior di latte|basilico q.b.|olio extravergine q.b.',
+ 'Sciogli il lievito nell\'acqua, aggiungi metà farina e mescola.|Unisci il resto della farina e per ultimo il sale; impasta 15 minuti fino a un impasto liscio.|Fai lievitare coperto 2 ore, poi dividi in 4 panetti e lascia lievitare altre 4-6 ore.|Schiaccia i pomodori con un pizzico di sale e taglia il fior di latte a dadini, lasciandolo scolare.|Stendi i panetti con le mani lasciando il bordo, condisci con pomodoro e un filo d\'olio.|Inforna alla massima temperatura (250-280 °C) per 8-10 minuti, aggiungi il fior di latte negli ultimi 3 minuti e il basilico all\'uscita.'],
+['Primi','Napoletana','Ragù napoletano',6,240,'domenica,classico',
+ '800 g muscolo di manzo|400 g tracchie di maiale|2 cipolle|1 bicchiere vino rosso|1,5 l passata di pomodoro|2 cucchiai concentrato di pomodoro|500 g ziti|4 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Trita finemente le cipolle e falle appassire nell\'olio in una pentola capiente.|Aggiungi la carne a pezzi grandi e rosolala bene su tutti i lati.|Sfuma con il vino rosso, poi aggiungi il concentrato sciolto in poca acqua calda.|Versa la passata, aggiungi il basilico e porta a bollore.|Cuoci a fuoco minimo con il coperchio socchiuso per almeno 3 ore: il ragù deve "pippiare".|Condisci gli ziti spezzati con il sugo e servi la carne come secondo.'],
+['Primi','Napoletana','Genovese napoletana',4,210,'domenica,classico',
+ '1,5 kg cipolle ramate|700 g lacerto di manzo|1 carota|1 costa sedano|1 bicchiere vino bianco|400 g ziti|60 g parmigiano|5 cucchiai olio extravergine|sale q.b.|pepe q.b.',
+ 'Affetta sottilmente le cipolle e trita carota e sedano.|Rosola la carne a pezzi nell\'olio, poi aggiungi tutte le verdure.|Copri e cuoci a fuoco bassissimo per 3 ore, mescolando ogni tanto: le cipolle diventano una crema.|Sfuma con il vino bianco a metà cottura e aggiusta di sale e pepe.|Cuoci gli ziti spezzati, condiscili con la genovese e il parmigiano.'],
+['Primi','Napoletana','Pasta e patate con la provola',4,45,'piatto unico,economico',
+ '350 g pasta mista|800 g patate|150 g provola|50 g pancetta|1 cipolla|1 carota|1 costa sedano|4 pomodorini|50 g parmigiano|1 crosta di parmigiano|3 cucchiai olio extravergine|sale q.b.',
+ 'Trita cipolla, carota e sedano e rosolali nell\'olio con la pancetta a dadini.|Aggiungi le patate a cubetti, i pomodorini e la crosta di parmigiano.|Copri con acqua calda e cuoci 20 minuti, finché le patate iniziano a sfaldarsi.|Butta la pasta direttamente nella pentola e cuocila aggiungendo acqua calda poco alla volta.|A fuoco spento unisci parmigiano e provola a dadini, mescola e lascia riposare 2 minuti.'],
+['Primi','Napoletana','Pasta e fagioli alla napoletana',4,40,'piatto unico,economico',
+ '300 g pasta mista|500 g fagioli cannellini lessati|200 g pomodorini|2 spicchi aglio|1 costa sedano|1 peperoncino|4 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Soffriggi aglio, sedano tritato e peperoncino nell\'olio.|Aggiungi i pomodorini tagliati e cuoci 5 minuti.|Unisci i fagioli con un po\' della loro acqua e schiacciane una parte con la forchetta.|Aggiungi acqua calda, porta a bollore e cuoci la pasta nella pentola.|Servi "azzeccata", cremosa, con prezzemolo e un filo d\'olio crudo.'],
+['Primi','Napoletana','Pasta e lenticchie',4,40,'piatto unico,vegetariano,economico',
+ '250 g lenticchie secche|200 g pasta mista|1 carota|1 costa sedano|1 cipolla|2 cucchiai concentrato di pomodoro|3 cucchiai olio extravergine|sale q.b.',
+ 'Trita carota, sedano e cipolla e falli appassire nell\'olio.|Aggiungi le lenticchie sciacquate e il concentrato, copri con acqua.|Cuoci 25 minuti aggiungendo acqua calda se serve.|Butta la pasta direttamente nella pentola e cuocila nel brodo.|Lascia riposare 5 minuti prima di servire.'],
+['Primi','Napoletana','Spaghetti alle vongole',4,30,'pesce,classico',
+ '360 g spaghetti|1 kg vongole veraci|2 spicchi aglio|1 peperoncino|1/2 bicchiere vino bianco|5 cucchiai olio extravergine|prezzemolo q.b.',
+ 'Lascia spurgare le vongole in acqua salata per almeno 2 ore e sciacquale.|In una padella ampia scalda olio, aglio e peperoncino, poi aggiungi le vongole e copri.|Quando si aprono sfuma con il vino; togli metà vongole dal guscio e filtra il fondo se c\'è sabbia.|Scola gli spaghetti molto al dente e finisci la cottura in padella con il sugo delle vongole.|Completa con abbondante prezzemolo tritato.'],
+['Primi','Napoletana','Spaghetti aglio, olio e peperoncino',4,15,'veloce,economico,vegetariano',
+ '360 g spaghetti|3 spicchi aglio|1 peperoncino|6 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Cuoci gli spaghetti in abbondante acqua salata.|Nel frattempo scalda a fuoco dolce l\'olio con l\'aglio a fettine e il peperoncino, senza far bruciare l\'aglio.|Scola la pasta al dente tenendo un mestolo d\'acqua di cottura.|Salta gli spaghetti nell\'olio con un po\' d\'acqua finché si crea una crema, poi aggiungi il prezzemolo.'],
+['Primi','Napoletana','Spaghetti alla puttanesca',4,25,'veloce,classico',
+ '360 g spaghetti|600 g pomodori pelati|100 g olive di Gaeta|30 g capperi|2 spicchi aglio|1 peperoncino|4 cucchiai olio extravergine|prezzemolo q.b.',
+ 'Sciacqua i capperi e denocciola le olive.|Soffriggi aglio e peperoncino nell\'olio, aggiungi olive e capperi.|Unisci i pelati schiacciati e cuoci 15 minuti.|Scola gli spaghetti al dente, saltali nel sugo e completa con il prezzemolo.'],
+['Primi','Napoletana','Pasta alla Nerano',4,40,'vegetariano,estate',
+ '400 g spaghetti|800 g zucchine|150 g provolone del Monaco|30 g burro|1 spicchio aglio|1 l olio di semi|basilico q.b.|sale q.b.',
+ 'Affetta le zucchine a rondelle sottili e friggile poche alla volta nell\'olio di semi finché sono dorate.|Mettile in una ciotola con aglio e basilico e lasciale insaporire, meglio se per qualche ora.|Togli l\'aglio e frulla un terzo delle zucchine con un mestolo d\'acqua di cottura.|Cuoci gli spaghetti, scolali al dente e mantecali fuori dal fuoco con zucchine, crema, burro e provolone grattugiato.'],
+['Primi','Napoletana','Gnocchi alla sorrentina',4,40,'forno,vegetariano',
+ '1 kg gnocchi di patate|600 ml passata di pomodoro|300 g fior di latte|60 g parmigiano|1 spicchio aglio|3 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Prepara un sugo con olio, aglio, passata e basilico: 20 minuti a fuoco basso.|Taglia il fior di latte a dadini e lascialo scolare.|Lessa gli gnocchi e scolali appena salgono a galla.|Condiscili con il sugo, metà del fior di latte e del parmigiano e versali in una teglia.|Copri con il resto del formaggio e gratina in forno a 220 °C per 10 minuti.'],
+['Primi','Napoletana','Frittata di maccheroni',4,40,'riciclo,gita',
+ '400 g spaghetti|6 uova|100 g parmigiano|150 g provola|100 g salame napoletano|3 cucchiai olio extravergine|pepe q.b.|sale q.b.',
+ 'Cuoci gli spaghetti, scolali al dente e lasciali intiepidire (vanno bene anche quelli avanzati).|Sbatti le uova con parmigiano, sale e pepe e unisci la pasta.|Aggiungi provola e salame a dadini e mescola bene.|Scalda l\'olio in una padella antiaderente, versa la pasta e compatta.|Cuoci a fuoco medio 8-10 minuti per lato, girando con un coperchio, finché è dorata.'],
+['Secondi','Napoletana','Parmigiana di melanzane',6,90,'forno,vegetariano,classico',
+ '1,5 kg melanzane|700 ml passata di pomodoro|400 g fior di latte|100 g parmigiano|1 l olio di semi|1 spicchio aglio|3 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Affetta le melanzane per il lungo, salale e lasciale perdere l\'acqua per un\'ora; poi asciugale.|Friggile nell\'olio di semi e scolale su carta da cucina.|Prepara un sugo semplice con olio, aglio, passata e basilico.|In una teglia alterna sugo, melanzane, fior di latte a fette, parmigiano e basilico.|Finisci con sugo e parmigiano e cuoci in forno a 180 °C per 40 minuti; lascia riposare prima di tagliare.'],
+['Secondi','Napoletana','Polpette al sugo',4,90,'classico,domenica',
+ '500 g carne macinata di manzo|150 g pane raffermo|2 uova|60 g parmigiano|30 g pecorino|1 spicchio aglio|30 g pinoli|30 g uvetta|1 l passata di pomodoro|1 l olio di semi|prezzemolo q.b.|sale q.b.|pepe q.b.',
+ 'Ammolla il pane in acqua e strizzalo bene.|Impasta la carne con pane, uova, formaggi, aglio e prezzemolo tritati, pinoli, uvetta, sale e pepe.|Forma polpette grandi come un mandarino e friggile nell\'olio di semi finché sono dorate.|Prepara il sugo con la passata e un filo d\'olio, aggiungi le polpette.|Cuoci a fuoco basso per 40 minuti.'],
+['Secondi','Napoletana','Salsiccia e friarielli',4,35,'classico,inverno',
+ '8 salsicce di maiale|1 kg friarielli|3 spicchi aglio|1 peperoncino|5 cucchiai olio extravergine|sale q.b.',
+ 'Pulisci i friarielli tenendo le foglie e le cime più tenere; lavali bene.|In una padella capiente scalda olio, aglio e peperoncino, poi aggiungi i friarielli ancora umidi.|Copri e cuoci 15-20 minuti mescolando, aggiusta di sale.|In un\'altra padella rosola le salsicce bucherellate, poi uniscile ai friarielli per 5 minuti.'],
+['Secondi','Napoletana','Impepata di cozze',4,25,'pesce,estate',
+ '2 kg cozze|2 spicchi aglio|3 cucchiai olio extravergine|1 limone|8 fette pane casereccio|prezzemolo q.b.|pepe q.b.',
+ 'Pulisci le cozze raschiando il guscio ed eliminando la barbetta.|In una pentola ampia scalda olio e aglio, aggiungi le cozze e copri.|Cuoci a fuoco vivo 5 minuti scuotendo la pentola, finché si aprono.|Completa con abbondante pepe nero, prezzemolo e succo di limone; servi con il pane abbrustolito.'],
+['Antipasti e fritti','Napoletana','Mozzarella in carrozza',4,30,'fritto,bambini',
+ '8 fette pane in cassetta|300 g mozzarella|3 uova|100 ml latte|100 g farina|150 g pangrattato|1 l olio di semi|sale q.b.',
+ 'Taglia la mozzarella a fette e lasciala scolare almeno mezz\'ora.|Fai 4 panini con pane e mozzarella e premi bene i bordi.|Passali nella farina, poi nelle uova sbattute con il latte e il sale, poi nel pangrattato.|Friggili in olio caldo finché sono dorati da entrambi i lati e scolali su carta.'],
+['Antipasti e fritti','Napoletana','Crocchè di patate',6,60,'fritto,friggitoria',
+ '1 kg patate|2 uova|60 g parmigiano|150 g provola|150 g pangrattato|1 l olio di semi|prezzemolo q.b.|sale q.b.|pepe q.b.',
+ 'Lessa le patate con la buccia, sbucciale e schiacciale ancora calde.|Unisci un uovo, parmigiano, prezzemolo, sale e pepe e impasta.|Forma dei cilindri con un bastoncino di provola al centro.|Passali nell\'altro uovo sbattuto e nel pangrattato.|Friggili in olio caldo finché sono dorati.'],
+['Contorni','Napoletana','Scarola alla napoletana',4,30,'vegetariano,inverno',
+ '2 cespi scarola|50 g olive di Gaeta|30 g capperi|30 g pinoli|30 g uvetta|2 spicchi aglio|4 filetti acciughe|4 cucchiai olio extravergine',
+ 'Lava la scarola e scottala 2 minuti in acqua bollente; scolala bene.|Soffriggi aglio e acciughe nell\'olio finché le acciughe si sciolgono.|Aggiungi olive, capperi, pinoli e uvetta ammollata.|Unisci la scarola e cuoci coperto 10 minuti, poi scoperto per asciugare.'],
+['Contorni','Napoletana','Zucchine alla scapece',4,40,'vegetariano,estate',
+ '1 kg zucchine|2 spicchi aglio|4 cucchiai aceto di vino bianco|1 l olio di semi|menta q.b.|sale q.b.',
+ 'Taglia le zucchine a rondelle e lasciale asciugare all\'aria per un\'ora.|Friggile poche alla volta finché sono ben dorate.|Disponile a strati in una ciotola con aglio a fettine, menta, sale e un filo d\'aceto.|Lasciale insaporire qualche ora: sono più buone il giorno dopo.'],
+['Contorni','Napoletana','Insalata di rinforzo',6,30,'natale,vegetariano',
+ '1 cavolfiore|200 g papaccelle sott\'aceto|100 g olive|50 g capperi|4 filetti acciughe|3 cucchiai aceto di vino bianco|5 cucchiai olio extravergine|sale q.b.',
+ 'Dividi il cavolfiore in cimette e lessalo al dente in acqua salata.|Scolalo e lascialo raffreddare.|Unisci papaccelle a pezzi, olive, capperi e acciughe.|Condisci con olio, aceto e sale e lascia riposare qualche ora.'],
+['Antipasti e fritti','Napoletana','Insalata caprese',4,10,'veloce,estate,vegetariano,senza glutine',
+ '400 g mozzarella di bufala|4 pomodori|4 cucchiai olio extravergine|basilico q.b.|origano q.b.|sale q.b.',
+ 'Affetta pomodori e mozzarella dello stesso spessore.|Alternali su un piatto da portata con le foglie di basilico.|Condisci con sale, origano e olio extravergine.'],
+['Pizze e lievitati','Napoletana','Casatiello',8,240,'pasqua,forno',
+ '500 g farina 00|300 ml acqua|12 g lievito di birra fresco|100 g strutto|150 g salame napoletano|150 g provolone|50 g pecorino|50 g parmigiano|4 uova|10 g sale|pepe q.b.',
+ 'Impasta farina, acqua, lievito e metà strutto; aggiungi sale e pepe.|Stendi l\'impasto, spalma il resto dello strutto e distribuisci salumi e formaggi a dadini e grattugiati.|Arrotola e chiudi a ciambella in uno stampo unto.|Sistema le uova crude intere sopra, fermandole con due strisce di impasto a croce.|Lascia lievitare 3 ore e cuoci a 180 °C per un\'ora.'],
+['Dolci','Napoletana','Pastiera napoletana',10,180,'pasqua,forno',
+ '500 g farina 00|200 g zucchero|200 g burro|3 uova|350 g ricotta|300 g grano cotto|250 ml latte|300 g zucchero|4 uova|100 g canditi|1 fiala aroma fiori d\'arancio|30 g burro|1 limone',
+ 'Prepara la frolla con farina, 200 g di zucchero, burro e 3 uova; riposo in frigo un\'ora.|Cuoci il grano con latte, 30 g di burro e scorza di limone finché diventa una crema.|Lavora la ricotta con lo zucchero, poi aggiungi i tuorli, il grano, i canditi e l\'aroma.|Incorpora gli albumi montati a neve.|Fodera lo stampo con la frolla, versa il ripieno e fai le strisce a grata.|Cuoci a 170 °C per un\'ora e mezza e lascia riposare almeno un giorno.'],
+['Dolci','Napoletana','Struffoli',8,90,'natale,fritto',
+ '500 g farina 00|4 uova|50 g burro|50 g zucchero|1 limone|1 arancia|300 g miele|100 g canditi|1 l olio di semi|diavolilli q.b.',
+ 'Impasta farina, uova, burro, zucchero e scorze grattugiate; riposo 30 minuti.|Forma dei cordoncini e tagliali a palline di 1 cm.|Friggili pochi alla volta finché sono dorati.|Sciogli il miele in una padella larga, spegni e versa gli struffoli mescolando.|Unisci canditi e diavolilli e disponi a ciambella.'],
+['Dolci','Napoletana','Torta caprese',8,60,'senza glutine,forno',
+ '200 g mandorle|200 g cioccolato fondente|150 g burro|150 g zucchero|4 uova|zucchero a velo q.b.',
+ 'Trita finemente le mandorle con il cioccolato.|Monta il burro morbido con lo zucchero, poi aggiungi i tuorli uno alla volta.|Unisci il trito di mandorle e cioccolato.|Incorpora gli albumi montati a neve con delicatezza.|Cuoci a 170 °C per 45 minuti e spolvera di zucchero a velo quando è fredda.'],
+
+/* ===== Italiane ===== */
+['Primi','Italiana','Spaghetti al pomodoro e basilico',4,25,'veloce,vegetariano,bambini',
+ '320 g spaghetti|400 g passata di pomodoro|1 spicchio aglio|3 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Scalda l\'olio con l\'aglio schiacciato a fuoco dolce per due minuti.|Aggiungi la passata, sala e cuoci 15 minuti a fuoco basso.|Cuoci gli spaghetti in acqua salata e scolali al dente.|Saltali nel sugo con qualche foglia di basilico e servi.'],
+['Primi','Italiana','Spaghetti alla carbonara',4,20,'veloce,romana,classico',
+ '360 g spaghetti|150 g guanciale|4 tuorli|1 uovo|60 g pecorino romano|pepe q.b.',
+ 'Taglia il guanciale a listarelle e rosolalo in padella senza olio finché è croccante.|Sbatti tuorli e uovo con il pecorino e molto pepe.|Scola gli spaghetti al dente e saltali con il guanciale fuori dal fuoco.|Aggiungi le uova e un po\' d\'acqua di cottura, mescolando velocemente fino a una crema.'],
+['Primi','Italiana','Bucatini all\'amatriciana',4,30,'romana,classico',
+ '360 g bucatini|150 g guanciale|400 g pomodori pelati|50 g pecorino romano|1/2 bicchiere vino bianco|1 peperoncino|sale q.b.',
+ 'Rosola il guanciale a listarelle senza olio, sfuma con il vino e tienilo da parte.|Nel grasso del guanciale cuoci i pelati con il peperoncino per 15 minuti.|Rimetti il guanciale nel sugo.|Condisci i bucatini al dente e completa con il pecorino.'],
+['Primi','Italiana','Cacio e pepe',4,15,'veloce,romana,vegetariano',
+ '360 g tonnarelli|160 g pecorino romano|pepe q.b.|sale q.b.',
+ 'Cuoci la pasta in poca acqua, salata poco.|Tosta il pepe macinato grosso in padella e bagnalo con un mestolo d\'acqua di cottura.|Mescola il pecorino con un po\' d\'acqua tiepida fino a una crema.|Salta la pasta nel pepe, poi fuori dal fuoco aggiungi la crema di pecorino mescolando velocemente.'],
+['Primi','Italiana','Trofie al pesto genovese',4,20,'veloce,vegetariano,ligure',
+ '400 g trofie|50 g basilico|60 g parmigiano|30 g pecorino|20 g pinoli|1 spicchio aglio|100 ml olio extravergine|sale q.b.',
+ 'Pesta nel mortaio (o frulla a scatti, freddo) aglio, pinoli e un pizzico di sale.|Aggiungi le foglie di basilico e lavora fino a una crema.|Unisci i formaggi e l\'olio a filo.|Condisci le trofie con il pesto e un cucchiaio d\'acqua di cottura, senza scaldarlo.'],
+['Primi','Italiana','Lasagne alla bolognese',6,180,'forno,domenica,classico',
+ '500 g lasagne all\'uovo|500 g carne macinata di manzo|150 g pancetta|1 carota|1 costa sedano|1 cipolla|700 ml passata di pomodoro|100 ml vino rosso|1 l latte|100 g burro|100 g farina|120 g parmigiano|noce moscata q.b.|sale q.b.',
+ 'Trita carota, sedano e cipolla e rosolali con la pancetta; aggiungi la carne e rosola bene.|Sfuma con il vino, aggiungi la passata e cuoci il ragù a fuoco basso almeno 2 ore.|Prepara la besciamella: burro e farina, poi il latte caldo, sale e noce moscata, finché si addensa.|In una teglia alterna sfoglia, ragù, besciamella e parmigiano.|Cuoci a 180 °C per 40 minuti e lascia riposare 10 minuti.'],
+['Primi','Italiana','Tagliatelle al ragù',4,150,'emiliana,classico',
+ '400 g tagliatelle all\'uovo|300 g carne macinata di manzo|150 g pancetta|1 carota|1 costa sedano|1 cipolla|300 g passata di pomodoro|100 ml vino rosso|100 ml latte|60 g parmigiano|sale q.b.',
+ 'Rosola la pancetta tritata, poi le verdure tritate finemente.|Aggiungi la carne e rosolala finché perde l\'acqua.|Sfuma con il vino, aggiungi la passata e cuoci a fuoco minimo 2 ore.|Verso la fine aggiungi il latte.|Condisci le tagliatelle e completa con il parmigiano.'],
+['Primi','Italiana','Risotto alla milanese',4,30,'lombarda,classico',
+ '320 g riso carnaroli|1 l brodo di carne|1 bustina zafferano|1 cipolla|80 g burro|60 g parmigiano|1/2 bicchiere vino bianco',
+ 'Trita la cipolla e falla appassire in metà del burro.|Tosta il riso 2 minuti, poi sfuma con il vino.|Aggiungi il brodo caldo un mestolo alla volta, mescolando.|A metà cottura unisci lo zafferano sciolto in poco brodo.|A fuoco spento manteca con il burro rimasto e il parmigiano.'],
+['Primi','Italiana','Risotto ai funghi',4,35,'vegetariano,autunno',
+ '320 g riso carnaroli|400 g funghi champignon|20 g funghi porcini secchi|1 l brodo vegetale|1 scalogno|1 spicchio aglio|1/2 bicchiere vino bianco|50 g burro|50 g parmigiano|prezzemolo q.b.',
+ 'Ammolla i porcini secchi in acqua tiepida e tritali.|Trifola gli champignon con aglio e un filo d\'olio, aggiungi i porcini.|Fai appassire lo scalogno nel burro, tosta il riso e sfuma con il vino.|Cuoci aggiungendo brodo e a metà cottura unisci i funghi.|Manteca con burro e parmigiano e completa con il prezzemolo.'],
+['Primi','Italiana','Pasta alla Norma',4,40,'siciliana,vegetariano',
+ '360 g maccheroni|2 melanzane|500 g pomodori pelati|100 g ricotta salata|1 spicchio aglio|1 l olio di semi|3 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Taglia le melanzane a cubetti e friggile nell\'olio di semi.|Prepara il sugo con olio, aglio e pelati: 15 minuti.|Unisci metà melanzane al sugo.|Condisci la pasta, completa con le melanzane rimaste, basilico e ricotta salata grattugiata.'],
+['Primi','Italiana','Orecchiette con le cime di rapa',4,30,'pugliese',
+ '400 g orecchiette|1 kg cime di rapa|4 filetti acciughe|2 spicchi aglio|1 peperoncino|5 cucchiai olio extravergine|sale q.b.',
+ 'Pulisci le cime di rapa tenendo foglie tenere e cimette.|Cuocile nell\'acqua salata e dopo 5 minuti butta anche le orecchiette.|Nel frattempo soffriggi aglio, peperoncino e acciughe nell\'olio.|Scola pasta e verdure insieme e saltale nella padella.'],
+['Primi','Italiana','Gnocchi di patate',4,60,'vegetariano,bambini',
+ '1 kg patate|300 g farina 00|1 uovo|sale q.b.',
+ 'Lessa le patate con la buccia, sbucciale e schiacciale ancora calde.|Su una spianatoia unisci farina, uovo e sale e impasta velocemente.|Forma dei cilindri e tagliali a tocchetti; se vuoi rigali con la forchetta.|Cuocili in acqua salata e scolali appena salgono a galla.'],
+['Zuppe','Italiana','Minestrone di verdure',6,60,'vegetariano,inverno',
+ '2 patate|2 carote|2 zucchine|1 costa sedano|1 cipolla|200 g fagiolini|200 g piselli|400 g fagioli borlotti lessati|200 g pomodori pelati|1 crosta di parmigiano|4 cucchiai olio extravergine|sale q.b.',
+ 'Taglia tutte le verdure a cubetti.|Fai appassire la cipolla nell\'olio, poi aggiungi le altre verdure.|Copri d\'acqua, aggiungi pelati e crosta di parmigiano.|Cuoci a fuoco basso un\'ora, aggiungendo i fagioli negli ultimi 15 minuti.'],
+['Zuppe','Italiana','Pasta e ceci',4,40,'economico,vegetariano',
+ '250 g ditalini|500 g ceci lessati|1 spicchio aglio|1 rametto rosmarino|2 cucchiai concentrato di pomodoro|4 cucchiai olio extravergine|sale q.b.',
+ 'Soffriggi aglio e rosmarino nell\'olio.|Aggiungi i ceci e il concentrato, poi copri con acqua calda.|Dopo 15 minuti frulla metà dei ceci per una crema.|Cuoci la pasta nella zuppa e servi con un filo d\'olio.'],
+['Zuppe','Italiana','Pappa al pomodoro',4,40,'toscana,riciclo,vegetariano',
+ '300 g pane toscano raffermo|600 g pomodori pelati|1 l brodo vegetale|2 spicchi aglio|5 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Soffriggi l\'aglio nell\'olio, aggiungi i pelati e cuoci 10 minuti.|Unisci il pane a pezzi e il brodo caldo.|Cuoci mescolando 20 minuti finché il pane si sfalda.|Completa con basilico e olio crudo; ottima anche tiepida.'],
+['Secondi','Italiana','Cotoletta alla milanese',4,25,'lombarda,bambini',
+ '4 costolette di vitello|2 uova|150 g pangrattato|100 g burro|1 limone|sale q.b.',
+ 'Batti le costolette per assottigliarle.|Passale nell\'uovo sbattuto e poi nel pangrattato, premendo bene.|Cuocile nel burro spumeggiante 4-5 minuti per lato.|Sala e servi con spicchi di limone.'],
+['Secondi','Italiana','Saltimbocca alla romana',4,20,'veloce,romana',
+ '8 fettine di vitello|8 fette prosciutto crudo|8 foglie salvia|40 g burro|2 cucchiai farina|1/2 bicchiere vino bianco|sale q.b.',
+ 'Batti le fettine e appoggia su ognuna una fetta di prosciutto e una foglia di salvia, fermandole con uno stecchino.|Infarina leggermente il lato della carne.|Cuocile nel burro 2 minuti per lato.|Sfuma con il vino e servile con il fondo di cottura.'],
+['Secondi','Italiana','Pollo alla cacciatora',4,75,'classico',
+ '1,2 kg pollo a pezzi|400 g pomodori pelati|1 cipolla|1 carota|1 costa sedano|1/2 bicchiere vino rosso|80 g olive|1 rametto rosmarino|4 cucchiai olio extravergine|sale q.b.',
+ 'Rosola il pollo nell\'olio finché è dorato.|Aggiungi le verdure tritate e il rosmarino.|Sfuma con il vino, poi unisci i pelati e le olive.|Copri e cuoci a fuoco basso 45 minuti.'],
+['Secondi','Italiana','Petto di pollo al limone',4,20,'veloce,bambini',
+ '600 g petto di pollo|1 limone|2 cucchiai farina|30 g burro|prezzemolo q.b.|sale q.b.',
+ 'Batti leggermente le fettine di pollo e infarinale.|Sciogli il burro in padella e rosola il pollo 3 minuti per lato.|Aggiungi il succo del limone e un po\' d\'acqua, fai addensare il fondo.|Sala, cospargi di prezzemolo tritato e servi subito.'],
+['Secondi','Italiana','Vitello tonnato',6,90,'piemontese,estate',
+ '800 g girello di vitello|1 carota|1 costa sedano|1 cipolla|200 g tonno sott\'olio|200 g maionese|4 filetti acciughe|20 g capperi',
+ 'Lessa il girello con carota, sedano e cipolla per un\'ora e lascialo raffreddare nel brodo.|Frulla tonno, acciughe, capperi e maionese con un po\' di brodo fino a una salsa liscia.|Affetta la carne sottile.|Coprila con la salsa e lascia riposare in frigo qualche ora.'],
+['Secondi','Italiana','Spezzatino con patate',4,120,'inverno,classico',
+ '800 g spezzatino di manzo|600 g patate|1 cipolla|1 carota|1 costa sedano|200 g passata di pomodoro|1/2 bicchiere vino rosso|500 ml brodo|2 cucchiai farina|4 cucchiai olio extravergine|sale q.b.',
+ 'Infarina la carne e rosolala nell\'olio.|Aggiungi il trito di verdure e sfuma con il vino.|Unisci passata e brodo, copri e cuoci a fuoco basso un\'ora.|Aggiungi le patate a pezzi e cuoci altri 40 minuti.'],
+['Secondi','Italiana','Orata al forno con patate',4,50,'pesce,forno,senza glutine',
+ '2 orate|600 g patate|200 g pomodorini|50 g olive|1 spicchio aglio|5 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Affetta le patate sottili e cuocile in teglia con olio e sale per 15 minuti a 200 °C.|Riempi le orate pulite con aglio e prezzemolo.|Adagiale sulle patate con pomodorini e olive.|Cuoci altri 25 minuti.'],
+['Secondi','Italiana','Frittata di zucchine',4,30,'vegetariano,senza glutine',
+ '6 uova|3 zucchine|1 cipolla|40 g parmigiano|2 cucchiai olio extravergine|sale q.b.|pepe q.b.',
+ 'Affetta la cipolla e le zucchine a rondelle sottili.|Rosolale in padella con l\'olio per 10 minuti.|Sbatti le uova con il parmigiano, sale e pepe.|Versa le uova sulle verdure, copri e cuoci a fuoco basso 8 minuti.|Gira la frittata aiutandoti con un piatto e cuoci altri 3 minuti.'],
+['Contorni','Italiana','Patate al forno',4,50,'vegetariano,senza glutine,bambini',
+ '1 kg patate|2 spicchi aglio|1 rametto rosmarino|5 cucchiai olio extravergine|sale q.b.',
+ 'Taglia le patate a spicchi e lasciale in acqua fredda 10 minuti; asciugale.|Condiscile in teglia con olio, sale, aglio e rosmarino.|Cuoci a 200 °C per 40 minuti, girandole a metà.'],
+['Contorni','Italiana','Peperonata',4,45,'vegetariano,estate',
+ '4 peperoni|2 cipolle|300 g pomodori pelati|5 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Taglia peperoni e cipolle a falde.|Fai appassire le cipolle nell\'olio, poi aggiungi i peperoni.|Dopo 10 minuti unisci i pelati e cuoci coperto 25 minuti.|Completa con il basilico.'],
+['Pizze e lievitati','Italiana','Focaccia genovese',6,240,'forno,ligure',
+ '500 g farina 0|350 ml acqua|12 g lievito di birra fresco|10 g sale|80 ml olio extravergine|sale grosso q.b.',
+ 'Impasta farina, acqua, lievito, sale e 20 ml d\'olio.|Lascia lievitare un\'ora, poi stendi nella teglia unta.|Dopo un\'altra ora fai le fossette con le dita.|Versa sopra un\'emulsione di olio e acqua e il sale grosso.|Lascia lievitare 45 minuti e cuoci a 230 °C per 20 minuti.'],
+['Dolci','Italiana','Tiramisù',8,30,'senza forno,classico',
+ '500 g mascarpone|4 uova|100 g zucchero|300 g savoiardi|300 ml caffè|cacao amaro q.b.',
+ 'Prepara il caffè e lascialo raffreddare.|Monta i tuorli con lo zucchero, poi unisci il mascarpone.|Incorpora gli albumi montati a neve.|Alterna savoiardi bagnati nel caffè e crema in una pirofila.|Riposo in frigo almeno 4 ore e spolvera di cacao prima di servire.'],
+['Dolci','Italiana','Panna cotta',6,20,'senza forno,senza glutine',
+ '500 ml panna fresca|100 g zucchero|8 g colla di pesce|1 bacca vaniglia',
+ 'Ammolla la colla di pesce in acqua fredda.|Scalda la panna con zucchero e vaniglia senza farla bollire.|Spegni e sciogli la colla di pesce strizzata.|Versa negli stampini e lascia rassodare in frigo 4 ore.'],
+['Dolci','Italiana','Ciambellone',8,60,'colazione,forno,bambini',
+ '300 g farina 00|200 g zucchero|3 uova|100 ml olio di semi|120 ml latte|1 bustina lievito per dolci|1 limone',
+ 'Monta le uova con lo zucchero finché sono chiare e spumose.|Aggiungi olio, latte e scorza di limone.|Unisci farina e lievito setacciati.|Versa in uno stampo a ciambella imburrato e cuoci a 180 °C per 40 minuti.']
+];
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const LIB = LIB_RAW.map(([cat, orig, name, servings, time, tags, ings, steps]) => ({
+  id: 'lib-' + slug(name), lib: true, cat, orig, name, servings, time,
+  tags: tags.split(',').filter(Boolean), ingredients: ings.split('|').map(parseIng).filter(Boolean),
+  steps: steps.split('|').join('\n'), notes: ''
+}));
+
+const LIB_CATS = ['Primi','Secondi','Contorni','Antipasti e fritti','Pizze e lievitati','Zuppe','Dolci'];
 
 /* ---------- stato e salvataggio ---------- */
 const KEY = 'casa-in-ordine.v1';
 const DEF_SET = {people: 4, remindDays: 5};
-function seedRecipes() {
-  const R = (name, servings, time, tags, ings, steps, notes = '') => ({id: uid(), name, servings, time, tags, ingredients: ings.map(parseIng).filter(Boolean), steps, notes, fav: false});
-  return [
-    R('Spaghetti al pomodoro e basilico', 4, 25, ['veloce','vegetariano'],
-      ['320 g spaghetti','400 g passata di pomodoro','1 spicchio aglio','3 cucchiai olio extravergine','basilico q.b.','sale q.b.'],
-      'Scalda l\'olio con l\'aglio schiacciato a fuoco dolce per due minuti.\nAggiungi la passata, sala e cuoci 15 minuti a fuoco basso.\nCuoci gli spaghetti in acqua salata e scolali al dente.\nSaltali nel sugo con qualche foglia di basilico e servi.'),
-    R('Frittata di zucchine', 4, 30, ['vegetariano','senza glutine'],
-      ['6 uova','3 zucchine','1 cipolla','40 g parmigiano','2 cucchiai olio extravergine','sale q.b.','pepe q.b.'],
-      'Affetta la cipolla e le zucchine a rondelle sottili.\nRosolale in padella con l\'olio per 10 minuti.\nSbatti le uova con il parmigiano, sale e pepe.\nVersa le uova sulle verdure, copri e cuoci a fuoco basso 8 minuti.\nGira la frittata aiutandoti con un piatto e cuoci altri 3 minuti.'),
-    R('Petto di pollo al limone', 4, 20, ['veloce','secondo'],
-      ['600 g petto di pollo','1 limone','2 cucchiai farina','30 g burro','prezzemolo q.b.','sale q.b.'],
-      'Batti leggermente le fettine di pollo e infarinale.\nSciogli il burro in padella e rosola il pollo 3 minuti per lato.\nAggiungi il succo del limone e un po\' d\'acqua, fai addensare il fondo.\nSala, cospargi di prezzemolo tritato e servi subito.'),
-    R('Pasta e lenticchie', 4, 40, ['vegetariano','piatto unico'],
-      ['250 g lenticchie secche','200 g pasta mista','1 carota','1 costa sedano','1 cipolla','2 cucchiai concentrato di pomodoro','3 cucchiai olio extravergine','sale q.b.'],
-      'Trita carota, sedano e cipolla e falli appassire nell\'olio.\nAggiungi le lenticchie sciacquate e il concentrato, copri con acqua.\nCuoci 25 minuti aggiungendo acqua calda se serve.\nButta la pasta direttamente nella pentola e cuocila nel brodo.\nRiposo di 5 minuti prima di servire.', 'Ottima anche il giorno dopo.')
-  ];
-}
-function fresh(seed) { return {v: 1, recipes: seed ? seedRecipes() : [], shopping: [], menu: {}, bills: [], settings: {...DEF_SET}}; }
+function fresh() { return {v: 2, recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], settings: {...DEF_SET}}; }
 function load() {
   try { const raw = localStorage.getItem(KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
-  return fresh(true);
+  return fresh();
 }
 function normalize(d) {
-  const s = Object.assign(fresh(false), d || {});
+  const s = Object.assign(fresh(), d || {});
   s.settings = {...DEF_SET, ...(s.settings || {})};
-  ['recipes','shopping','bills'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
+  ['recipes','favs','fridge','shopping','bills','moves'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
   if (!s.menu || typeof s.menu !== 'object') s.menu = {};
+  if ((d && d.v || 1) < 2) migrateV1(s);
+  s.v = 2;
   return s;
+}
+/* versione 1: le 4 ricette di esempio erano copie nell'archivio personale; ora stanno nel ricettario */
+function migrateV1(s) {
+  const remap = {};
+  s.recipes = s.recipes.filter(r => {
+    const lib = LIB.find(l => l.name === r.name);
+    if (r.fav) s.favs.push(lib ? lib.id : r.id);
+    delete r.fav;
+    if (lib) { remap[r.id] = lib.id; return false; }
+    return true;
+  });
+  for (const day of Object.values(s.menu)) for (const m of Object.values(day)) if (m && m.r && remap[m.r]) m.r = remap[m.r];
+  for (const b of s.bills) if (b.paid && !s.moves.some(m => m.billId === b.id)) s.moves.push(billMove(b));
 }
 let S = load();
 let saveWarned = false;
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!saveWarned) { saveWarned = true; toast('Non riesco a salvare sul dispositivo'); } } }
 const pref = {get(k, d) { try { return localStorage.getItem('casa.' + k) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('casa.' + k, v); } catch (e) {} }};
 
+/* ---------- Claude (solo quando l'app è aperta dentro Claude) ---------- */
+let AI = null, AI_IMG = false, DL = null;
+let canDownload = true; try { canDownload = window.top === window; } catch (e) { canDownload = false; }
+(async () => {
+  const c = window.claude; if (!c || typeof c.use !== 'function') return;
+  try { DL = await c.use('downloads'); } catch (e) { DL = null; }
+  try { AI = await c.use('sample'); if (AI) { const l = await AI.limits().catch(() => null); AI_IMG = !!(l && l.images); } } catch (e) { AI = null; }
+  render();
+})();
+function aiErr(e) {
+  const code = e && e.code;
+  if (['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)) { AI = null; AI_IMG = false; render(); return 'L\'assistente non è disponibile: hai negato il permesso o non è attivo per questo account.'; }
+  if (code === 'images_unavailable') { AI_IMG = false; return 'Qui non posso leggere le foto.'; }
+  return {
+    rate_limited: 'Troppe richieste in poco tempo: riprova tra qualche minuto.',
+    image_rejected: 'Non riesco a leggere questa foto: provane un\'altra, più nitida.',
+    refused: 'L\'assistente non ha risposto a questa richiesta: prova a cambiarla.',
+    invalid_json: 'La risposta non era leggibile: riprova.',
+    session_expired: 'Devi accedere di nuovo a Claude.',
+    cancelled: 'Interrotto.'
+  }[code] || 'Non è andata a buon fine: riprova.';
+}
+
 /* ---------- logica ---------- */
-const recipeById = id => S.recipes.find(r => r.id === id);
+const allRecipes = () => [...LIB, ...S.recipes];
+const recipeById = id => LIB.find(r => r.id === id) || S.recipes.find(r => r.id === id);
+const isFav = id => S.favs.includes(id);
 const billById = id => S.bills.find(b => b.id === id);
 const byDue = (a, b) => a.due < b.due ? -1 : a.due > b.due ? 1 : 0;
 
@@ -378,23 +669,52 @@ function addShop(it) {
   S.shopping.push({id: uid(), name, qty: it.qty ?? null, unit: it.unit || '', aisle: it.aisle || guessAisle(name), done: false});
   return true;
 }
-/* aggiunge gli ingredienti di una ricetta, con le dosi per il numero di persone */
-function addRecipeToShop(r, people) {
-  /* salta sale, olio a cucchiai e simili: di solito sono già in dispensa */
+const isQB = name => /\bq\.?\s?b\.?$/i.test(name);
+const stripQB = name => name.replace(/\s*\bq\.?\s?b\.?$/i, '').trim();
+/* aggiunge gli ingredienti di una ricetta con le dosi per il numero di persone;
+   salta sale, olio a cucchiai e simili: di solito sono già in dispensa */
+function addRecipeToShop(r, people, only) {
   const f = people && r.servings ? people / r.servings : 1; let n = 0;
   for (const i of r.ingredients) {
-    let name = i.name; const qb = /\bq\.?\s?b\.?$/i.test(name);
-    name = name.replace(/\s*\bq\.?\s?b\.?$/i, '').trim();
-    const aisle = guessAisle(name);
-    if (aisle === 'dispensa' && (qb || SPOON_UNITS.has(i.unit))) continue;
+    if (only && !only.includes(i)) continue;
+    const qb = isQB(i.name), name = stripQB(i.name), aisle = guessAisle(name);
+    if (!only && aisle === 'dispensa' && (qb || SPOON_UNITS.has(i.unit))) continue;
     if (addShop({name, qty: scaleQty(i, f, true), unit: i.unit, aisle})) n++;
   }
   return n;
 }
 
+/* "cosa ho in frigo": confronta gli ingredienti principali con quelli che hai */
+const STAPLES = ['sale','pepe','olio','acqua','ghiaccio','zucchero a velo','sale grosso'];
+const PASTA_W = ['spaghett','pasta','penne','fusill','rigaton','linguin','vermicell','paccher','ziti','bucatin','tagliatell','maccheron','lasagn','fettuccin','orecchiett','trofie','tonnarell','ditalin','tubett','mezze'];
+const stem = w => w.length > 4 ? w.replace(/[aeiou]+$/, '') : w;
+const words = s => norm(s).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !['con','del','della','dei','per','alla'].includes(w)).map(stem);
+const isStaple = i => { const n = norm(stripQB(i.name)); return STAPLES.some(s => n === s || n.startsWith(s + ' ')) || isQB(i.name); };
+function ingHas(ingName, term) {
+  const n = norm(ingName), t = norm(term).trim(); if (!t) return false;
+  if (n.includes(t)) return true;
+  if (t === 'pasta' && PASTA_W.some(w => n.includes(w))) return true;
+  const tw = words(t), nw = words(n);
+  return tw.length > 0 && tw.every(x => nw.some(y => y.startsWith(x) || (y.length >= 4 && x.startsWith(y))));
+}
+function fridgeMatches() {
+  const F = S.fridge; if (!F.length) return [];
+  const out = [];
+  for (const r of allRecipes()) {
+    const main = r.ingredients.filter(i => !isStaple(i)); if (!main.length) continue;
+    const have = main.filter(i => F.some(t => ingHas(i.name, t)));
+    if (!have.length) continue;
+    out.push({r, have, miss: main.filter(i => !have.includes(i)), score: have.length / main.length});
+  }
+  return out.sort((a, b) => a.miss.length - b.miss.length || b.score - a.score || b.have.length - a.have.length);
+}
+
+/* bollette */
+function billMove(b) { return {id: uid(), date: b.paidOn || b.due, amount: b.amount, kind: 'out', cat: BILL_TO_MCAT[b.cat] || 'casa', desc: b.name, src: 'bill', billId: b.id}; }
 function payBill(id, amount, date) {
   const b = billById(id); if (!b || b.paid) return null;
   b.paid = true; b.amount = amount; b.paidOn = date;
+  S.moves.push(billMove(b));
   let next = null;
   const step = (REC[b.rec] || REC.none)[1];
   if (step && !b.nextId) {
@@ -406,6 +726,7 @@ function payBill(id, amount, date) {
 function unpayBill(id) {
   const b = billById(id); if (!b || !b.paid) return;
   b.paid = false; b.paidOn = null;
+  S.moves = S.moves.filter(m => m.billId !== id);
   const n = b.nextId && billById(b.nextId);
   if (n && !n.paid) { S.bills = S.bills.filter(x => x.id !== n.id); b.nextId = null; }
 }
@@ -429,11 +750,54 @@ function dueInfo(b) {
   return {t: pre + fmtD(b.due), c: ''};
 }
 
+/* estratto conto CSV: trova da solo le colonne di data, descrizione e importo */
+function decodeText(buf) {
+  try { return new TextDecoder('utf-8', {fatal: true}).decode(buf); } catch (e) { return new TextDecoder('windows-1252').decode(buf); }
+}
+function parseAnyDate(s) {
+  s = String(s || '').trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+  m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/); if (!m) return null;
+  let y = +m[3]; if (y < 100) y += 2000;
+  const mo = +m[2], d = +m[1]; if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return `${y}-${pad(mo)}-${pad(d)}`;
+}
+function parseBankCSV(text) {
+  text = text.replace(/^﻿/, '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 6000);
+  if (!lines.length) return {error: 'Il file è vuoto.'};
+  const head = lines.slice(0, 40).join('\n');
+  const delim = [';', '\t', ','].map(d => [d, head.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const split = line => { const out = []; let cur = '', q = false; for (let i = 0; i < line.length; i++) { const c = line[i]; if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; } else if (c === '"') q = true; else if (c === delim) { out.push(cur.trim()); cur = ''; } else cur += c; } out.push(cur.trim()); return out; };
+  const rows = lines.map(split);
+  const h = rows.findIndex(r => r.some(c => /^data/.test(norm(c))) && r.some(c => /importo|dare|avere|addebit|accredit|uscit|entrat|amount/.test(norm(c))));
+  if (h < 0) return {error: 'Non trovo le colonne "Data" e "Importo". Esporta dalla banca il file CSV dei movimenti (non il PDF).'};
+  const H = rows[h].map(norm);
+  const find = (re, not) => H.findIndex(c => re.test(c) && !(not && not.test(c)));
+  let dI = find(/data (contabile|operazione|registrazione)/); if (dI < 0) dI = find(/^data/, /valuta/); if (dI < 0) dI = find(/^data/);
+  const descI = find(/descrizione|causale|dettagl|beneficiario|esercente|motivo|operazione|movimento|controparte/, /^data|importo/);
+  const amtI = find(/importo|amount/), outI = find(/dare|addebit|uscit/), inI = find(/avere|accredit|entrat/);
+  const list = [];
+  for (const r of rows.slice(h + 1)) {
+    const date = parseAnyDate(r[dI]); if (!date) continue;
+    let v = 0;
+    if (amtI >= 0 && r[amtI]) v = parseSigned(r[amtI]);
+    else { const o = outI >= 0 ? parseSigned(r[outI]) : 0, i = inI >= 0 ? parseSigned(r[inI]) : 0; v = o ? -Math.abs(o) : Math.abs(i); }
+    if (!v) continue;
+    const desc = (descI >= 0 ? r[descI] : r.filter((c, j) => j !== dI && j !== amtI && j !== outI && j !== inI).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 140) || 'Movimento';
+    const kind = v < 0 ? 'out' : 'in';
+    list.push({date, amount: Math.abs(v), kind, desc, cat: guessMcat(desc, kind)});
+  }
+  if (!list.length) return {error: 'Ho trovato le colonne ma nessun movimento valido.'};
+  return {list};
+}
+const moveKey = m => `${m.date}|${m.kind}|${m.amount.toFixed(2)}|${norm(m.desc).slice(0, 24)}`;
+
 /* ---------- interfaccia ---------- */
-const TABS = [['home','Oggi','home'],['ricette','Ricette','book'],['menu','Menù','cal'],['spesa','Spesa','cart'],['bollette','Bollette','bill']];
-const TITLES = {home:'Casa in Ordine', ricette:'Ricette', menu:'Menù della settimana', spesa:'Lista della spesa', bollette:'Bollette'};
+const TABS = [['home','Oggi','home'],['ricette','Ricette','book'],['menu','Menù','cal'],['spesa','Spesa','cart'],['bollette','Bollette','bill'],['conti','Conti','wallet']];
+const TITLES = {home:'Casa in Ordine', ricette:'Ricette', menu:'Menù della settimana', spesa:'Lista della spesa', bollette:'Bollette', conti:'Entrate e spese'};
 let tab = TABS.some(t => t[0] === pref.get('tab')) ? pref.get('tab') : 'home';
-const ui = {q: '', tag: 'tutte', week: mondayOf(today()), bview: 'todo', year: new Date().getFullYear(), serv: null, rid: null, slot: null};
+const ui = {q: '', tag: 'tutte', rview: 'lib', week: mondayOf(today()), bview: 'todo', year: new Date().getFullYear(), month: today().slice(0, 7), serv: null, rid: null, slot: null, ai: null, csv: null};
 
 function render() {
   $('#title').textContent = TITLES[tab];
@@ -442,10 +806,13 @@ function render() {
     ricette: `<button class="btn primary sm" data-a="newRecipe">${ic('plus','sm')} Ricetta</button>`,
     menu: ui.week !== mondayOf(today()) ? `<button class="btn sm" data-a="wkToday">Oggi</button>` : '',
     spesa: S.shopping.length ? `<button class="btn ghost sm" data-a="clearAll">Svuota</button>` : '',
-    bollette: `<button class="btn primary sm" data-a="newBill">${ic('plus','sm')} Bolletta</button>`
+    bollette: `<button class="btn primary sm" data-a="newBill">${ic('plus','sm')} Bolletta</button>`,
+    conti: `<button class="btn primary sm" data-a="newMove">${ic('plus','sm')} Movimento</button>`
   }[tab];
   $('#topact').innerHTML = act;
+  const focusId = document.activeElement && document.activeElement.id;
   $('#main').innerHTML = V[tab]();
+  if (focusId === 'fi' && $('#fi')) $('#fi').focus();
   const toBuy = S.shopping.filter(i => !i.done).length;
   const late = S.bills.filter(b => !b.paid && diffDays(today(), b.due) <= S.settings.remindDays).length;
   $('#nav').innerHTML = TABS.map(([k, l, i]) => {
@@ -461,7 +828,12 @@ function billRow(b, quick = true) {
   const c = catOf(b.cat), d = dueInfo(b);
   return `<div class="row"><button class="row-main" data-a="bill" data-id="${b.id}"><span class="emo">${c[2]}</span><span class="rt"><b>${esc(b.name)}</b><small class="${d.c}">${d.t}</small></span><span class="amt">${euro(b.amount)}</span></button>${quick && !b.paid ? `<button class="pill" data-a="pay" data-id="${b.id}">${ic('check','sm')} Pagata</button>` : ''}</div>`;
 }
+function moveRow(m) {
+  const c = mcatOf(m.cat);
+  return `<div class="row"><button class="row-main" data-a="move" data-id="${m.id}"><span class="emo">${c[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${c[1]}${m.src === 'bill' ? ' · da Bollette' : m.src === 'csv' ? ' · da estratto conto' : ''}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></button></div>`;
+}
 const slotLabel = v => { if (!v) return ''; if (v.r) { const r = recipeById(v.r); return r ? r.name : ''; } return v.t || ''; };
+const origBadge = r => r.lib ? (r.orig === 'Napoletana' ? '<span class="tag nap">Napoletana</span>' : '') : '<span class="tag mine">Mia</span>';
 
 const V = {
   home() {
@@ -469,31 +841,33 @@ const V = {
     const due = S.bills.filter(b => !b.paid && diffDays(t, b.due) <= S.settings.remindDays).sort(byDue);
     const m = S.menu[t] || {};
     const toBuy = S.shopping.filter(i => !i.done);
-    const paidM = sum(S.bills.filter(b => b.paid && (b.paidOn || b.due).slice(0, 7) === ym).map(b => b.amount));
+    const mv = S.moves.filter(x => x.date.slice(0, 7) === ym);
+    const outM = sum(mv.filter(x => x.kind === 'out').map(x => x.amount)), inM = sum(mv.filter(x => x.kind === 'in').map(x => x.amount));
     const openM = S.bills.filter(b => !b.paid && b.due.slice(0, 7) <= ym);
     return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>
     <section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte le bollette</button></div>
       ${due.length ? due.map(b => billRow(b)).join('') : `<p class="empty-s">Nessuna bolletta da pagare nei prossimi ${S.settings.remindDays} giorni.</p>`}
     </section>
     <section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù</button></div>
-      <div class="meals">${MEALS.map(([k, l]) => { const lab = slotLabel(m[k]); return `<button class="meal" data-a="${m[k] && m[k].r && recipeById(m[k].r) ? 'recipe' : 'slot'}" data-id="${m[k] && m[k].r ? m[k].r : ''}" data-day="${t}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : 'Da decidere'}</b></button>`; }).join('')}</div>
+      <div class="meals">${MEALS.map(([k, l]) => { const lab = slotLabel(m[k]); const isR = m[k] && m[k].r && recipeById(m[k].r); return `<button class="meal" data-a="${isR ? 'recipe' : 'slot'}" data-id="${isR ? m[k].r : ''}" data-day="${t}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : 'Da decidere'}</b></button>`; }).join('')}</div>
+      <button class="btn ghost wide" style="margin-top:10px" data-a="fridgeGo">${ic('fridge','sm')} Cosa cucino con quello che ho?</button>
     </section>
     <section class="card"><div class="card-h"><h2>Spesa</h2><button class="link" data-a="go" data-t="spesa">Apri la lista</button></div>
       ${toBuy.length ? `<p class="empty-s" style="color:var(--ink)"><b>${toBuy.length}</b> ${toBuy.length === 1 ? 'cosa' : 'cose'} da comprare</p><div class="chipline">${toBuy.slice(0, 8).map(i => `<span class="tag">${esc(i.name)}</span>`).join('')}${toBuy.length > 8 ? `<span class="tag">+${toBuy.length - 8}</span>` : ''}</div>` : `<p class="empty-s">La lista è vuota.</p>`}
     </section>
     <div class="stats">
-      <div class="stat"><div class="l">Pagato a ${MESI[d.getMonth()]}</div><div class="v">${euro(paidM)}</div></div>
-      <div class="stat"><div class="l">Ancora da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} ${openM.length === 1 ? 'bolletta' : 'bollette'} entro il mese</div></div>
+      <button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>
+      <button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>
     </div>`;
   },
 
   ricette() {
-    if (!S.recipes.length) return empty('📖', 'Nessuna ricetta', 'Aggiungi le ricette di famiglia: poi puoi metterle nel menù e mandare gli ingredienti alla spesa.', `<button class="btn primary" data-a="newRecipe">${ic('plus','sm')} Aggiungi una ricetta</button>`);
-    const tags = [...new Set(S.recipes.flatMap(r => r.tags || []))].sort((a, b) => a.localeCompare(b, 'it'));
-    if (ui.tag !== 'tutte' && ui.tag !== 'preferite' && !tags.includes(ui.tag)) ui.tag = 'tutte';
+    const seg = `<div class="seg two" role="group" aria-label="Vista"><button data-a="rview" data-v="lib" aria-pressed="${ui.rview === 'lib'}">${ic('book','sm')} Ricettario</button><button data-a="rview" data-v="frigo" aria-pressed="${ui.rview === 'frigo'}">${ic('fridge','sm')} Cosa ho in frigo</button></div>`;
+    if (ui.rview === 'frigo') return seg + vFridge();
+    const userTags = [...new Set(S.recipes.flatMap(r => r.tags || []))].sort((a, b) => a.localeCompare(b, 'it'));
     const chip = (k, l) => `<button class="chip" data-a="tag" data-t="${esc(k)}" aria-pressed="${ui.tag === k}">${l}</button>`;
-    return `<label class="search">${ic('search')}<span class="vh">Cerca</span><input type="search" id="rq" placeholder="Cerca ricetta o ingrediente" value="${esc(ui.q)}" autocomplete="off"></label>
-      <div class="chips">${chip('tutte', 'Tutte')}${S.recipes.some(r => r.fav) ? chip('preferite', '★ Preferite') : ''}${tags.map(t => chip(t, esc(t))).join('')}</div>
+    return seg + `<label class="search">${ic('search')}<span class="vh">Cerca</span><input type="search" id="rq" placeholder="Cerca tra ${allRecipes().length} ricette o per ingrediente" value="${esc(ui.q)}" autocomplete="off"></label>
+      <div class="chips">${chip('tutte', 'Tutte')}${S.favs.length ? chip('preferite', '★ Preferite') : ''}${chip('napoletana', 'Napoletane')}${S.recipes.length ? chip('mie', 'Le mie') : ''}${LIB_CATS.map(c => chip('cat:' + c, c)).join('')}${userTags.map(t => chip('tag:' + t, esc(t))).join('')}</div>
       <div id="rlist">${recipeList()}</div>`;
   },
 
@@ -505,7 +879,7 @@ const V = {
     let nR = 0;
     for (let i = 0; i < 7; i++) {
       const day = addDays(w, i), m = S.menu[day] || {};
-      html += `<div class="day ${day === t ? 'today' : ''}"><div class="day-h">${fmtLong(day).replace(/ \d+ .*/, '')} ${parseD(day).getDate()}${day === t ? '<em>oggi</em>' : ''}</div><div class="slots">${MEALS.map(([k, l]) => {
+      html += `<div class="day ${day === t ? 'today' : ''}"><div class="day-h">${GIORNI[parseD(day).getDay()]} ${parseD(day).getDate()}${day === t ? '<em>oggi</em>' : ''}</div><div class="slots">${MEALS.map(([k, l]) => {
         const v = m[k], lab = slotLabel(v); if (v && v.r && recipeById(v.r)) nR++;
         return `<button class="slot ${v && v.r ? 'has-r' : ''}" data-a="slot" data-day="${day}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : '+ Aggiungi'}</b></button>`;
       }).join('')}</div></div>`;
@@ -535,9 +909,10 @@ const V = {
     const late = open.filter(b => b.due < t);
     const paidY = sum(S.bills.filter(b => b.paid && (b.paidOn || b.due).slice(0, 4) === String(y)).map(b => b.amount));
     const seg = (k, l) => `<button data-a="bview" data-v="${k}" aria-pressed="${ui.bview === k}">${l}</button>`;
-    let html = `<div class="stats"><div class="stat"><div class="l">Da pagare</div><div class="v">${euro(sum(open.map(b => b.amount)))}</div><div class="s ${late.length ? 'st-bad' : ''}">${late.length ? `${late.length} scadut${late.length === 1 ? 'a' : 'e'}` : `${open.length} in arrivo`}</div></div><div class="stat"><div class="l">Pagato nel ${y}</div><div class="v">${euro(paidY)}</div></div></div>
-      <div class="seg" role="group" aria-label="Vista">${seg('todo', 'Da pagare')}${seg('paid', 'Pagate')}${seg('sum', 'Riepilogo')}</div>`;
-    if (!S.bills.length) return html + empty('🧾', 'Nessuna bolletta', 'Aggiungi luce, gas, acqua, affitto, assicurazioni… Per quelle che si ripetono, quando segni il pagamento la prossima si crea da sola.', `<button class="btn primary" data-a="newBill">${ic('plus','sm')} Aggiungi una bolletta</button>`);
+    let html = `<div class="stats"><div class="stat"><div class="l">Da pagare</div><div class="v">${euro(sum(open.map(b => b.amount)))}</div><div class="s ${late.length ? 'st-bad' : ''}">${late.length ? `${late.length} scadut${late.length === 1 ? 'a' : 'e'}` : `${open.length} in arrivo`}</div></div><div class="stat"><div class="l">Pagato nel ${y}</div><div class="v">${euro(paidY)}</div></div></div>`;
+    if (AI_IMG) html += `<label class="btn ghost wide photo-btn" style="margin-bottom:12px">${ic('camera','sm')} Aggiungi da una foto della bolletta<input type="file" id="billphoto" accept="image/*" class="vh"></label>`;
+    html += `<div class="seg" role="group" aria-label="Vista">${seg('todo', 'Da pagare')}${seg('paid', 'Pagate')}${seg('sum', 'Riepilogo')}</div>`;
+    if (!S.bills.length) return html + empty('🧾', 'Nessuna bolletta', `Aggiungi luce, gas, acqua, affitto, assicurazioni… ${AI_IMG ? 'Puoi anche fotografare la bolletta: i dati li legge l\'assistente. ' : ''}Per quelle che si ripetono, quando segni il pagamento la prossima si crea da sola.`, `<button class="btn primary" data-a="newBill">${ic('plus','sm')} Aggiungi una bolletta</button>`);
     if (ui.bview === 'todo') {
       html += open.length ? `<div class="list">${open.map(b => billRow(b)).join('')}</div>` : empty('🎉', 'Tutto pagato', 'Non ci sono bollette in attesa.');
     } else if (ui.bview === 'paid') {
@@ -546,39 +921,85 @@ const V = {
       const groups = {}; paid.forEach(b => { const k = (b.paidOn || b.due).slice(0, 7); (groups[k] = groups[k] || []).push(b); });
       for (const [k, list] of Object.entries(groups)) {
         const [yy, mm] = k.split('-').map(Number);
-        html += `<h3 class="sec-t" style="display:flex;justify-content:space-between"><span>${MESI[mm - 1]} ${yy}</span><span>${euro(sum(list.map(b => b.amount)))}</span></h3><div class="list">${list.map(b => billRow(b, false)).join('')}</div>`;
+        html += `<h3 class="sec-t sec-row"><span>${MESI[mm - 1]} ${yy}</span><span>${euro(sum(list.map(b => b.amount)))}</span></h3><div class="list">${list.map(b => billRow(b, false)).join('')}</div>`;
       }
     } else {
       const yr = ui.year, inY = S.bills.filter(b => b.paid && (b.paidOn || b.due).slice(0, 4) === String(yr));
       const tot = sum(inY.map(b => b.amount));
       const byM = Array.from({length: 12}, (_, i) => sum(inY.filter(b => +(b.paidOn || b.due).slice(5, 7) === i + 1).map(b => b.amount)));
-      const max = Math.max(...byM, 1), curM = yr === y ? new Date().getMonth() : -1;
       const byC = CATS.map(c => [c, sum(inY.filter(b => catOf(b.cat)[0] === c[0]).map(b => b.amount))]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
       html += `<div class="weeknav"><button class="icon-btn" data-a="year" data-d="-1" aria-label="Anno prima">${ic('left')}</button><b>${yr} · ${euro(tot)}</b><button class="icon-btn" data-a="year" data-d="1" aria-label="Anno dopo">${ic('right')}</button></div>`;
-      html += `<section class="card"><div class="card-h"><h2>Mese per mese</h2></div><div class="months" role="img" aria-label="Spese pagate per mese nel ${yr}">${byM.map((v, i) => `<div class="${i === curM ? 'cur' : ''}" title="${MESI[i]}: ${euro(v)}"><i class="${v ? '' : 'zero'}" style="height:${v ? Math.max(4, v / max * 92) : 2}px"></i><span>${MB[i][0].toUpperCase()}</span></div>`).join('')}</div></section>`;
-      html += `<section class="card"><div class="card-h"><h2>Per categoria</h2></div>${byC.length ? `<div class="bars">${byC.map(([c, v]) => `<div class="bar-row"><span class="n">${c[2]} ${c[1]}</span><span class="a">${euro(v)}</span><span class="bar"><i style="width:${(v / byC[0][1] * 100).toFixed(1)}%"></i></span></div>`).join('')}</div>` : `<p class="empty-s">Nessun pagamento registrato nel ${yr}.</p>`}</section>`;
+      html += monthBars(byM, yr, 'Bollette pagate per mese');
+      html += `<section class="card"><div class="card-h"><h2>Per categoria</h2></div>${byC.length ? bars(byC.map(([c, v]) => [`${c[2]} ${c[1]}`, v])) : `<p class="empty-s">Nessun pagamento registrato nel ${yr}.</p>`}</section>`;
     }
+    return html;
+  },
+
+  conti() {
+    const ym = ui.month, [yy, mm] = ym.split('-').map(Number);
+    const mv = S.moves.filter(m => m.date.slice(0, 7) === ym).sort((a, b) => b.date.localeCompare(a.date));
+    const inn = sum(mv.filter(m => m.kind === 'in').map(m => m.amount)), out = sum(mv.filter(m => m.kind === 'out').map(m => m.amount)), bal = inn - out;
+    let html = `<div class="weeknav"><button class="icon-btn" data-a="month" data-d="-1" aria-label="Mese prima">${ic('left')}</button><b style="text-transform:capitalize">${MESI[mm - 1]} ${yy}</b><button class="icon-btn" data-a="month" data-d="1" aria-label="Mese dopo">${ic('right')}</button></div>
+      <div class="stats three"><div class="stat"><div class="l">Entrate</div><div class="v st-good">${euro(inn)}</div></div><div class="stat"><div class="l">Uscite</div><div class="v">${euro(out)}</div></div><div class="stat"><div class="l">Saldo</div><div class="v ${bal < 0 ? 'st-bad' : ''}">${bal < 0 ? '−' : ''}${euro(Math.abs(bal))}</div></div></div>
+      <div class="actions two-c" style="margin:0 0 14px"><button class="btn" data-a="importCsv">${ic('upload','sm')} Estratto conto</button><button class="btn" data-a="newMove" data-k="in">${ic('plus','sm')} Entrata</button></div>`;
+    const unsorted = S.moves.filter(m => m.src === 'csv' && (m.cat === 'uscite' || m.cat === 'entrate'));
+    if (AI && unsorted.length) html += `<section class="card ai-card"><p style="margin:0 0 10px">${unsorted.length} ${unsorted.length === 1 ? 'movimento importato è' : 'movimenti importati sono'} senza categoria.</p><button class="btn primary wide" data-a="aiSort">${ic('spark','sm')} Classificali con l'assistente</button><p class="hint" id="aisort-st"></p></section>`;
+    if (!mv.length) return html + empty('💶', `Nessun movimento a ${MESI[mm - 1]}`, 'Le bollette pagate finiscono qui da sole. Per avere tutte le spese, importa il file CSV dei movimenti scaricato dall\'app o dal sito della tua banca, oppure aggiungi le voci a mano.');
+    const byC = MCATS.filter(c => c[3] === 'out').map(c => [`${c[2]} ${c[1]}`, sum(mv.filter(m => m.kind === 'out' && mcatOf(m.cat)[0] === c[0]).map(m => m.amount))]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+    if (byC.length) html += `<section class="card"><div class="card-h"><h2>Dove vanno i soldi</h2></div>${bars(byC)}</section>`;
+    const days = {}; mv.forEach(m => (days[m.date] = days[m.date] || []).push(m));
+    for (const [d, list] of Object.entries(days)) html += `<h3 class="sec-t sec-row"><span>${fmtD(d)}</span></h3><div class="list">${list.map(moveRow).join('')}</div>`;
     return html;
   }
 };
+function bars(rows) {
+  const max = Math.max(...rows.map(r => r[1]), 1);
+  return `<div class="bars">${rows.map(([n, v]) => `<div class="bar-row"><span class="n">${n}</span><span class="a">${euro(v)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span></div>`).join('')}</div>`;
+}
+function monthBars(byM, yr, label) {
+  const max = Math.max(...byM, 1), curM = yr === new Date().getFullYear() ? new Date().getMonth() : -1;
+  return `<section class="card"><div class="card-h"><h2>Mese per mese</h2></div><div class="months" role="img" aria-label="${label} nel ${yr}">${byM.map((v, i) => `<div class="${i === curM ? 'cur' : ''}" title="${MESI[i]}: ${euro(v)}"><i class="${v ? '' : 'zero'}" style="height:${v ? Math.max(4, v / max * 92) : 2}px"></i><span>${MB[i][0].toUpperCase()}</span></div>`).join('')}</div></section>`;
+}
 
+function recipeCard(r, extra = '') {
+  return `<button class="rcard" data-a="recipe" data-id="${r.id}"><h3>${esc(r.name)}</h3><div class="meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} min</span>` : ''}<span>${ic('users','sm')} ${r.servings}</span>${r.cat ? `<span>${esc(r.cat)}</span>` : ''}</div><div class="tags">${origBadge(r)}${(r.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>${extra}${isFav(r.id) ? `<span class="fav">${ic('star','sm fav-on')}</span>` : ''}</button>`;
+}
 function recipeList() {
-  const q = ui.q.trim().toLowerCase();
-  const list = S.recipes.filter(r => (ui.tag === 'tutte' || (ui.tag === 'preferite' ? r.fav : (r.tags || []).includes(ui.tag))) &&
-    (!q || r.name.toLowerCase().includes(q) || r.ingredients.some(i => i.name.toLowerCase().includes(q)))).sort((a, b) => (b.fav - a.fav) || a.name.localeCompare(b.name, 'it'));
+  const q = norm(ui.q.trim()), tg = ui.tag;
+  const list = allRecipes().filter(r =>
+    (tg === 'tutte' || (tg === 'preferite' ? isFav(r.id) : tg === 'mie' ? !r.lib : tg === 'napoletana' ? r.orig === 'Napoletana' : tg.startsWith('cat:') ? r.cat === tg.slice(4) : tg.startsWith('tag:') ? (r.tags || []).includes(tg.slice(4)) : true)) &&
+    (!q || norm(r.name).includes(q) || r.ingredients.some(i => norm(i.name).includes(q)) || (r.tags || []).some(t => norm(t).includes(q))))
+    .sort((a, b) => (isFav(b.id) - isFav(a.id)) || a.name.localeCompare(b.name, 'it'));
   if (!list.length) return `<p class="hint" style="margin-top:24px">Nessuna ricetta trovata.</p>`;
-  return `<div class="rgrid">${list.map(r => `<button class="rcard" data-a="recipe" data-id="${r.id}"><h3>${esc(r.name)}</h3><div class="meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} min</span>` : ''}<span>${ic('users','sm')} ${r.servings} porz.</span><span>${r.ingredients.length} ingredienti</span></div>${(r.tags || []).length ? `<div class="tags">${r.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}${r.fav ? `<span class="fav">${ic('star','sm fav-on')}</span>` : ''}</button>`).join('')}</div>`;
+  return `<p class="count">${list.length} ${list.length === 1 ? 'ricetta' : 'ricette'}</p><div class="rgrid">${list.map(r => recipeCard(r)).join('')}</div>`;
+}
+const FRIDGE_SUGG = ['uova','pasta','pomodori','mozzarella','zucchine','patate','melanzane','pollo','carne macinata','parmigiano','cipolla','fagioli','salsicce','riso','limone','ricotta'];
+function vFridge() {
+  let html = `<form class="quick" data-form="fridge" autocomplete="off"><label class="vh" for="fi">Cosa hai in frigo?</label><input id="fi" name="t" placeholder="Cosa hai? es. uova, zucchine, provola" enterkeyhint="done"><button class="btn primary" aria-label="Aggiungi">${ic('plus')}</button></form>`;
+  if (S.fridge.length) html += `<div class="chipline fridge">${S.fridge.map(f => `<button class="tag fchip" data-a="unfridge" data-v="${esc(f)}" aria-label="Togli ${esc(f)}">${esc(f)} ${ic('x','xs')}</button>`).join('')}<button class="link" data-a="clearFridge" style="margin-left:4px">Svuota</button></div>`;
+  const sugg = FRIDGE_SUGG.filter(s => !S.fridge.some(f => norm(f) === s));
+  html += `<div class="chipline" style="margin-bottom:14px">${sugg.slice(0, S.fridge.length ? 8 : 16).map(s => `<button class="tag sugg" data-a="addFridge" data-v="${s}">+ ${s}</button>`).join('')}</div>`;
+  if (AI) html += `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} Ricetta su misura</h2></div><p style="margin:0 0 10px">L'assistente inventa una ricetta per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'} con ${S.fridge.length ? 'quello che hai' : 'gli ingredienti che scrivi qui sopra'}.</p><label class="field" style="margin-bottom:10px"><span>Preferenze (facoltativo)</span><input id="ainote" maxlength="120" placeholder="es. veloce, senza glutine, piace ai bambini"></label><button class="btn primary wide" data-a="aiRecipe" ${S.fridge.length ? '' : 'disabled'}>${ic('spark','sm')} Inventa una ricetta</button></section>`;
+  if (!S.fridge.length) return html + `<p class="hint">Aggiungi quello che hai in frigo e in dispensa: ti mostro le ricette che puoi preparare e cosa ti manca.</p>`;
+  const res = fridgeMatches();
+  if (!res.length) return html + `<p class="hint">Nessuna ricetta del ricettario usa questi ingredienti.${AI ? ' Prova a farne inventare una all\'assistente.' : ''}</p>`;
+  const ready = res.filter(x => !x.miss.length), near = res.filter(x => x.miss.length && x.miss.length <= 2), rest = res.filter(x => x.miss.length > 2 && (x.have.length >= 2 || x.score >= 0.4)).slice(0, 8);
+  const card = x => `<div class="match">${recipeCard(x.r, `<p class="mt ${x.miss.length ? '' : 'st-good'}">${x.miss.length ? `Hai ${x.have.length} su ${x.have.length + x.miss.length} · manca: ${esc(x.miss.map(i => stripQB(i.name)).join(', '))}` : 'Hai tutto quello che serve'}</p>`)}${x.miss.length ? `<button class="btn sm ghost" data-a="missShop" data-id="${x.r.id}">${ic('cart','sm')} Metti in spesa ciò che manca</button>` : ''}</div>`;
+  if (ready.length) html += `<h3 class="sec-t">Puoi farle subito</h3><div class="rgrid">${ready.map(card).join('')}</div>`;
+  if (near.length) html += `<h3 class="sec-t">Ti manca poco</h3><div class="rgrid">${near.map(card).join('')}</div>`;
+  if (rest.length) html += `<h3 class="sec-t">Con qualche acquisto</h3><div class="rgrid">${rest.map(card).join('')}</div>`;
+  return html;
 }
 
 /* ---------- fogli ---------- */
-let sheetOpen = false;
+let sheetOpen = false, onSheetClose = null;
 function openSheet(title, body) {
   $('#sheet-body').innerHTML = `<div class="grab"></div><div class="sh-h"><h2>${title}</h2><button class="icon-btn" data-a="close" aria-label="Chiudi">${ic('x')}</button></div>${body}`;
   $('#sheet').hidden = false; document.body.style.overflow = 'hidden';
   $('#sheet-body').scrollTop = 0;
   if (!sheetOpen) { sheetOpen = true; try { history.pushState({sheet: 1}, ''); } catch (e) {} }
 }
-function hideSheet() { $('#sheet').hidden = true; document.body.style.overflow = ''; sheetOpen = false; }
+function hideSheet() { $('#sheet').hidden = true; document.body.style.overflow = ''; sheetOpen = false; if (onSheetClose) { const f = onSheetClose; onSheetClose = null; f(); } }
 function closeSheet() { if (!sheetOpen) return; if (history.state && history.state.sheet) history.back(); else hideSheet(); }
 window.addEventListener('popstate', () => { if (sheetOpen) hideSheet(); });
 
@@ -587,38 +1008,43 @@ function toast(msg, undo) {
   const el = $('#toast'), u = $('#toast-u');
   $('#toast-t').textContent = msg; el.hidden = false;
   u.hidden = !undo; u.onclick = () => { el.hidden = true; undo && undo(); };
-  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, undo ? 5000 : 2600);
+  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, undo ? 5000 : 2800);
 }
 /* azione con "Annulla": salva una copia dei dati prima di cambiarli */
 function withUndo(msg, fn) { const snap = JSON.stringify(S); fn(); save(); render(); toast(msg, () => { S = normalize(JSON.parse(snap)); save(); render(); }); }
 
+function recipeBody(r, f, people) {
+  const steps = String(r.steps || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+  return `${r.ingredients.length ? `<p class="h3">Ingredienti per ${people} ${people == 1 ? 'persona' : 'persone'}</p><ul class="ing">${r.ingredients.map(i => `<li><b>${esc([i.qty != null ? fmtQty(scaleQty(i, f)) : '', i.unit].filter(Boolean).join(' ')) || '—'}</b><span>${esc(i.name)}</span></li>`).join('')}</ul>` : ''}
+    ${steps.length ? `<p class="h3">Procedimento</p><ol class="steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
+    ${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ''}`;
+}
 function sheetRecipe(id) {
   const r = recipeById(id); if (!r) return;
-  ui.rid = id; if (ui.serv == null) ui.serv = r.servings;
+  ui.rid = id; if (ui.serv == null) ui.serv = S.settings.people;
   const f = ui.serv / r.servings;
-  const steps = String(r.steps || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
   openSheet(esc(r.name), `
-    <div class="r-meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} minuti</span>` : ''}${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-    <div class="stepper"><b>Porzioni</b><div><button data-a="serv" data-d="-1" aria-label="Meno porzioni">−</button><output>${ui.serv}</output><button data-a="serv" data-d="1" aria-label="Più porzioni">+</button></div></div>
-    ${r.ingredients.length ? `<p class="h3">Ingredienti</p><ul class="ing">${r.ingredients.map(i => `<li><b>${esc([i.qty != null ? fmtQty(scaleQty(i, f)) : '', i.unit].filter(Boolean).join(' ')) || '—'}</b><span>${esc(i.name)}</span></li>`).join('')}</ul>` : ''}
-    ${steps.length ? `<p class="h3">Procedimento</p><ol class="steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
-    ${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ''}
+    <div class="r-meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} minuti</span>` : ''}${r.cat ? `<span>${esc(r.cat)}</span>` : ''}${origBadge(r)}${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <div class="stepper"><b>Per quante persone?<small>Ricetta originale per ${r.servings}</small></b><div><button data-a="serv" data-d="-1" aria-label="Una persona in meno">−</button><output>${ui.serv}</output><button data-a="serv" data-d="1" aria-label="Una persona in più">+</button></div></div>
+    <div class="chipline serv-q">${[1, 2, 3, 4, 6, 8, 10, 12].map(n => `<button class="chip" data-a="servSet" data-n="${n}" aria-pressed="${ui.serv === n}">${n}</button>`).join('')}</div>
+    ${recipeBody(r, f, ui.serv)}
     <div class="actions">
-      <button class="btn primary" data-a="toShop" data-id="${r.id}">${ic('cart','sm')} Ingredienti nella spesa (${ui.serv} porz.)</button>
-      <div class="actions two-c" style="margin:0"><button class="btn" data-a="planRecipe" data-id="${r.id}">${ic('cal','sm')} Nel menù</button><button class="btn" data-a="fav" data-id="${r.id}">${ic('star', 'sm' + (r.fav ? ' fav-on' : ''))} ${r.fav ? 'Preferita' : 'Preferiti'}</button></div>
-      <div class="actions two-c" style="margin:0"><button class="btn ghost" data-a="editRecipe" data-id="${r.id}">${ic('pen','sm')} Modifica</button><button class="btn danger" data-a="delRecipe" data-id="${r.id}">${ic('trash','sm')} Elimina</button></div>
+      <button class="btn primary" data-a="toShop" data-id="${r.id}">${ic('cart','sm')} Ingredienti nella spesa (per ${ui.serv})</button>
+      <div class="actions two-c" style="margin:0"><button class="btn" data-a="planRecipe" data-id="${r.id}">${ic('cal','sm')} Nel menù</button><button class="btn" data-a="fav" data-id="${r.id}">${ic('star', 'sm' + (isFav(r.id) ? ' fav-on' : ''))} ${isFav(r.id) ? 'Preferita' : 'Preferiti'}</button></div>
+      ${r.lib ? `<button class="btn ghost" data-a="editRecipe" data-id="${r.id}">${ic('pen','sm')} Crea la mia versione</button>` : `<div class="actions two-c" style="margin:0"><button class="btn ghost" data-a="editRecipe" data-id="${r.id}">${ic('pen','sm')} Modifica</button><button class="btn danger" data-a="delRecipe" data-id="${r.id}">${ic('trash','sm')} Elimina</button></div>`}
     </div>`);
 }
 function sheetRecipeForm(id) {
-  const r = id ? recipeById(id) : null;
-  openSheet(r ? 'Modifica ricetta' : 'Nuova ricetta', `<form data-form="recipe" data-id="${r ? r.id : ''}">
-    <label class="field"><span>Nome</span><input name="name" required maxlength="120" value="${esc(r ? r.name : '')}" placeholder="es. Lasagne della nonna"></label>
-    <div class="two"><label class="field"><span>Porzioni</span><input name="servings" type="number" min="1" max="50" inputmode="numeric" value="${r ? r.servings : S.settings.people}"></label>
-    <label class="field"><span>Tempo (minuti)</span><input name="time" type="number" min="0" max="2000" inputmode="numeric" value="${r && r.time ? r.time : ''}" placeholder="30"></label></div>
-    <label class="field"><span>Ingredienti, uno per riga</span><textarea name="ings" rows="7" placeholder="500 g lasagne&#10;400 g macinato&#10;1 l latte&#10;sale q.b.">${esc(r ? r.ingredients.map(i => ingText(i)).join('\n') : '')}</textarea><small>Scrivi prima la quantità: così le dosi si ricalcolano quando cambi le porzioni.</small></label>
-    <label class="field"><span>Procedimento, un passaggio per riga</span><textarea name="steps" rows="6">${esc(r ? r.steps : '')}</textarea></label>
-    <label class="field"><span>Etichette, separate da virgola</span><input name="tags" value="${esc(r ? (r.tags || []).join(', ') : '')}" placeholder="veloce, vegetariano, bimbi"></label>
-    <label class="field"><span>Note</span><input name="notes" value="${esc(r ? r.notes : '')}" placeholder="es. si può congelare"></label>
+  const src = id ? recipeById(id) : null, copy = src && src.lib, r = src;
+  openSheet(copy ? 'La mia versione' : r ? 'Modifica ricetta' : 'Nuova ricetta', `<form data-form="recipe" data-id="${r && !copy ? r.id : ''}">
+    <label class="field"><span>Nome</span><input id="rf-name" name="name" required maxlength="120" value="${esc(r ? r.name : '')}" placeholder="es. Lasagne della nonna"></label>
+    <div class="two"><label class="field"><span>Porzioni</span><input id="rf-serv" name="servings" type="number" min="1" max="50" inputmode="numeric" value="${r ? r.servings : S.settings.people}"></label>
+    <label class="field"><span>Tempo (minuti)</span><input id="rf-time" name="time" type="number" min="0" max="2000" inputmode="numeric" value="${r && r.time ? r.time : ''}" placeholder="30"></label></div>
+    <label class="field"><span>Categoria</span><select id="rf-cat" name="cat"><option value="">—</option>${LIB_CATS.map(c => `<option ${r && r.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+    <label class="field"><span>Ingredienti, uno per riga</span><textarea id="rf-ings" name="ings" rows="7" placeholder="500 g lasagne&#10;400 g macinato&#10;1 l latte&#10;sale q.b.">${esc(r ? r.ingredients.map(i => ingText(i)).join('\n') : '')}</textarea><small>Scrivi prima la quantità: così le dosi si ricalcolano quando cambi le persone.</small></label>
+    <label class="field"><span>Procedimento, un passaggio per riga</span><textarea id="rf-steps" name="steps" rows="6">${esc(r ? r.steps : '')}</textarea></label>
+    <label class="field"><span>Etichette, separate da virgola</span><input id="rf-tags" name="tags" value="${esc(r ? (r.tags || []).join(', ') : '')}" placeholder="veloce, vegetariano, bimbi"></label>
+    <label class="field"><span>Note</span><input id="rf-notes" name="notes" value="${esc(r ? r.notes : '')}" placeholder="es. si può congelare"></label>
     <div class="actions"><button class="btn primary">Salva ricetta</button></div></form>`);
 }
 function sheetPlan(id) {
@@ -631,21 +1057,27 @@ function sheetPlan(id) {
   }
   openSheet('Quando la prepari?', `<p class="empty-s" style="margin:0 0 10px">${esc(r.name)}</p><div class="list">${rows}</div>`);
 }
-function sheetSlot(day, meal) {
+function sheetSlot(day, meal, q = '') {
   ui.slot = {day, meal};
   const v = (S.menu[day] || {})[meal];
-  const recs = [...S.recipes].sort((a, b) => (b.fav - a.fav) || a.name.localeCompare(b.name, 'it'));
   openSheet(`${fmtLong(day).replace(/^./, c => c.toUpperCase())} · ${meal === 'pranzo' ? 'Pranzo' : 'Cena'}`, `
-    <form data-form="slotText" class="quick" style="margin-bottom:14px"><label class="vh" for="st">Scrivi un piatto</label><input id="st" name="t" placeholder="Scrivi, es. Pizza fuori, avanzi…" value="${esc(v && v.t ? v.t : '')}" maxlength="80"><button class="btn primary">Salva</button></form>
-    ${recs.length ? `<p class="h3">Oppure scegli una ricetta</p><div class="list">${recs.map(r => `<div class="row"><button class="row-main" data-a="pickr" data-id="${r.id}"><span class="rt"><b>${r.fav ? '★ ' : ''}${esc(r.name)}</b><small>${r.time ? r.time + ' min · ' : ''}${(r.tags || []).join(', ')}</small></span>${v && v.r === r.id ? `<span class="st-good">${ic('check')}</span>` : ''}</button></div>`).join('')}</div>` : ''}
+    <form data-form="slotText" class="quick" style="margin-bottom:12px"><label class="vh" for="st">Scrivi un piatto</label><input id="st" name="t" placeholder="Scrivi, es. Pizza fuori, avanzi…" value="${esc(v && v.t ? v.t : '')}" maxlength="80"><button class="btn primary">Salva</button></form>
+    <label class="search">${ic('search')}<span class="vh">Cerca ricetta</span><input type="search" id="sq" placeholder="Oppure cerca una ricetta" value="${esc(q)}" autocomplete="off"></label>
+    <div id="slist">${slotList(q, v)}</div>
     ${v ? `<div class="actions"><button class="btn danger" data-a="clearSlot">${ic('trash','sm')} Togli dal menù</button></div>` : ''}`);
+}
+function slotList(q, v) {
+  const n = norm(q.trim());
+  const recs = allRecipes().filter(r => !n || norm(r.name).includes(n) || r.ingredients.some(i => norm(i.name).includes(n))).sort((a, b) => (isFav(b.id) - isFav(a.id)) || a.name.localeCompare(b.name, 'it')).slice(0, 60);
+  if (!recs.length) return `<p class="hint">Nessuna ricetta trovata.</p>`;
+  return `<div class="list">${recs.map(r => `<div class="row"><button class="row-main" data-a="pickr" data-id="${r.id}"><span class="rt"><b>${isFav(r.id) ? '★ ' : ''}${esc(r.name)}</b><small>${[r.cat, r.time ? r.time + ' min' : ''].filter(Boolean).join(' · ')}</small></span>${v && v.r === r.id ? `<span class="st-good">${ic('check')}</span>` : ''}</button></div>`).join('')}</div>`;
 }
 function sheetItem(id) {
   const i = S.shopping.find(x => x.id === id); if (!i) return;
   openSheet('Modifica prodotto', `<form data-form="item" data-id="${i.id}">
-    <label class="field"><span>Prodotto</span><input name="name" required value="${esc(i.name)}"></label>
-    <div class="two"><label class="field"><span>Quantità</span><input name="qty" value="${esc(fmtQty(i.qty))}" inputmode="decimal" placeholder="—"></label><label class="field"><span>Unità</span><input name="unit" value="${esc(i.unit)}" placeholder="kg, pz…"></label></div>
-    <label class="field"><span>Reparto</span><select name="aisle">${AISLES.map(([k, l, e]) => `<option value="${k}" ${aisleOf(i.aisle)[0] === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
+    <label class="field"><span>Prodotto</span><input id="it-name" name="name" required value="${esc(i.name)}"></label>
+    <div class="two"><label class="field"><span>Quantità</span><input id="it-qty" name="qty" value="${esc(fmtQty(i.qty))}" inputmode="decimal" placeholder="—"></label><label class="field"><span>Unità</span><input id="it-unit" name="unit" value="${esc(i.unit)}" placeholder="kg, pz…"></label></div>
+    <label class="field"><span>Reparto</span><select id="it-aisle" name="aisle">${AISLES.map(([k, l, e]) => `<option value="${k}" ${aisleOf(i.aisle)[0] === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
     <div class="actions two-c"><button type="button" class="btn danger" data-a="delItem" data-id="${i.id}">${ic('trash','sm')} Elimina</button><button class="btn primary">Salva</button></div></form>`);
 }
 function sheetBill(id) {
@@ -664,37 +1096,145 @@ function sheetPay(id) {
   const step = (REC[b.rec] || REC.none)[1];
   openSheet('Pagamento', `<form data-form="pay" data-id="${b.id}">
     <p class="empty-s" style="margin:0 0 14px">${catOf(b.cat)[2]} ${esc(b.name)} · scadenza ${fmtD(b.due)}</p>
-    <div class="two"><label class="field"><span>Importo pagato (€)</span><input name="amount" inputmode="decimal" value="${moneyIn(b.amount)}" required></label>
-    <label class="field"><span>Data</span><input name="date" type="date" value="${today()}" required></label></div>
+    <div class="two"><label class="field"><span>Importo pagato (€)</span><input id="pf-amount" name="amount" inputmode="decimal" value="${moneyIn(b.amount)}" required></label>
+    <label class="field"><span>Data</span><input id="pf-date" name="date" type="date" value="${today()}" required></label></div>
     ${step && !b.nextId ? `<p class="hint" style="text-align:left;margin:0 0 14px">La prossima (${fmtD(addMonths(b.due, step))}) verrà aggiunta da sola con lo stesso importo: potrai correggerlo quando arriva.</p>` : ''}
     <div class="actions"><button class="btn primary">${ic('check','sm')} Conferma pagamento</button></div></form>`);
 }
-function sheetBillForm(id) {
-  const b = id ? billById(id) : null;
-  openSheet(b ? 'Modifica bolletta' : 'Nuova bolletta', `<form data-form="bill" data-id="${b ? b.id : ''}">
-    <label class="field"><span>Nome</span><input name="name" required maxlength="80" value="${esc(b ? b.name : '')}" placeholder="es. Luce, Mutuo, RC auto"></label>
-    <label class="field"><span>Categoria</span><select name="cat">${CATS.map(([k, l, e]) => `<option value="${k}" ${(b ? b.cat : 'luce') === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
-    <div class="two"><label class="field"><span>Importo (€)</span><input name="amount" inputmode="decimal" required value="${b ? moneyIn(b.amount) : ''}" placeholder="0,00"></label>
-    <label class="field"><span>Scadenza</span><input name="due" type="date" required value="${b ? b.due : today()}"></label></div>
-    <label class="field"><span>Si ripete</span><select name="rec">${Object.entries(REC).map(([k, [l]]) => `<option value="${k}" ${(b ? b.rec : 'm2') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-    <label class="switch"><input type="checkbox" name="auto" ${b && b.auto ? 'checked' : ''}><span><b>Domiciliata in banca</b><small>Alla scadenza viene segnata pagata da sola</small></span></label>
-    <label class="field"><span>Note</span><input name="notes" maxlength="200" value="${esc(b ? b.notes : '')}" placeholder="es. codice cliente, IBAN, fornitore"></label>
+function sheetBillForm(id, pre) {
+  const b = id ? billById(id) : (pre || null);
+  openSheet(id ? 'Modifica bolletta' : 'Nuova bolletta', `<form data-form="bill" data-id="${id || ''}">
+    ${!id && AI_IMG ? `<label class="btn ghost wide photo-btn" style="margin-bottom:6px">${ic('camera','sm')} Compila da una foto<input type="file" id="billphoto2" accept="image/*" class="vh"></label><p class="hint" id="photo-st" style="margin:0 0 14px">${pre ? 'Dati letti dalla foto: controllali prima di salvare.' : 'Fotografa la prima pagina: importo, scadenza e fornitore li legge l\'assistente.'}</p>` : ''}
+    <label class="field"><span>Nome</span><input id="bf-name" name="name" required maxlength="80" value="${esc(b ? b.name : '')}" placeholder="es. Luce, Mutuo, RC auto"></label>
+    <label class="field"><span>Categoria</span><select id="bf-cat" name="cat">${CATS.map(([k, l, e]) => `<option value="${k}" ${(b ? b.cat : 'luce') === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
+    <div class="two"><label class="field"><span>Importo (€)</span><input id="bf-amount" name="amount" inputmode="decimal" required value="${b ? moneyIn(b.amount) : ''}" placeholder="0,00"></label>
+    <label class="field"><span>Scadenza</span><input id="bf-due" name="due" type="date" required value="${b && b.due ? b.due : today()}"></label></div>
+    <label class="field"><span>Si ripete</span><select id="bf-rec" name="rec">${Object.entries(REC).map(([k, [l]]) => `<option value="${k}" ${(b && b.rec ? b.rec : 'm2') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label class="switch"><input type="checkbox" id="bf-auto" name="auto" ${b && b.auto ? 'checked' : ''}><span><b>Domiciliata in banca</b><small>Alla scadenza viene segnata pagata da sola</small></span></label>
+    <label class="field"><span>Note</span><input id="bf-notes" name="notes" maxlength="200" value="${esc(b ? b.notes : '')}" placeholder="es. codice cliente, POD, fornitore"></label>
     <div class="actions"><button class="btn primary">Salva</button></div></form>`);
 }
-/* dentro un riquadro incorporato (anteprima web) i download sono bloccati: resta solo la copia del testo */
-let canDownload = true; try { canDownload = window.top === window; } catch (e) { canDownload = false; }
+function sheetMove(id, kind) {
+  const m = id ? S.moves.find(x => x.id === id) : null;
+  const k = m ? m.kind : (kind || 'out');
+  const opt = c => `<option value="${c[0]}" ${(m ? m.cat : k === 'in' ? 'stipendio' : 'spesa') === c[0] ? 'selected' : ''}>${c[2]} ${c[1]}</option>`;
+  openSheet(m ? 'Movimento' : k === 'in' ? 'Nuova entrata' : 'Nuova spesa', `<form data-form="move" data-id="${m ? m.id : ''}">
+    ${m && m.src === 'bill' ? `<p class="hint" style="text-align:left;margin:0 0 14px">Viene dalla bolletta pagata: per cambiarlo modifica la bolletta.</p>` : ''}
+    <label class="field"><span>Descrizione</span><input id="mf-desc" name="desc" required maxlength="140" value="${esc(m ? m.desc : '')}" placeholder="es. Spesa Conad, Stipendio"></label>
+    <div class="two"><label class="field"><span>Importo (€)</span><input id="mf-amount" name="amount" inputmode="decimal" required value="${m ? moneyIn(m.amount) : ''}" placeholder="0,00"></label>
+    <label class="field"><span>Data</span><input id="mf-date" name="date" type="date" required value="${m ? m.date : today()}"></label></div>
+    <label class="field"><span>Categoria</span><select id="mf-cat" name="cat"><optgroup label="Uscite">${MCATS.filter(c => c[3] === 'out').map(opt).join('')}</optgroup><optgroup label="Entrate">${MCATS.filter(c => c[3] === 'in').map(opt).join('')}</optgroup></select><small>La categoria dice se è un'entrata o un'uscita.</small></label>
+    <div class="actions ${m ? 'two-c' : ''}">${m ? `<button type="button" class="btn danger" data-a="delMove" data-id="${m.id}">${ic('trash','sm')} Elimina</button>` : ''}<button class="btn primary">Salva</button></div></form>`);
+}
+function sheetCsv() {
+  const c = ui.csv;
+  let body = `<p class="empty-s" style="margin:0 0 12px;font-size:15px">Dall'app o dal sito della banca scarica la lista movimenti in formato <b>CSV</b> (se c'è solo Excel, aprilo e salvalo come CSV). Le categorie vengono assegnate da sole e i movimenti già presenti non vengono duplicati.</p>
+    <label class="btn primary wide photo-btn">${ic('upload','sm')} Scegli il file CSV<input type="file" id="csvfile" accept=".csv,text/csv,text/plain" class="vh"></label>`;
+  if (c && c.error) body += `<p class="st-bad" style="margin:14px 2px 0">${esc(c.error)}</p>`;
+  if (c && c.list) {
+    const n = c.list.length, dates = c.list.map(m => m.date).sort();
+    body += `<div class="kv" style="margin-top:16px"><div><dt>Movimenti nuovi</dt><dd>${c.fresh.length}</dd></div><div><dt>Periodo</dt><dd>${fmtD(dates[0])} – ${fmtD(dates[dates.length - 1])}</dd></div>${c.dup ? `<div><dt>Già presenti</dt><dd>${c.dup}</dd></div>` : ''}${c.bills ? `<div><dt>Già registrati come bollette</dt><dd>${c.bills}</dd></div>` : ''}<div><dt>Uscite / entrate</dt><dd>${euro(sum(c.fresh.filter(m => m.kind === 'out').map(m => m.amount)))} / ${euro(sum(c.fresh.filter(m => m.kind === 'in').map(m => m.amount)))}</dd></div></div>
+      ${c.fresh.length ? `<div class="list" style="margin-bottom:14px">${c.fresh.slice(0, 6).map(m => `<div class="row"><span class="row-main"><span class="emo">${mcatOf(m.cat)[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${fmtD(m.date)} · ${mcatOf(m.cat)[1]}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></span></div>`).join('')}${n > 6 ? `<p class="hint" style="margin:6px 0 10px">…e altri ${c.fresh.length - 6}</p>` : ''}</div>
+      <div class="actions"><button class="btn primary" data-a="csvImport">Importa ${c.fresh.length} movimenti</button></div>` : `<p class="hint">Non c'è niente di nuovo da importare.</p>`}`;
+  }
+  openSheet('Importa estratto conto', body);
+}
 function sheetSettings() {
   const theme = pref.get('theme', 'auto');
   openSheet('Impostazioni', `<form data-form="settings">
-    <div class="two"><label class="field"><span>Persone in famiglia</span><input name="people" type="number" min="1" max="20" inputmode="numeric" value="${S.settings.people}"><small>Per le dosi del menù</small></label>
-    <label class="field"><span>Preavviso bollette</span><select name="remindDays">${[1, 3, 5, 7, 10, 14].map(n => `<option value="${n}" ${S.settings.remindDays == n ? 'selected' : ''}>${n} ${n === 1 ? 'giorno' : 'giorni'}</option>`).join('')}</select><small>Prima della scadenza</small></label></div>
-    <label class="field"><span>Aspetto</span><select name="theme"><option value="auto" ${theme === 'auto' ? 'selected' : ''}>Come il telefono</option><option value="light" ${theme === 'light' ? 'selected' : ''}>Chiaro</option><option value="dark" ${theme === 'dark' ? 'selected' : ''}>Scuro</option></select></label>
+    <div class="two"><label class="field"><span>Persone in famiglia</span><input id="set-people" name="people" type="number" min="1" max="20" inputmode="numeric" value="${S.settings.people}"><small>Dosi di ricette e menù</small></label>
+    <label class="field"><span>Preavviso bollette</span><select id="set-remind" name="remindDays">${[1, 3, 5, 7, 10, 14].map(n => `<option value="${n}" ${S.settings.remindDays == n ? 'selected' : ''}>${n} ${n === 1 ? 'giorno' : 'giorni'}</option>`).join('')}</select><small>Prima della scadenza</small></label></div>
+    <label class="field"><span>Aspetto</span><select id="set-theme" name="theme"><option value="auto" ${theme === 'auto' ? 'selected' : ''}>Come il telefono</option><option value="light" ${theme === 'light' ? 'selected' : ''}>Chiaro</option><option value="dark" ${theme === 'dark' ? 'selected' : ''}>Scuro</option></select></label>
     <div class="actions"><button class="btn primary">Salva impostazioni</button></div></form>
     <p class="h3" style="margin-top:22px">Copia di sicurezza</p>
-    <p class="empty-s" style="margin:0 0 10px;font-size:14px">I dati restano solo su questo telefono. Fai ogni tanto una copia: serve anche per passarli a un altro telefono.</p>
-    ${canDownload ? `<div class="actions two-c"><button class="btn" data-a="export">Scarica copia</button><button class="btn" data-a="copy">Copia testo</button></div>` : `<div class="actions"><button class="btn" data-a="copy">Copia il testo della copia</button></div>`}
-    <form data-form="import" style="margin-top:14px"><label class="field"><span>Ripristina da una copia</span><input type="file" name="file" accept="application/json,.json,text/plain"><small>Oppure incolla qui il testo della copia:</small></label><label class="field"><span class="vh">Testo della copia</span><textarea name="text" rows="3" placeholder='{"v":1, …}' style="min-height:80px"></textarea></label><div class="actions"><button class="btn ghost">Ripristina</button></div></form>
+    <p class="empty-s" style="margin:0 0 10px;font-size:14px">I dati restano solo su questo dispositivo. Fai ogni tanto una copia: serve anche per passarli a un altro telefono.</p>
+    ${DL || canDownload ? `<div class="actions two-c"><button class="btn" data-a="export">Scarica copia</button><button class="btn" data-a="copy">Copia testo</button></div>` : `<div class="actions"><button class="btn" data-a="copy">Copia il testo della copia</button></div>`}
+    <form data-form="import" style="margin-top:14px"><label class="field"><span>Ripristina da una copia</span><input type="file" id="imp-file" name="file" accept="application/json,.json,text/plain"><small>Oppure incolla qui il testo della copia:</small></label><label class="field"><span class="vh">Testo della copia</span><textarea id="imp-text" name="text" rows="3" placeholder='{"v":2, …}' style="min-height:80px"></textarea></label><div class="actions"><button class="btn ghost">Ripristina</button></div></form>
     <div class="actions" style="margin-top:22px"><button class="btn danger" data-a="reset">Cancella tutti i dati</button></div>`);
+}
+
+/* ---------- assistente: ricetta su misura ---------- */
+let aiCtl = null;
+function sheetAi() {
+  const a = ui.ai; if (!a) return;
+  if (a.status === 'loading') return openSheet('Ricetta su misura', `<div class="thinking"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><p class="hint">L'assistente sta pensando a una ricetta con: ${esc(S.fridge.join(', '))}. Può volerci fino a un minuto.</p><div class="actions"><button class="btn ghost" data-a="aiStop">Interrompi</button></div>`);
+  if (a.status === 'error') return openSheet('Ricetta su misura', `<p class="st-bad">${esc(a.msg)}</p><div class="actions"><button class="btn primary" data-a="aiRecipe">Riprova</button></div>`);
+  const r = a.recipe;
+  openSheet(esc(r.name), `<div class="r-meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} minuti</span>` : ''}<span class="tag ai">Inventata dall'assistente</span></div>${recipeBody(r, 1, r.servings)}
+    <div class="actions"><button class="btn primary" data-a="aiSave">${ic('check','sm')} Salva nelle mie ricette</button><div class="actions two-c" style="margin:0"><button class="btn" data-a="aiShop">${ic('cart','sm')} In spesa</button><button class="btn ghost" data-a="aiRecipe" data-again="1">${ic('spark','sm')} Un'altra idea</button></div></div>`);
+}
+async function aiRecipe(again) {
+  if (!AI || !S.fridge.length) return;
+  const noteEl = $('#ainote'); if (noteEl) ui.aiNote = noteEl.value.trim();
+  const people = S.settings.people;
+  const prev = again && ui.ai && ui.ai.recipe ? `\nNon riproporre "${ui.ai.recipe.name}": serve un'idea diversa.` : '';
+  const prompt = `Sei un cuoco di cucina casalinga italiana (anche napoletana). Inventa UNA ricetta per ${people} persone usando soprattutto questi ingredienti che ho in casa: ${S.fridge.join(', ')}.
+Puoi aggiungere solo ingredienti di base che quasi tutti hanno (sale, pepe, olio, aglio, cipolla, farina, burro, zucchero, parmigiano, erbe aromatiche). Non serve usare tutti gli ingredienti.${ui.aiNote ? `\nPreferenze della famiglia: ${ui.aiNote}.` : ''}${prev}
+Rispondi solo con un oggetto JSON in italiano, così:
+{"name":"Nome del piatto","time":30,"servings":${people},"cat":"Primi","tags":["veloce"],"ingredients":["320 g spaghetti","2 spicchi aglio","sale q.b."],"steps":["Primo passaggio.","Secondo passaggio."],"notes":"un consiglio breve"}
+Regole: in "ingredients" la quantità va prima del nome, con unità tra g, kg, ml, l, cucchiai, cucchiaini, spicchi, fette, oppure solo il numero per le cose che si contano; usa "q.b." per sale, pepe ed erbe. "cat" è uno tra ${LIB_CATS.join(', ')}. Da 3 a 7 passaggi chiari.`;
+  if (aiCtl) aiCtl.abort();
+  aiCtl = new AbortController(); const ctl = aiCtl;
+  ui.ai = {status: 'loading'}; sheetAi();
+  try {
+    const d = await AI.json(prompt, {signal: ctl.signal, cache: again ? false : undefined});
+    if (ctl !== aiCtl) return;
+    const ings = Array.isArray(d && d.ingredients) ? d.ingredients.map(x => parseIng(String(x))).filter(Boolean) : [];
+    if (!d || !d.name || !ings.length) throw {code: 'invalid_json'};
+    ui.ai = {status: 'done', recipe: {id: 'ai', name: String(d.name).slice(0, 120), time: parseInt(d.time) || 0, servings: Math.max(1, parseInt(d.servings) || people), cat: LIB_CATS.includes(d.cat) ? d.cat : '', tags: Array.isArray(d.tags) ? d.tags.map(t => String(t).toLowerCase().slice(0, 30)).slice(0, 4) : [], ingredients: ings, steps: (Array.isArray(d.steps) ? d.steps : [String(d.steps || '')]).map(s => String(s).trim()).filter(Boolean).join('\n'), notes: String(d.notes || '').slice(0, 300)}};
+  } catch (e) {
+    if (ctl !== aiCtl) return;
+    if (e && e.code === 'cancelled') { ui.ai = null; return; }
+    ui.ai = {status: 'error', msg: aiErr(e)};
+  }
+  aiCtl = null;
+  if (sheetOpen) sheetAi();
+}
+
+/* ---------- assistente: bolletta da foto ---------- */
+async function billFromPhoto(file) {
+  if (!AI || !file) return;
+  const st = $('#photo-st');
+  const draft = {name: '', cat: 'luce', amount: 0, due: today(), rec: 'm2', auto: false, notes: ''};
+  sheetBillForm(null, null);
+  const s2 = $('#photo-st'); if (s2) { s2.textContent = 'Sto leggendo la bolletta…'; s2.className = 'hint st-warn'; }
+  const prompt = `Nella foto c'è una bolletta o un avviso di pagamento italiano. Leggi i dati e rispondi solo con un oggetto JSON:
+{"name":"fornitore e servizio in breve, es. Enel luce","cat":"una tra ${CATS.map(c => c[0]).join(', ')}","amount":87.40,"due":"AAAA-MM-GG","rec":"una tra none, m1, m2, m3, m6, m12","auto":false,"notes":"codice cliente, POD o PDR se visibili"}
+"amount" è il totale da pagare in euro (numero). "due" è la data di scadenza del pagamento. "rec" è la periodicità della fatturazione se indicata (mensile m1, bimestrale m2, trimestrale m3), altrimenti la più probabile per quel servizio. "auto" è true se il pagamento risulta domiciliato o con addebito diretto SDD. Usa null per i campi che non trovi.`;
+  try {
+    const d = await AI.json(prompt, {images: [file], modelTier: 'default'});
+    if (d && typeof d === 'object') {
+      if (d.name) draft.name = String(d.name).slice(0, 80);
+      if (CATS.some(c => c[0] === d.cat)) draft.cat = d.cat;
+      if (d.amount != null) draft.amount = typeof d.amount === 'number' ? Math.round(d.amount * 100) / 100 : parseMoney(d.amount);
+      if (d.due && /^\d{4}-\d{2}-\d{2}$/.test(String(d.due))) draft.due = String(d.due);
+      if (d.rec in REC) draft.rec = d.rec;
+      draft.auto = d.auto === true;
+      if (d.notes) draft.notes = String(d.notes).slice(0, 200);
+    }
+    if (sheetOpen) sheetBillForm(null, draft);
+  } catch (e) {
+    const s3 = $('#photo-st'); if (s3) { s3.textContent = aiErr(e); s3.className = 'hint st-bad'; }
+  }
+}
+
+/* ---------- assistente: categorie dei movimenti importati ---------- */
+async function aiSort() {
+  if (!AI) return;
+  const list = S.moves.filter(m => m.src === 'csv' && (m.cat === 'uscite' || m.cat === 'entrate')).slice(0, 150);
+  if (!list.length) return;
+  const st = $('#aisort-st'); if (st) st.textContent = 'L\'assistente sta classificando i movimenti…';
+  const outC = MCATS.filter(c => c[3] === 'out').map(c => `${c[0]} (${c[1]})`).join(', '), inC = MCATS.filter(c => c[3] === 'in').map(c => `${c[0]} (${c[1]})`).join(', ');
+  const prompt = `Classifica questi movimenti di un conto corrente italiano. Per le uscite usa una tra: ${outC}. Per le entrate usa una tra: ${inC}.
+Rispondi solo con un oggetto JSON che associa il numero di ogni riga alla categoria, es. {"0":"spesa","1":"stipendio"}. Se non sei sicuro usa "uscite" o "entrate".
+${list.map((m, i) => `${i}. [${m.kind === 'in' ? 'entrata' : 'uscita'}] ${m.desc}`).join('\n')}`;
+  try {
+    const d = await AI.json(prompt, {modelTier: 'quick'});
+    let n = 0;
+    list.forEach((m, i) => { const c = d && d[String(i)]; const mc = MCATS.find(x => x[0] === c); if (mc && mc[3] === m.kind && c !== m.cat) { m.cat = c; n++; } });
+    list.forEach(m => { if (m.cat === 'uscite' || m.cat === 'entrate') m.src = 'csv-checked'; });
+    save(); render(); toast(n ? `${n} movimenti classificati` : 'Nessuna categoria da cambiare');
+  } catch (e) { const s = $('#aisort-st'); if (s) s.textContent = aiErr(e); }
 }
 
 /* ---------- azioni ---------- */
@@ -703,14 +1243,18 @@ const A = {
   close: () => closeSheet(),
   settings: () => sheetSettings(),
   tag: d => { ui.tag = d.t; render(); },
+  rview: d => { ui.rview = d.v; render(); },
+  fridgeGo: () => { ui.rview = 'frigo'; setTab('ricette'); },
   newRecipe: () => sheetRecipeForm(null),
   recipe: d => { if (!d.id || !recipeById(d.id)) return A.slot(d); ui.serv = null; sheetRecipe(d.id); },
-  serv: d => { const r = recipeById(ui.rid); if (!r) return; ui.serv = Math.max(1, Math.min(50, ui.serv + Number(d.d))); sheetRecipe(r.id); },
-  fav: d => { const r = recipeById(d.id); r.fav = !r.fav; save(); render(); sheetRecipe(r.id); },
-  toShop: d => { const r = recipeById(d.id); const n = addRecipeToShop(r, ui.serv || r.servings); save(); render(); toast(n ? `${n} ingredienti aggiunti alla spesa` : 'Niente da aggiungere'); },
+  serv: d => { if (!recipeById(ui.rid)) return; ui.serv = Math.max(1, Math.min(50, ui.serv + Number(d.d))); sheetRecipe(ui.rid); },
+  servSet: d => { if (!recipeById(ui.rid)) return; ui.serv = Number(d.n); sheetRecipe(ui.rid); },
+  fav: d => { S.favs = isFav(d.id) ? S.favs.filter(x => x !== d.id) : [...S.favs, d.id]; save(); render(); sheetRecipe(d.id); },
+  toShop: d => { const r = recipeById(d.id); const n = addRecipeToShop(r, ui.serv || r.servings); save(); render(); toast(n ? `${n} ingredienti per ${ui.serv} nella spesa` : 'Niente da aggiungere'); },
+  missShop: d => { const x = fridgeMatches().find(m => m.r.id === d.id); if (!x) return; const n = addRecipeToShop(x.r, S.settings.people, x.miss); save(); render(); toast(`${n} ${n === 1 ? 'ingrediente' : 'ingredienti'} nella spesa`); },
   editRecipe: d => sheetRecipeForm(d.id),
   delRecipe: d => { const r = recipeById(d.id); closeSheet(); withUndo(`“${r.name}” eliminata`, () => {
-    S.recipes = S.recipes.filter(x => x.id !== d.id);
+    S.recipes = S.recipes.filter(x => x.id !== d.id); S.favs = S.favs.filter(x => x !== d.id);
     for (const day of Object.keys(S.menu)) for (const [k] of MEALS) if (S.menu[day][k] && S.menu[day][k].r === d.id) S.menu[day][k] = {t: r.name};
   }); },
   planRecipe: d => sheetPlan(d.id),
@@ -725,6 +1269,13 @@ const A = {
     for (let i = 0; i < 7; i++) { const m = S.menu[addDays(ui.week, i)] || {}; for (const [k] of MEALS) { const r = m[k] && m[k].r && recipeById(m[k].r); if (r) { n += addRecipeToShop(r, S.settings.people); meals++; } } }
     save(); render(); toast(`${n} ingredienti da ${meals} ${meals === 1 ? 'pasto' : 'pasti'} nella spesa`);
   },
+  addFridge: d => { if (!S.fridge.some(f => norm(f) === norm(d.v))) S.fridge.push(d.v); save(); render(); },
+  unfridge: d => { S.fridge = S.fridge.filter(f => f !== d.v); save(); render(); },
+  clearFridge: () => withUndo('Frigo svuotato', () => { S.fridge = []; }),
+  aiRecipe: d => aiRecipe(!!d.again),
+  aiStop: () => { if (aiCtl) aiCtl.abort(); aiCtl = null; ui.ai = null; closeSheet(); },
+  aiSave: () => { const r = ui.ai && ui.ai.recipe; if (!r) return; const nr = {...r, id: uid()}; S.recipes.push(nr); save(); ui.ai = null; ui.serv = null; render(); sheetRecipe(nr.id); toast('Ricetta salvata in “Le mie”'); },
+  aiShop: () => { const r = ui.ai && ui.ai.recipe; if (!r) return; const n = addRecipeToShop(r, r.servings); save(); render(); toast(`${n} ingredienti nella spesa`); },
   tog: d => { const i = S.shopping.find(x => x.id === d.id); if (i) { i.done = !i.done; save(); render(); } },
   editItem: d => sheetItem(d.id),
   delItem: d => { closeSheet(); withUndo('Prodotto tolto', () => { S.shopping = S.shopping.filter(x => x.id !== d.id); }); },
@@ -736,24 +1287,39 @@ const A = {
   unpay: d => { unpayBill(d.id); save(); render(); sheetBill(d.id); },
   editBill: d => sheetBillForm(d.id),
   delBill: d => { const b = billById(d.id); closeSheet(); withUndo(`“${b.name}” eliminata`, () => {
-    S.bills = S.bills.filter(x => x.id !== d.id);
+    S.bills = S.bills.filter(x => x.id !== d.id); S.moves = S.moves.filter(m => m.billId !== d.id);
     S.bills.forEach(x => { if (x.nextId === d.id) x.nextId = null; });
   }); },
   bview: d => { ui.bview = d.v; render(); },
   year: d => { ui.year += Number(d.d); render(); },
-  export: () => {
-    try { const blob = new Blob([JSON.stringify(S, null, 1)], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `casa-in-ordine-${today()}.json`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Copia scaricata'); }
+  month: d => { ui.month = addMonths(ui.month + '-01', Number(d.d)).slice(0, 7); render(); },
+  newMove: d => sheetMove(null, d.k),
+  move: d => sheetMove(d.id),
+  delMove: d => { closeSheet(); withUndo('Movimento eliminato', () => { const m = S.moves.find(x => x.id === d.id); S.moves = S.moves.filter(x => x.id !== d.id); if (m && m.billId) unpayBill(m.billId); }); },
+  importCsv: () => { ui.csv = null; sheetCsv(); },
+  csvImport: () => {
+    const c = ui.csv; if (!c || !c.fresh) return;
+    const n = c.fresh.length, months = [...new Set(c.fresh.map(m => m.date.slice(0, 7)))].sort();
+    closeSheet();
+    withUndo(`${n} movimenti importati`, () => { c.fresh.forEach(m => S.moves.push({id: uid(), ...m, src: 'csv'})); ui.month = months[months.length - 1] || ui.month; });
+    ui.csv = null;
+  },
+  aiSort: () => aiSort(),
+  export: async () => {
+    const txt = JSON.stringify(S, null, 1), name = `casa-in-ordine-${today()}.json`;
+    if (DL) { try { await DL.save({filename: name, data: txt}); toast('Copia salvata'); } catch (e) { if (e && e.code !== 'cancelled' && e.code !== 'declined') toast('Salvataggio non riuscito: usa “Copia testo”'); } return; }
+    try { const blob = new Blob([txt], {type: 'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('Copia scaricata'); }
     catch (e) { toast('Download non riuscito: usa “Copia testo”'); }
   },
   copy: async () => {
     const txt = JSON.stringify(S);
     try { await navigator.clipboard.writeText(txt); toast('Copia negli appunti: incollala in una nota o in una mail'); }
-    catch (e) { const ta = document.querySelector('[data-form="import"] textarea'); if (ta) { ta.value = txt; ta.select(); } toast('Testo selezionato qui sotto: copialo a mano'); }
+    catch (e) { const ta = $('#imp-text'); if (ta) { ta.value = txt; ta.select(); } toast('Testo selezionato qui sotto: copialo a mano'); }
   },
   /* conferma in due tocchi, senza finestre di sistema */
   reset: (d, el) => {
     if (el.dataset.armed !== '1') { el.dataset.armed = '1'; el.textContent = 'Tocca di nuovo per cancellare tutto'; setTimeout(() => { if (el.isConnected) { el.dataset.armed = ''; el.textContent = 'Cancella tutti i dati'; } }, 4000); return; }
-    closeSheet(); withUndo('Dati cancellati', () => { S = fresh(false); });
+    closeSheet(); withUndo('Dati cancellati', () => { S = fresh(); });
   }
 };
 function setSlot(day, meal, v) {
@@ -764,7 +1330,7 @@ function setSlot(day, meal, v) {
 }
 
 const F = {
-  quick: (v, f) => {
+  quick: (v) => {
     const raw = (v.t || '').trim(); if (!raw) return;
     let n = 0;
     for (const part of raw.split(/\s*;\s*|,\s+/)) { const p = parseIng(part); if (p && addShop({name: p.name, qty: p.qty, unit: p.unit})) n++; }
@@ -772,13 +1338,18 @@ const F = {
     const inp = $('#qi'); if (inp) inp.focus();
     if (n > 1) toast(`${n} prodotti aggiunti`);
   },
+  fridge: (v) => {
+    const items = String(v.t || '').split(/\s*[,;]\s*|\s+e\s+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    for (const it of items) if (!S.fridge.some(f => norm(f) === norm(it))) S.fridge.push(it.slice(0, 40));
+    save(); render(); const inp = $('#fi'); if (inp) inp.focus();
+  },
   recipe: (v, f) => {
-    const data = {name: v.name.trim(), servings: Math.max(1, parseInt(v.servings) || 1), time: parseInt(v.time) || 0,
+    const data = {name: v.name.trim(), servings: Math.max(1, parseInt(v.servings) || 1), time: parseInt(v.time) || 0, cat: LIB_CATS.includes(v.cat) ? v.cat : '',
       ingredients: String(v.ings || '').split('\n').map(parseIng).filter(Boolean), steps: String(v.steps || '').trim(),
       tags: [...new Set(String(v.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean))], notes: String(v.notes || '').trim()};
     if (!data.name) return;
-    let r = f.dataset.id && recipeById(f.dataset.id);
-    if (r) Object.assign(r, data); else { r = {id: uid(), fav: false, ...data}; S.recipes.push(r); }
+    let r = f.dataset.id && S.recipes.find(x => x.id === f.dataset.id);
+    if (r) Object.assign(r, data); else { r = {id: uid(), ...data}; S.recipes.push(r); }
     save(); render(); ui.serv = null; sheetRecipe(r.id); toast('Ricetta salvata');
   },
   slotText: v => { const t = (v.t || '').trim(); setSlot(ui.slot.day, ui.slot.meal, t ? {t} : null); closeSheet(); },
@@ -796,9 +1367,19 @@ const F = {
     const data = {name: v.name.trim(), cat: v.cat, amount: parseMoney(v.amount), due: v.due || today(), rec: v.rec in REC ? v.rec : 'none', auto: !!v.auto, notes: String(v.notes || '').trim()};
     if (!data.name) return;
     let b = f.dataset.id && billById(f.dataset.id);
-    if (b) Object.assign(b, data); else { b = {id: uid(), paid: false, paidOn: null, nextId: null, ...data}; S.bills.push(b); }
+    if (b) { Object.assign(b, data); S.moves.forEach(m => { if (m.billId === b.id) Object.assign(m, {desc: b.name, amount: b.amount, cat: BILL_TO_MCAT[b.cat] || 'casa'}); }); }
+    else { b = {id: uid(), paid: false, paidOn: null, nextId: null, ...data}; S.bills.push(b); }
     const n = autoPay(); save(); render(); closeSheet();
     toast(n ? 'Salvata e segnata pagata (domiciliata, già scaduta)' : 'Bolletta salvata');
+  },
+  move: (v, f) => {
+    const c = mcatOf(v.cat);
+    const data = {desc: String(v.desc || '').trim() || c[1], amount: parseMoney(v.amount), date: v.date || today(), cat: c[0], kind: c[3]};
+    if (!data.amount) return toast('Scrivi un importo');
+    const m = f.dataset.id && S.moves.find(x => x.id === f.dataset.id);
+    if (m) Object.assign(m, data); else S.moves.push({id: uid(), src: 'man', ...data});
+    ui.month = data.date.slice(0, 7);
+    save(); render(); closeSheet(); toast(m ? 'Movimento aggiornato' : c[3] === 'in' ? 'Entrata aggiunta' : 'Spesa aggiunta');
   },
   settings: v => {
     S.settings.people = Math.max(1, Math.min(20, parseInt(v.people) || 1));
@@ -820,7 +1401,7 @@ const F = {
 /* ---------- avvio ---------- */
 function applyTheme() { const t = pref.get('theme', 'auto'); if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); }
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-a]'); if (!el) return;
+  const el = e.target.closest('[data-a]'); if (!el || el.disabled) return;
   const fn = A[el.dataset.a]; if (!fn) return;
   e.preventDefault(); fn(el.dataset, el);
 });
@@ -828,7 +1409,34 @@ document.addEventListener('submit', e => {
   const f = e.target, fn = F[f.dataset.form]; if (!fn) return;
   e.preventDefault(); fn(Object.fromEntries(new FormData(f)), f);
 });
-document.addEventListener('input', e => { if (e.target.id === 'rq') { ui.q = e.target.value; $('#rlist').innerHTML = recipeList(); } });
+document.addEventListener('input', e => {
+  if (e.target.id === 'rq') { ui.q = e.target.value; $('#rlist').innerHTML = recipeList(); }
+  if (e.target.id === 'sq') { $('#slist').innerHTML = slotList(e.target.value, ui.slot && (S.menu[ui.slot.day] || {})[ui.slot.meal]); }
+});
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if ((t.id === 'billphoto' || t.id === 'billphoto2') && t.files[0]) { const file = t.files[0]; t.value = ''; billFromPhoto(file); }
+  if (t.id === 'csvfile' && t.files[0]) {
+    const file = t.files[0]; t.value = '';
+    try {
+      const res = parseBankCSV(decodeText(await file.arrayBuffer()));
+      if (res.error) ui.csv = {error: res.error};
+      else {
+        const keys = new Set(S.moves.map(moveKey)), billMoves = S.moves.filter(m => m.src === 'bill');
+        let dup = 0, bills = 0; const freshL = [];
+        for (const m of res.list) {
+          if (keys.has(moveKey(m))) { dup++; continue; }
+          /* una bolletta già segnata pagata compare anche nell'estratto conto: non contarla due volte */
+          const bi = m.kind === 'out' && billMoves.findIndex(b => Math.abs(b.amount - m.amount) < 0.01 && Math.abs(diffDays(b.date, m.date)) <= 10);
+          if (bi !== false && bi >= 0) { billMoves.splice(bi, 1); bills++; continue; }
+          keys.add(moveKey(m)); freshL.push(m);
+        }
+        ui.csv = {list: res.list, fresh: freshL, dup, bills};
+      }
+    } catch (err) { ui.csv = {error: 'Non riesco a leggere il file.'}; }
+    sheetCsv();
+  }
+});
 window.addEventListener('scroll', () => $('#top').classList.toggle('scrolled', window.scrollY > 4), {passive: true});
 /* se l'app resta aperta oltre la mezzanotte, aggiorna scadenze e "oggi" */
 let lastDay = today();
@@ -836,6 +1444,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && to
 
 applyTheme();
 autoPay();
+save();
 render();
 </script>
 </body>
