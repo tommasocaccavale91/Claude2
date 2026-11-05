@@ -599,8 +599,8 @@ const LIB_CATS = ['Primi','Secondi','Contorni','Antipasti e fritti','Pizze e lie
 
 /* ---------- stato e salvataggio ---------- */
 const KEY = 'casa-in-ordine.v1';
-const DEF_SET = {people: 4, remindDays: 5};
-function fresh() { return {v: 2, recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], settings: {...DEF_SET}}; }
+const DEF_SET = {people: 4, remindDays: 5, notif: true, notifHour: 9, monthRem: true, monthDay: 3};
+function fresh() { return {v: 2, monthDone: '', recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], settings: {...DEF_SET}}; }
 function load() {
   try { const raw = localStorage.getItem(KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
   return fresh();
@@ -629,7 +629,63 @@ function migrateV1(s) {
 }
 let S = load();
 let saveWarned = false;
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!saveWarned) { saveWarned = true; toast('Non riesco a salvare sul dispositivo'); } } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!saveWarned) { saveWarned = true; toast('Non riesco a salvare sul dispositivo'); } } queueNotifs(); }
+
+/* ---------- notifiche sul telefono (solo nell'app Android) ---------- */
+const LN = (() => {
+  const C = window.Capacitor;
+  try { if (!C || !C.isNativePlatform || !C.isNativePlatform()) return null; return (C.Plugins && C.Plugins.LocalNotifications) || (C.registerPlugin && C.registerPlugin('LocalNotifications')) || null; } catch (e) { return null; }
+})();
+let notifPerm = 'unknown', notifT = null;
+const queueNotifs = () => { if (!LN) return; clearTimeout(notifT); notifT = setTimeout(scheduleNotifs, 800); };
+const hashId = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return 1000 + Math.abs(h % 1000000) * 2; };
+async function notifStatus() {
+  if (!LN) return 'none';
+  try { notifPerm = (await LN.checkPermissions()).display; } catch (e) { notifPerm = 'denied'; }
+  return notifPerm;
+}
+async function askNotifs() {
+  if (!LN) return false;
+  try { notifPerm = (await LN.requestPermissions()).display; } catch (e) { notifPerm = 'denied'; }
+  render(); queueNotifs();
+  return notifPerm === 'granted';
+}
+/* a ogni modifica cancella i promemoria programmati e li ricrea dai dati attuali */
+async function scheduleNotifs() {
+  if (!LN) return;
+  try {
+    const pend = await LN.getPending();
+    if (pend.notifications && pend.notifications.length) await LN.cancel({notifications: pend.notifications.map(n => ({id: n.id}))});
+    if ((await notifStatus()) !== 'granted') return;
+    const H = S.settings.notifHour, t = today(), now = Date.now(), list = [];
+    const at = iso => { const d = parseD(iso); d.setHours(H, 0, 0, 0); return d; };
+    if (S.settings.notif) {
+      const open = S.bills.filter(b => !b.paid).sort(byDue);
+      for (const b of open.filter(b => b.due >= t && diffDays(t, b.due) <= 120)) {
+        const amt = euro(b.amount), verb = b.auto ? 'Addebito' : 'Scade';
+        const pre = addDays(b.due, -S.settings.remindDays);
+        if (S.settings.remindDays > 0 && at(pre).getTime() > now) list.push({id: hashId(b.id + 'p'), title: `${catOf(b.cat)[2]} ${b.name}: ${amt}`, body: `${verb} tra ${S.settings.remindDays} ${S.settings.remindDays === 1 ? 'giorno' : 'giorni'}, ${fmtD(b.due)}.`, schedule: {at: at(pre), allowWhileIdle: true}, extra: {tab: 'bollette', bill: b.id}});
+        if (at(b.due).getTime() > now) list.push({id: hashId(b.id + 'd'), title: `${catOf(b.cat)[2]} ${b.name}: ${amt}`, body: b.auto ? 'Oggi c\'è l\'addebito in banca.' : 'Scade oggi. Quando l\'hai pagata, segnalalo nell\'app.', schedule: {at: at(b.due), allowWhileIdle: true}, extra: {tab: 'bollette', bill: b.id}});
+      }
+      const late = open.filter(b => b.due < t && !b.auto);
+      if (late.length) list.push({id: 3, title: late.length === 1 ? `${late[0].name}: bolletta scaduta` : `${late.length} bollette scadute`, body: `Da pagare: ${euro(sum(late.map(b => b.amount)))}. ${late.length === 1 ? 'Se l\'hai già pagata, segnalalo' : 'Se le hai già pagate, segnalalo'} nell'app.`, schedule: {at: at(addDays(t, 1)), allowWhileIdle: true}, extra: {tab: 'bollette'}});
+    }
+    if (S.settings.monthRem) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}, allowWhileIdle: true}, extra: {tab: 'conti', act: 'csv'}});
+    if (list.length) await LN.schedule({notifications: list.slice(0, 60)});
+  } catch (e) { /* le notifiche sono un aiuto: se il telefono le rifiuta l'app funziona lo stesso */ }
+}
+if (LN) {
+  try {
+    LN.addListener('localNotificationActionPerformed', ev => {
+      const x = (ev && ev.notification && ev.notification.extra) || {};
+      if (sheetOpen) hideSheet();
+      if (x.tab) setTab(x.tab);
+      if (x.bill && billById(x.bill)) sheetBill(x.bill);
+      if (x.act === 'csv') { ui.month = prevMonth(); render(); A.importCsv(); }
+    });
+  } catch (e) {}
+}
+const prevMonth = () => addMonths(today().slice(0, 7) + '-01', -1).slice(0, 7);
 const pref = {get(k, d) { try { return localStorage.getItem('casa.' + k) ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('casa.' + k, v); } catch (e) {} }};
 
 /* ---------- Claude (solo quando l'app è aperta dentro Claude) ---------- */
@@ -844,7 +900,10 @@ const V = {
     const mv = S.moves.filter(x => x.date.slice(0, 7) === ym);
     const outM = sum(mv.filter(x => x.kind === 'out').map(x => x.amount)), inM = sum(mv.filter(x => x.kind === 'in').map(x => x.amount));
     const openM = S.bills.filter(b => !b.paid && b.due.slice(0, 7) <= ym);
-    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>
+    const pm = prevMonth(), pmName = MESI[+pm.slice(5, 7) - 1];
+    const monthCard = S.settings.monthRem && d.getDate() >= S.settings.monthDay && S.monthDone !== pm ? `<section class="card ai-card"><div class="card-h"><h2>${ic('wallet','sm')} Spese di ${pmName}</h2></div><p style="margin:0 0 10px">È il momento di registrare le spese del mese scorso: importa l'estratto conto della banca o aggiungile a mano.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="monthImport">${ic('upload','sm')} Importa</button><button class="btn ghost" data-a="monthDone">Fatto</button></div></section>` : '';
+    const notifCard = LN && notifPerm === 'prompt' && (S.settings.notif || S.settings.monthRem) ? `<section class="card"><div class="card-h"><h2>Promemoria</h2></div><p style="margin:0 0 10px">Ricevi sul telefono un avviso prima delle scadenze delle bollette e a inizio mese per le spese.</p><button class="btn primary wide" data-a="askNotif">Attiva le notifiche</button></section>` : '';
+    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${notifCard}${monthCard}
     <section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte le bollette</button></div>
       ${due.length ? due.map(b => billRow(b)).join('') : `<p class="empty-s">Nessuna bolletta da pagare nei prossimi ${S.settings.remindDays} giorni.</p>`}
     </section>
@@ -1144,6 +1203,12 @@ function sheetSettings() {
   openSheet('Impostazioni', `<form data-form="settings">
     <div class="two"><label class="field"><span>Persone in famiglia</span><input id="set-people" name="people" type="number" min="1" max="20" inputmode="numeric" value="${S.settings.people}"><small>Dosi di ricette e menù</small></label>
     <label class="field"><span>Preavviso bollette</span><select id="set-remind" name="remindDays">${[1, 3, 5, 7, 10, 14].map(n => `<option value="${n}" ${S.settings.remindDays == n ? 'selected' : ''}>${n} ${n === 1 ? 'giorno' : 'giorni'}</option>`).join('')}</select><small>Prima della scadenza</small></label></div>
+    <p class="h3" style="margin-top:6px">Promemoria</p>
+    ${LN ? (notifPerm === 'denied' ? `<p class="st-bad" style="margin:0 0 12px;font-size:14px">Le notifiche sono bloccate: attivale nelle impostazioni del telefono, alla voce App › Casa in Ordine › Notifiche.</p>` : '') : `<p class="empty-s" style="margin:0 0 12px;font-size:14px">Gli avvisi sul telefono arrivano con l'app Android. Qui le scadenze e il promemoria delle spese compaiono nella schermata Oggi.</p>`}
+    ${LN ? `<label class="switch"><input type="checkbox" id="set-notif" name="notif" ${S.settings.notif ? 'checked' : ''}><span><b>Scadenze delle bollette</b><small>Un avviso qualche giorno prima (vedi preavviso) e il giorno stesso</small></span></label>` : ''}
+    <label class="switch"><input type="checkbox" id="set-month" name="monthRem" ${S.settings.monthRem ? 'checked' : ''}><span><b>Spese del mese scorso</b><small>Ogni mese, il giorno scelto, ti ricordo di registrarle</small></span></label>
+    <div class="two"><label class="field"><span>Giorno del mese</span><select id="set-mday" name="monthDay">${Array.from({length: 28}, (_, i) => i + 1).map(n => `<option value="${n}" ${S.settings.monthDay == n ? 'selected' : ''}>il ${n}</option>`).join('')}</select><small>Le banche di solito chiudono il mese entro il 2-3</small></label>
+    ${LN ? `<label class="field"><span>Ora degli avvisi</span><select id="set-hour" name="notifHour">${Array.from({length: 15}, (_, i) => i + 7).map(h => `<option value="${h}" ${S.settings.notifHour == h ? 'selected' : ''}>${h}:00</option>`).join('')}</select></label>` : ''}</div>
     <label class="field"><span>Aspetto</span><select id="set-theme" name="theme"><option value="auto" ${theme === 'auto' ? 'selected' : ''}>Come il telefono</option><option value="light" ${theme === 'light' ? 'selected' : ''}>Chiaro</option><option value="dark" ${theme === 'dark' ? 'selected' : ''}>Scuro</option></select></label>
     <div class="actions"><button class="btn primary">Salva impostazioni</button></div></form>
     <p class="h3" style="margin-top:22px">Copia di sicurezza</p>
@@ -1301,10 +1366,13 @@ const A = {
     const c = ui.csv; if (!c || !c.fresh) return;
     const n = c.fresh.length, months = [...new Set(c.fresh.map(m => m.date.slice(0, 7)))].sort();
     closeSheet();
-    withUndo(`${n} movimenti importati`, () => { c.fresh.forEach(m => S.moves.push({id: uid(), ...m, src: 'csv'})); ui.month = months[months.length - 1] || ui.month; });
+    withUndo(`${n} movimenti importati`, () => { c.fresh.forEach(m => S.moves.push({id: uid(), ...m, src: 'csv'})); ui.month = months[months.length - 1] || ui.month; if (months.includes(prevMonth())) S.monthDone = prevMonth(); });
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  askNotif: () => askNotifs().then(ok => toast(ok ? 'Notifiche attive' : 'Notifiche non attivate')),
+  monthImport: () => { ui.month = prevMonth(); setTab('conti'); A.importCsv(); },
+  monthDone: () => { S.monthDone = prevMonth(); save(); render(); toast('Ok, te lo ricordo il mese prossimo'); },
   export: async () => {
     const txt = JSON.stringify(S, null, 1), name = `casa-in-ordine-${today()}.json`;
     if (DL) { try { await DL.save({filename: name, data: txt}); toast('Copia salvata'); } catch (e) { if (e && e.code !== 'cancelled' && e.code !== 'declined') toast('Salvataggio non riuscito: usa “Copia testo”'); } return; }
@@ -1384,8 +1452,12 @@ const F = {
   settings: v => {
     S.settings.people = Math.max(1, Math.min(20, parseInt(v.people) || 1));
     S.settings.remindDays = parseInt(v.remindDays) || 5;
+    S.settings.monthRem = !!v.monthRem;
+    S.settings.monthDay = Math.max(1, Math.min(28, parseInt(v.monthDay) || 3));
+    if (LN) { S.settings.notif = !!v.notif; S.settings.notifHour = Math.max(0, Math.min(23, parseInt(v.notifHour) || 9)); }
     pref.set('theme', v.theme); applyTheme();
     save(); render(); closeSheet(); toast('Impostazioni salvate');
+    if (LN && (S.settings.notif || S.settings.monthRem) && notifPerm !== 'granted' && notifPerm !== 'denied') askNotifs();
   },
   import: async (v, f) => {
     let txt = String(v.text || '').trim();
@@ -1446,6 +1518,7 @@ applyTheme();
 autoPay();
 save();
 render();
+if (LN) notifStatus().then(() => render());
 </script>
 </body>
 </html>
