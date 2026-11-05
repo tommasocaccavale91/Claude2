@@ -372,23 +372,6 @@ const MCATS = [
   ['stipendio','Stipendio','💼','in'],['pensione','Pensione','🧓','in'],['rimborsi','Rimborsi','↩️','in'],['entrate','Altre entrate','✨','in']
 ];
 const mcatOf = k => MCATS.find(c => c[0] === k) || MCATS[11];
-/* spese detraibili nel 730: la stima usa il 19% con le franchigie e i limiti più comuni */
-const DED = [['sanitarie','Spese sanitarie','farmacia, visite, ticket, esami'],['veterinarie','Spese veterinarie','animali domestici'],['istruzione','Istruzione','scuola, mensa, gite, università'],['sport','Sport dei ragazzi','dai 5 ai 18 anni'],['mutuo','Interessi del mutuo','prima casa'],['altre','Altre detraibili','']];
-const dedOf = k => DED.find(d => d[0] === k);
-function dedEstimate(k, tot) {
-  if (k === 'sanitarie') return 0.19 * Math.max(0, tot - 129.11);
-  if (k === 'veterinarie') return 0.19 * Math.max(0, Math.min(tot, 550) - 129.11);
-  if (k === 'mutuo') return 0.19 * Math.min(tot, 4000);
-  if (k === 'istruzione' || k === 'sport') return 0.19 * tot;
-  return 0;
-}
-function guessDed(cat, desc) {
-  const n = norm(desc);
-  if (cat === 'salute' && !/palestra|ottica/.test(n)) return 'sanitarie';
-  if (cat === 'animali' && /veterinar/.test(n)) return 'veterinarie';
-  if (cat === 'figli' && /scuola|mensa|asilo|universit|gita/.test(n)) return 'istruzione';
-  return '';
-}
 const BILL_TO_MCAT = {auto:'auto', bollo:'auto', revisione:'auto', documenti:'tasse', isee:'tasse', tasse:'tasse', abbonamenti:'abbonamenti', scuola:'figli', salute:'salute', altro:'uscite'};
 /* parole che compaiono nelle descrizioni dei movimenti delle banche italiane */
 const MOVE_KW = {
@@ -828,60 +811,6 @@ function dueInfo(b) {
   return {t: pre + fmtD(b.due), c: ''};
 }
 
-/* fatture elettroniche: il file XML (o .p7m firmato) che si scarica da "Fatture e corrispettivi" dell'Agenzia delle Entrate */
-const BILL_KW = {luce:['energia elettrica','elettric','luce',' pod '], gas:['gas naturale','gas ',' pdr ','metano'], acqua:['idric','acqua','acquedotto','fognatura','depurazione'],
-  internet:['telefon','internet','fibra','adsl','linea fissa','mobile','tim ','vodafone','fastweb','windtre','iliad','sky '], rifiuti:['rifiuti','tari ','igiene ambientale'],
-  assicurazioni:['assicura','polizza','premio di'], abbonamenti:['abbonamento','canone'], salute:['farmac','medic','sanitari'], scuola:['scuola','mensa','retta']};
-function guessBillCat(text) {
-  const n = ' ' + norm(text) + ' '; let best = 'altro', score = 0;
-  for (const [k, list] of Object.entries(BILL_KW)) { const sc = list.reduce((a, w) => a + (n.split(w).length - 1), 0); if (sc > score) { best = k; score = sc; } }
-  return best;
-}
-function xmlFromBytes(buf) {
-  let bytes = new Uint8Array(buf), bin = new TextDecoder('latin1').decode(bytes);
-  if (!bin.includes('FatturaElettronica')) { try { const raw = atob(bin.replace(/\s/g, '')); bytes = Uint8Array.from(raw, c => c.charCodeAt(0)); bin = raw; } catch (e) {} }
-  let a = bin.indexOf('<?xml'); if (a < 0) a = bin.search(/<[\w.-]*:?FatturaElettronica[\s>]/);
-  const endTag = bin.match(/<\/[\w.-]*:?FatturaElettronica>(?![\s\S]*<\/[\w.-]*:?FatturaElettronica>)/);
-  if (a < 0 || !endTag) return null;
-  const end = endTag.index + endTag[0].length;
-  const dec = arr => new TextDecoder('utf-8').decode(arr);
-  let xml = dec(bytes.slice(a, end));
-  if (new DOMParser().parseFromString(xml, 'application/xml').getElementsByTagName('parsererror').length) {
-    /* nei .p7m il testo può essere spezzato in blocchi da 1000 byte: tolgo le intestazioni dei blocchi */
-    const parts = []; const sl = bytes.slice(a, end);
-    for (let i = 0; i < sl.length; i++) { if (sl[i] === 0x04 && sl[i + 1] === 0x82 && sl[i + 2] === 0x03 && sl[i + 3] === 0xe8) { i += 3; continue; } parts.push(sl[i]); }
-    xml = dec(new Uint8Array(parts));
-  }
-  return xml;
-}
-function parseFattura(xml) {
-  const doc = new DOMParser().parseFromString(xml, 'application/xml');
-  if (doc.getElementsByTagName('parsererror').length) return [];
-  const q = (el, n) => el ? el.getElementsByTagNameNS('*', n)[0] || null : null;
-  const tx = (el, n) => { const x = q(el, n); return x ? x.textContent.trim() : ''; };
-  const ced = q(doc, 'CedentePrestatore');
-  const sup = tx(ced, 'Denominazione') || `${tx(ced, 'Nome')} ${tx(ced, 'Cognome')}`.trim() || 'Fornitore';
-  const piva = tx(q(ced, 'IdFiscaleIVA'), 'IdCodice');
-  const base = sup.replace(/\b(s\.?\s?p\.?\s?a\.?|s\.?\s?r\.?\s?l\.?|societa'? per azioni|unipersonale|a socio unico)\b/gi, '').replace(/[.,\s]+$/, '').trim().split(/\s+/).slice(0, 3).join(' ');
-  const short = /[a-z]/.test(base) ? base : base.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
-  const out = [];
-  for (const body of doc.getElementsByTagNameNS('*', 'FatturaElettronicaBody')) {
-    const dg = q(body, 'DatiGeneraliDocumento'), tipo = tx(dg, 'TipoDocumento');
-    if (tipo === 'TD04') continue; /* nota di credito */
-    const num = tx(dg, 'Numero'), date = tx(dg, 'Data');
-    const pays = [...body.getElementsByTagNameNS('*', 'DettaglioPagamento')];
-    const p0 = pays[0] || null;
-    const total = parseFloat(tx(dg, 'ImportoTotaleDocumento')) || sum(pays.map(p => parseFloat(tx(p, 'ImportoPagamento')))) || 0;
-    const due = tx(p0, 'DataScadenzaPagamento') || (date ? addDays(date, 20) : today());
-    const mode = tx(p0, 'ModalitaPagamento');
-    const lines = [...body.getElementsByTagNameNS('*', 'Descrizione')].map(x => x.textContent).join(' ').slice(0, 3000);
-    const cat = guessBillCat(sup + ' ' + lines);
-    out.push({inv: `${piva || sup}|${num}|${date}`, name: `${short} – ${catOf(cat)[1]}`.slice(0, 80), cat, amount: Math.round(total * 100) / 100, due: /^\d{4}-\d{2}-\d{2}$/.test(due) ? due : today(),
-      rec: 'none', auto: ['MP19', 'MP20', 'MP21'].includes(mode), notes: `Fattura n. ${num}${date ? ' del ' + fmtFull(date) : ''}`});
-  }
-  return out;
-}
-
 /* estratto conto Excel (.xlsx): il file è uno zip con dentro fogli XML */
 async function readXlsx(buf) {
   const u = new Uint8Array(buf), dv = new DataView(buf);
@@ -957,8 +886,7 @@ function parseBankRows(rows) {
     if (!v) continue;
     const desc = (descI >= 0 ? r[descI] : r.filter((c, j) => j !== dI && j !== amtI && j !== outI && j !== inI).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 140) || 'Movimento';
     const kind = v < 0 ? 'out' : 'in';
-    const cat = guessMcat(desc, kind);
-    list.push({date, amount: Math.abs(v), kind, desc, cat, ded: guessDed(cat, desc)});
+    list.push({date, amount: Math.abs(v), kind, desc, cat: guessMcat(desc, kind)});
   }
   if (!list.length) return {error: 'Ho trovato le colonne ma nessun movimento valido.'};
   return {list};
@@ -1002,7 +930,7 @@ function billRow(b, quick = true) {
 }
 function moveRow(m) {
   const c = mcatOf(m.cat);
-  return `<div class="row"><button class="row-main" data-a="move" data-id="${m.id}"><span class="emo">${c[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${c[1]}${m.ded ? ' · detraibile' : ''}${m.src === 'bill' ? ' · da Bollette' : m.src === 'csv' ? ' · da estratto conto' : ''}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></button></div>`;
+  return `<div class="row"><button class="row-main" data-a="move" data-id="${m.id}"><span class="emo">${c[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${c[1]}${m.src === 'bill' ? ' · da Bollette' : m.src === 'csv' ? ' · da estratto conto' : ''}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></button></div>`;
 }
 const slotLabel = v => { if (!v) return ''; if (v.r) { const r = recipeById(v.r); return r ? r.name : ''; } return v.t || ''; };
 const origBadge = r => r.lib ? (r.orig === 'Napoletana' ? '<span class="tag nap">Napoletana</span>' : '') : '<span class="tag mine">Mia</span>';
@@ -1085,7 +1013,6 @@ const V = {
     const paidY = sum(S.bills.filter(b => b.paid && (b.paidOn || b.due).slice(0, 4) === String(y)).map(b => b.amount));
     const seg = (k, l) => `<button data-a="bview" data-v="${k}" aria-pressed="${ui.bview === k}">${l}</button>`;
     let html = `<div class="stats"><div class="stat"><div class="l">Da pagare</div><div class="v">${euro(sum(open.map(b => b.amount)))}</div><div class="s ${late.length ? 'st-bad' : ''}">${late.length ? `${late.length} scadut${late.length === 1 ? 'a' : 'e'}` : `${open.length} in arrivo`}</div></div><div class="stat"><div class="l">Pagato nel ${y}</div><div class="v">${euro(paidY)}</div></div></div>`;
-    html += `<label class="btn ghost wide photo-btn" style="margin-bottom:${AI_IMG ? 8 : 12}px">${ic('upload','sm')} Importa fatture elettroniche (XML)<input type="file" id="fattfile" accept=".xml,.p7m,text/xml,application/xml,application/pkcs7-mime" multiple class="vh"></label>`;
     if (AI_IMG) html += `<label class="btn ghost wide photo-btn" style="margin-bottom:12px">${ic('camera','sm')} Aggiungi da una foto della bolletta<input type="file" id="billphoto" accept="image/*" class="vh"></label>`;
     html += `<div class="seg" role="group" aria-label="Vista">${seg('todo', 'Da pagare')}${seg('paid', 'Pagate')}${seg('sum', 'Riepilogo')}</div>`;
     if (!S.bills.length) return html + empty('🧾', 'Nessuna bolletta', `Aggiungi luce, gas, acqua, affitto, assicurazioni… ${AI_IMG ? 'Puoi anche fotografare la bolletta: i dati li legge l\'assistente. ' : ''}Per quelle che si ripetono, quando segni il pagamento la prossima si crea da sola.`, `<button class="btn primary" data-a="newBill">${ic('plus','sm')} Aggiungi una bolletta</button>`);
@@ -1119,7 +1046,7 @@ const V = {
       <div class="stats three"><div class="stat"><div class="l">Entrate</div><div class="v st-good">${euro(inn)}</div></div><div class="stat"><div class="l">Uscite</div><div class="v">${euro(out)}</div></div><div class="stat"><div class="l">Saldo</div><div class="v ${bal < 0 ? 'st-bad' : ''}">${bal < 0 ? '−' : ''}${euro(Math.abs(bal))}</div></div></div>
       <form class="quick" data-form="qmove" autocomplete="off"><label class="vh" for="qm">Spesa veloce</label><input id="qm" name="t" placeholder="Veloce: 30 farmacia · +1500 stipendio" enterkeyhint="done"><button class="btn primary" aria-label="Aggiungi">${ic('plus')}</button></form>
       ${quickChips()}
-      <div class="actions ${AI_IMG ? 'three-c' : 'two-c'}" style="margin:6px 0 14px"><button class="btn" data-a="importCsv">${ic('upload','sm')} ${AI_IMG ? 'Estratto' : 'Estratto conto'}</button>${AI_IMG ? `<label class="btn photo-btn">${ic('camera','sm')} Scontrino<input type="file" id="receiptphoto" accept="image/*" class="vh"></label>` : ''}<button class="btn" data-a="sheet730">${ic('bill','sm')} 730</button></div>`;
+      <div class="actions" style="margin:6px 0 14px"><button class="btn" data-a="importCsv">${ic('upload','sm')} Importa l'estratto conto (CSV o Excel)</button></div>`;
     const unsorted = S.moves.filter(m => m.src === 'csv' && (m.cat === 'uscite' || m.cat === 'entrate'));
     if (AI && unsorted.length) html += `<section class="card ai-card"><p style="margin:0 0 10px">${unsorted.length} ${unsorted.length === 1 ? 'movimento importato è' : 'movimenti importati sono'} senza categoria.</p><button class="btn primary wide" data-a="aiSort">${ic('spark','sm')} Classificali con l'assistente</button><p class="hint" id="aisort-st"></p></section>`;
     if (!mv.length) return html + empty('💶', `Nessun movimento a ${MESI[mm - 1]}`, 'Le bollette pagate finiscono qui da sole. Per avere tutte le spese, importa il file CSV dei movimenti scaricato dall\'app o dal sito della tua banca, oppure aggiungi le voci a mano.');
@@ -1310,7 +1237,6 @@ function sheetMove(id, kind, pre) {
     <label class="field"><span>Descrizione</span><input id="mf-desc" name="desc" required maxlength="140" value="${esc(v ? v.desc : '')}" placeholder="es. Spesa Conad, Stipendio"></label>
     <div class="two"><label class="field"><span>Importo (€)</span><input id="mf-amount" name="amount" inputmode="decimal" required value="${v && v.amount ? moneyIn(v.amount) : ''}" placeholder="0,00"></label>
     <label class="field"><span>Data</span><input id="mf-date" name="date" type="date" required value="${v && v.date ? v.date : today()}"></label></div>
-    <label class="field"><span>Detraibile nel 730</span><select id="mf-ded" name="ded"><option value="">No</option>${DED.map(d => `<option value="${d[0]}" ${(m ? m.ded : pre && pre.ded) === d[0] ? 'selected' : ''}>${d[1]}${d[2] ? ' (' + d[2] + ')' : ''}</option>`).join('')}</select><small>Per la farmacia serve lo scontrino "parlante" con il codice fiscale.</small></label>
     <label class="field"><span>Categoria</span><select id="mf-cat" name="cat"><optgroup label="Uscite">${MCATS.filter(c => c[3] === 'out').map(opt).join('')}</optgroup><optgroup label="Entrate">${MCATS.filter(c => c[3] === 'in').map(opt).join('')}</optgroup></select><small>La categoria dice se è un'entrata o un'uscita.</small></label>
     <div class="actions ${m ? 'two-c' : ''}">${m ? `<button type="button" class="btn danger" data-a="delMove" data-id="${m.id}">${ic('trash','sm')} Elimina</button>` : ''}<button class="btn primary">Salva</button></div></form>`);
 }
@@ -1412,26 +1338,6 @@ async function billFromPhoto(file) {
   }
 }
 
-function sheetFatt() {
-  const f = ui.fatt; if (!f) return;
-  let body = '';
-  if (!f.fresh.length) body = `<p class="${f.bad ? 'st-bad' : 'hint'}">${f.bad ? 'Non ho trovato fatture elettroniche valide nei file scelti. Servono i file .xml o .xml.p7m scaricati da "Fatture e corrispettivi".' : 'Queste fatture sono già tutte nell\'app.'}</p>`;
-  else body = `<div class="list" style="margin-bottom:12px">${f.fresh.map(b => `<div class="row"><span class="row-main"><span class="emo">${catOf(b.cat)[2]}</span><span class="rt"><b>${esc(b.name)}</b><small class="${b.paid ? 'st-good' : b.auto ? '' : 'st-warn'}">${b.paid ? 'già scaduta: la segno pagata' : (b.auto ? 'addebito il ' : 'scade il ') + fmtD(b.due)}</small></span><span class="amt">${euro(b.amount)}</span></span></div>`).join('')}</div>
-    ${f.dup || f.bad ? `<p class="hint" style="margin:0 0 12px">${f.dup ? `${f.dup} già presenti. ` : ''}${f.bad ? `${f.bad} file non letti.` : ''}</p>` : ''}
-    <div class="actions"><button class="btn primary" data-a="fattImport">Importa ${f.fresh.length} ${f.fresh.length === 1 ? 'bolletta' : 'bollette'}</button></div>`;
-  openSheet('Fatture elettroniche', `<p class="empty-s" style="margin:0 0 12px;font-size:14px">Le bollette scadute vengono segnate come pagate. Puoi cambiarle dopo l'import.</p>${body}`);
-}
-function sheet730() {
-  const y = String(ui.y730), list = S.moves.filter(m => m.ded && m.date.slice(0, 4) === y);
-  const rows = DED.map(([k, l, h]) => { const xs = list.filter(m => m.ded === k), tot = sum(xs.map(m => m.amount)); return {k, l, h, n: xs.length, tot, est: dedEstimate(k, tot)}; }).filter(r => r.n);
-  const est = sum(rows.map(r => r.est));
-  openSheet('Spese detraibili', `<div class="weeknav"><button class="icon-btn" data-a="y730" data-d="-1" aria-label="Anno prima">${ic('left')}</button><b>Spese del ${y}</b><button class="icon-btn" data-a="y730" data-d="1" aria-label="Anno dopo">${ic('right')}</button></div>
-    ${rows.length ? `<div class="kv">${rows.map(r => `<div><dt>${r.l}<small style="display:block;font-size:12.5px">${r.n} ${r.n === 1 ? 'spesa' : 'spese'}${r.est ? ` · rimborso stimato ${euro(r.est)}` : ''}</small></dt><dd>${euro(r.tot)}</dd></div>`).join('')}</div>
-      <div class="stat" style="margin-bottom:14px"><div class="l">Rimborso stimato con il 730</div><div class="v st-good">${euro(est)}</div><div class="s">19% delle spese, con la franchigia di 129,11 € per sanitarie e veterinarie, 550 € massimo per le veterinarie e 4.000 € per gli interessi del mutuo. Per scuola (800 € per studente) e sport (210 € per ragazzo) i limiti dipendono dal numero di figli.</div></div>
-      <p class="hint" style="text-align:left;margin:0 0 14px">È una stima indicativa: limiti e regole possono cambiare e con redditi alti le detrazioni si riducono. Verifica con il CAF o il commercialista e conserva scontrini e ricevute.</p>
-      <div class="actions"><button class="btn" data-a="copy730">Copia l'elenco per il CAF</button></div>` : `<p class="hint">Nessuna spesa detraibile segnata nel ${y}. Quando registri una spesa in farmacia, dal medico, dal veterinario o per la scuola, scegli "Detraibile nel 730".</p>`}`);
-}
-
 /* ---------- assistente: scontrino da foto ---------- */
 async function receiptFromPhoto(file) {
   if (!AI || !file) return;
@@ -1439,13 +1345,13 @@ async function receiptFromPhoto(file) {
   const st = $('#rcpt-st'); if (st) { st.textContent = 'Sto leggendo lo scontrino…'; st.className = 'hint st-warn'; }
   const outCats = MCATS.filter(c => c[3] === 'out').map(c => c[0]).join(', ');
   const prompt = `Nella foto c'è uno scontrino o una ricevuta italiana. Rispondi solo con un oggetto JSON:
-{"store":"nome del negozio in breve","total":23.50,"date":"AAAA-MM-GG","cat":"una tra ${outCats}","ded":"sanitarie, veterinarie, istruzione, sport oppure null"}
-"total" è il totale pagato in euro. "ded" è "sanitarie" solo per farmacia, visite o ticket, e solo se sullo scontrino c'è un codice fiscale (scontrino parlante); "veterinarie" per il veterinario; altrimenti null. Usa null per i campi che non trovi.`;
+{"store":"nome del negozio in breve","total":23.50,"date":"AAAA-MM-GG","cat":"una tra ${outCats}"}
+"total" è il totale pagato in euro. Usa null per i campi che non trovi.`;
   try {
     const d = await AI.json(prompt, {images: [file], modelTier: 'default'});
     const pre = {desc: d && d.store ? String(d.store).slice(0, 140) : '', amount: d && d.total != null ? (typeof d.total === 'number' ? Math.round(d.total * 100) / 100 : parseMoney(d.total)) : 0,
       date: d && /^\d{4}-\d{2}-\d{2}$/.test(String(d.date)) && d.date <= today() ? String(d.date) : today(),
-      cat: MCATS.some(c => c[0] === (d && d.cat) && c[3] === 'out') ? d.cat : guessMcat(d && d.store || '', 'out'), ded: dedOf(d && d.ded) ? d.ded : ''};
+      cat: MCATS.some(c => c[0] === (d && d.cat) && c[3] === 'out') ? d.cat : guessMcat(d && d.store || '', 'out')};
     if (sheetOpen) sheetMove(null, 'out', pre);
   } catch (e) { const s3 = $('#rcpt-st'); if (s3) { s3.textContent = aiErr(e); s3.className = 'hint st-bad'; } }
 }
@@ -1539,21 +1445,6 @@ const A = {
   },
   aiSort: () => aiSort(),
   qchip: d => { const i = $('#qm'); if (i) { i.value = d.v + ' '; i.focus(); } },
-  sheet730: () => { if (!ui.y730) ui.y730 = new Date().getMonth() < 6 ? new Date().getFullYear() - 1 : new Date().getFullYear(); sheet730(); },
-  y730: d => { ui.y730 += Number(d.d); sheet730(); },
-  copy730: async () => {
-    const y = String(ui.y730), list = S.moves.filter(m => m.ded && m.date.slice(0, 4) === y).sort((a, b) => a.date.localeCompare(b.date));
-    const txt = `Spese detraibili ${y}\n` + DED.map(([k, l]) => { const xs = list.filter(m => m.ded === k); return xs.length ? `\n${l}: ${euro(sum(xs.map(m => m.amount)))}\n` + xs.map(m => `${fmtFull(m.date)}  ${m.desc}  ${euro(m.amount)}`).join('\n') : ''; }).join('');
-    try { await navigator.clipboard.writeText(txt); toast('Elenco copiato: incollalo in una mail per il CAF'); } catch (e) { toast('Non riesco a copiare: fai uno screenshot dell\'elenco'); }
-  },
-  fattImport: () => {
-    const f = ui.fatt; if (!f || !f.fresh.length) return;
-    const n = f.fresh.length; closeSheet();
-    withUndo(`${n} ${n === 1 ? 'bolletta importata' : 'bollette importate'}`, () => {
-      for (const d of f.fresh) { const b = {id: uid(), nextId: null, ...d, paid: false, paidOn: null}; S.bills.push(b); if (d.paid) payBill(b.id, b.amount, b.due); }
-    });
-    ui.fatt = null;
-  },
   askNotif: () => askNotifs().then(ok => toast(ok ? 'Notifiche attive' : 'Notifiche non attivate')),
   monthImport: () => { ui.month = prevMonth(); setTab('conti'); A.importCsv(); },
   monthDone: () => { S.monthDone = prevMonth(); save(); render(); toast('Ok, te lo ricordo il mese prossimo'); },
@@ -1588,10 +1479,10 @@ const F = {
     if (m) { [, sign, amt, desc] = m; } else { m = t.match(/^(.*?)\s+([+-])?\s*(\d+(?:[.,]\d{1,2})?)\s*(?:€|euro)?$/i); if (!m) return toast('Scrivi importo e descrizione, es. 30 farmacia'); [, desc, sign, amt] = m; }
     const kind = sign === '+' ? 'in' : 'out', cat = guessMcat(desc, kind), c = mcatOf(cat);
     desc = desc.trim() ? desc.trim().replace(/^./, x => x.toUpperCase()) : c[1];
-    const mv = {id: uid(), src: 'man', date: today(), amount: parseMoney(amt), kind, cat, desc, ded: kind === 'out' ? guessDed(cat, desc) : ''};
+    const mv = {id: uid(), src: 'man', date: today(), amount: parseMoney(amt), kind, cat, desc};
     if (!mv.amount) return;
     ui.month = today().slice(0, 7);
-    withUndo(`${kind === 'in' ? '+' : '−'}${euro(mv.amount)} · ${c[2]} ${c[1]}${mv.ded ? ' · detraibile' : ''}`, () => S.moves.push(mv));
+    withUndo(`${kind === 'in' ? '+' : '−'}${euro(mv.amount)} · ${c[2]} ${c[1]}`, () => S.moves.push(mv));
     const i = $('#qm'); if (i) i.focus();
   },
   quick: (v) => {
@@ -1638,7 +1529,7 @@ const F = {
   },
   move: (v, f) => {
     const c = mcatOf(v.cat);
-    const data = {desc: String(v.desc || '').trim() || c[1], amount: parseMoney(v.amount), date: v.date || today(), cat: c[0], kind: c[3], ded: dedOf(v.ded) && c[3] === 'out' ? v.ded : ''};
+    const data = {desc: String(v.desc || '').trim() || c[1], amount: parseMoney(v.amount), date: v.date || today(), cat: c[0], kind: c[3]};
     if (!data.amount) return toast('Scrivi un importo');
     const m = f.dataset.id && S.moves.find(x => x.id === f.dataset.id);
     if (m) Object.assign(m, data); else S.moves.push({id: uid(), src: 'man', ...data});
@@ -1684,13 +1575,6 @@ document.addEventListener('input', e => {
 document.addEventListener('change', async e => {
   const t = e.target;
   if ((t.id === 'billphoto' || t.id === 'billphoto2') && t.files[0]) { const file = t.files[0]; t.value = ''; billFromPhoto(file); }
-  if (t.id === 'fattfile' && t.files.length) {
-    const files = [...t.files]; t.value = ''; let bad = 0; const list = [];
-    for (const f of files) { try { const xml = xmlFromBytes(await f.arrayBuffer()); const inv = xml ? parseFattura(xml) : []; if (!inv.length) bad++; list.push(...inv); } catch (err) { bad++; } }
-    const keys = new Set(S.bills.map(b => b.inv).filter(Boolean)), t0 = today();
-    const fresh = list.filter(b => !keys.has(b.inv) && keys.add(b.inv)).map(b => ({...b, paid: b.due < t0}));
-    ui.fatt = {fresh, dup: list.length - fresh.length, bad}; sheetFatt();
-  }
   if (t.id === 'receiptphoto' && t.files[0]) { const file = t.files[0]; t.value = ''; receiptFromPhoto(file); }
   if (t.id === 'csvfile' && t.files[0]) {
     const file = t.files[0]; t.value = '';
