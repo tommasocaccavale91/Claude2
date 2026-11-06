@@ -201,6 +201,47 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .switch span small{color:var(--muted);font-size:13px}
 .actions{display:grid;gap:10px;margin-top:8px}
 .actions.two-c{grid-template-columns:1fr 1fr}
+.tour{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto}
+.tour[hidden]{display:none}
+.tour-in{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.tour-top{display:grid;grid-template-columns:56px 1fr 56px;align-items:center;min-height:48px}
+.tour-top .sp{width:44px}
+.tour-top .link{justify-self:end}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:8px;height:8px;border-radius:4px;background:var(--line)}
+.dots i.on{width:22px;background:var(--accent)}
+.dots i.past{background:var(--accent-soft)}
+.tour-body{flex:1;padding:14px 0 18px}
+.tour-body h1{font-family:var(--f-title);font-weight:600;font-size:34px;line-height:1.15;margin:8px 0 12px;text-wrap:balance}
+.tour-body h2{font-family:var(--f-title);font-weight:600;font-size:28px;line-height:1.2;margin:6px 0 8px;text-wrap:balance}
+.tour-body .lead{font-size:16.5px;color:var(--muted);margin:0 0 18px}
+.tour-hero{font-size:72px;margin-top:28px;line-height:1}
+.tour-foot{display:grid;gap:10px}
+.tour-time{margin:-4px 0 12px 54px}
+.mod{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.mod[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.mod .rt small{white-space:normal}
+.mod .tick{width:26px;height:26px;border-radius:13px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;color:transparent;flex:none}
+.mod[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cmp{width:100%;border-collapse:collapse;background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)}
+.cmp th,.cmp td{padding:10px 12px;border-top:1px solid var(--line);text-align:left;font-size:14.5px;vertical-align:middle}
+.cmp th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-top:0}
+.cmp .c{text-align:center;width:68px;font-weight:700}
+.muted{color:var(--muted)}
+.pbadge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:10px;background:var(--olive-soft);color:var(--olive);margin-left:4px;vertical-align:middle;text-transform:none}
+.plist{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:10px}
+.plist li{display:flex;gap:8px;align-items:flex-start}
+.plist .ic{color:var(--good);margin-top:2px}
+.idea{display:block;width:100%;text-align:left;margin-top:10px;background:var(--olive-soft);border-radius:12px;padding:10px 12px}
+.idea span{display:block;font-size:12.5px;color:var(--olive);font-weight:700}
+.idea b{display:block;font-weight:600;margin-top:2px}
+.plan-btn{margin-bottom:12px}
+.plan-row{gap:8px}
+.plan-row .rt small{display:block;font-size:12.5px;color:var(--muted);text-transform:capitalize}
+.plan-row .rt small+b+small{text-transform:none}
+.stats.one{grid-template-columns:1fr}
+.chip.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.chip.chk input{accent-color:var(--accent)}
 .rem-q{margin:2px 0 0}
 .rem-q .mic{background:var(--surface2);padding:0 12px}
 .rem-q .mic.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite ease-in-out}
@@ -291,6 +332,7 @@ button.stat:active{transform:scale(.98)}
 </div>
 <nav class="nav" aria-label="Sezioni"><div class="nav-in" id="nav"></div></nav>
 <div id="sheet" class="sheet-wrap" hidden><div class="scrim" data-a="close"></div><div class="sheet" role="dialog" aria-modal="true" id="sheet-body"></div></div>
+<div id="tour" class="tour" role="dialog" aria-modal="true" aria-label="Benvenuto" hidden></div>
 <div class="toast" id="toast" role="status" hidden><span id="toast-t"></span><button id="toast-u" hidden>Annulla</button></div>
 <script>
 'use strict';
@@ -410,7 +452,7 @@ function guessMcat(desc, kind) {
 
 /* ingredienti: "200 g farina" -> {qty:200, unit:'g', name:'farina'} */
 const UNITS = 'kg|gr|g|hg|mg|lt|l|dl|cl|ml|cucchiai|cucchiaio|cucchiaini|cucchiaino|pz|pezzi|pezzo|spicchi|spicchio|bicchieri|bicchiere|tazze|tazza|fette|fetta|confezioni|confezione|scatole|scatola|barattoli|barattolo|bottiglie|bottiglia|vasetti|vasetto|mazzi|mazzo|rametti|rametto|foglie|pizzico|pizzichi|bustine|bustina|panetti|panetto|vaschette|vaschetta|buste|busta|lattine|lattina|rotoli|rotolo|fiale|fiala|cespi|cespo|filetti|filetto|coste|costa|bacche|bacca|croste|crosta';
-const ING_RE = new RegExp(`^\\s*(\\d+(?:[.,]\\d+)?(?:\\s*\\/\\s*\\d+)?)?\\s*(?:(${UNITS})\\.?\\s+)?(?:(?:di|d')\\s*)?(.+?)\\s*$`, 'i');
+const ING_RE = new RegExp(`^\\s*(\\d+(?:[.,]\\d+)?(?:\\s*\\/\\s*\\d+)?)?\\s*(?:(${UNITS})\\.?\\s+)?(?:di\\s+|d')?(.+?)\\s*$`, 'i');
 function parseQty(t) { if (!t) return null; t = String(t).replace(',', '.').replace(/\s/g, ''); if (t.includes('/')) { const [a, b] = t.split('/').map(Number); return b ? a / b : null; } const n = parseFloat(t); return isNaN(n) ? null : n; }
 function parseIng(line) { const m = String(line).match(ING_RE); if (!m) return null; const name = (m[3] || '').trim(); if (!name) return null; const qty = parseQty(m[1]); return {qty, unit: qty == null ? '' : (m[2] || '').toLowerCase(), name}; }
 const fmtQty = n => { if (n == null || n === '') return ''; if (Math.abs(n - 0.5) < 0.001) return '½'; const r = n >= 10 ? Math.round(n) : n >= 1 ? Math.round(n * 10) / 10 : Math.round(n * 100) / 100; return String(r).replace('.', ','); };
@@ -611,8 +653,9 @@ const LIB_CATS = ['Primi','Secondi','Contorni','Antipasti e fritti','Pizze e lie
 
 /* ---------- stato e salvataggio ---------- */
 const KEY = 'casa-in-ordine.v1';
-const DEF_SET = {people: 4, remindDays: 5, notif: true, notifHour: 9, monthRem: true, monthDay: 3};
-function fresh() { return {v: 2, monthDone: '', recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], rems: [], settings: {...DEF_SET}}; }
+const DEF_MODS = {ricette: true, spesa: true, bollette: true, conti: true, promemoria: true};
+const DEF_SET = {people: 4, remindDays: 5, notif: true, notifHour: 9, monthRem: true, monthDay: 3, mods: DEF_MODS, diet: [], dinner: true, dinnerTime: '17:30', sunday: true, sundayTime: '10:00'};
+function fresh() { return {v: 2, onboarded: false, premium: {}, monthDone: '', recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], rems: [], settings: {...DEF_SET}}; }
 function load() {
   try { const raw = localStorage.getItem(KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
   return fresh();
@@ -620,6 +663,11 @@ function load() {
 function normalize(d) {
   const s = Object.assign(fresh(), d || {});
   s.settings = {...DEF_SET, ...(s.settings || {})};
+  s.settings.mods = {...DEF_MODS, ...(s.settings.mods || {})};
+  if (!Array.isArray(s.settings.diet)) s.settings.diet = [];
+  if (!s.premium || typeof s.premium !== 'object') s.premium = {};
+  /* chi usava già l'app non rivede il tour: trova solo l'invito a personalizzarla */
+  if (d && d.onboarded === undefined) s.onboarded = 'legacy';
   ['recipes','favs','fridge','shopping','bills','moves','rems'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
   if (!s.menu || typeof s.menu !== 'object') s.menu = {};
   if ((d && d.v || 1) < 2) migrateV1(s);
@@ -671,7 +719,7 @@ async function scheduleNotifs() {
     if ((await notifStatus()) !== 'granted') return;
     const H = S.settings.notifHour, t = today(), now = Date.now(), list = [];
     const at = iso => { const d = parseD(iso); d.setHours(H, 0, 0, 0); return d; };
-    if (S.settings.notif) {
+    if (S.settings.notif && on('bollette')) {
       const open = S.bills.filter(b => !b.paid).sort(byDue);
       for (const b of open.filter(b => b.due >= t && diffDays(t, b.due) <= 120)) {
         const amt = b.amount ? ': ' + euro(b.amount) : '', verb = b.auto ? 'Addebito' : 'Scade';
@@ -682,11 +730,35 @@ async function scheduleNotifs() {
       const late = open.filter(b => b.due < t && !b.auto);
       if (late.length) list.push({id: 3, title: late.length === 1 ? `${late[0].name}: bolletta scaduta` : `${late.length} bollette scadute`, body: `Da pagare: ${euro(sum(late.map(b => b.amount)))}. ${late.length === 1 ? 'Se l\'hai già pagata, segnalalo' : 'Se le hai già pagate, segnalalo'} nell'app.`, schedule: {at: at(addDays(t, 1)), allowWhileIdle: true}, extra: {tab: 'bollette'}});
     }
-    for (const r of S.rems.filter(r => !r.done && r.at)) {
+    for (const r of on('promemoria') ? S.rems.filter(r => !r.done && r.at) : []) {
       const at = atDate(r.rep ? nextAt(r) : r.at); if (at.getTime() <= now) continue;
       list.push({id: hashId(r.id + 'r'), title: '🔔 Promemoria', body: r.text, schedule: r.rep ? {at, repeats: true, every: r.rep === 'd' ? 'day' : r.rep === 'w' ? 'week' : 'month', allowWhileIdle: true} : {at, allowWhileIdle: true}, extra: {tab: 'home', rem: r.id}});
     }
-    if (S.settings.monthRem) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}, allowWhileIdle: true}, extra: {tab: 'conti', act: 'csv'}});
+    if (on('ricette') && S.settings.dinner) {
+      const [dh, dm] = S.settings.dinnerTime.split(':').map(Number);
+      const usedIdeas = new Set(Object.values(S.menu).map(m => m.cena && m.cena.r).filter(Boolean));
+      for (let i = 0; i < 14; i++) {
+        const day = addDays(t, i), at = parseD(day); at.setHours(dh, dm, 0, 0); if (at.getTime() <= now) continue;
+        const cena = (S.menu[day] || {}).cena, r = cena && cena.r && recipeById(cena.r), prep = prepFor(addDays(day, 1));
+        const sunday = at.getDay() === 0 && S.settings.sunday;
+        let title, body, rid = r ? r.id : null;
+        if (r) { title = `🍽️ Stasera: ${r.name}`; body = !r.time ? 'Tocca per la ricetta.' : r.time > 90 ? `Ci vogliono circa ${fmtMin(r.time)}: se non hai già iniziato, valuta un piatto più veloce.` : `Ci vogliono circa ${fmtMin(r.time)}.`; }
+        else if (cena && cena.t) { if (!prep) continue; title = `🍽️ Stasera: ${cena.t}`; body = ''; }
+        else { if (sunday && !prep) continue; const idea = ideaFor(day, usedIdeas); if (!idea) continue; usedIdeas.add(idea.id); rid = idea.id; title = '🍽️ Cosa mangiamo stasera?'; body = `Un'idea: ${idea.name}${S.fridge.length ? ', con quello che hai in casa' : ''}.`; }
+        if (prep) body = `${body ? body + ' ' : ''}Per domani: ${prep}.`;
+        list.push({id: 5000 + i, title, body, schedule: {at, allowWhileIdle: true}, extra: {act: 'dinner', day, r: rid}});
+      }
+    }
+    if (on('ricette') && S.settings.sunday) {
+      const [sh, sm] = S.settings.sundayTime.split(':').map(Number);
+      for (let k = 0, found = 0; k < 15 && found < 2; k++) {
+        const day = addDays(t, k), at = parseD(day); if (at.getDay() !== 0) continue; at.setHours(sh, sm, 0, 0); if (at.getTime() <= now) continue; found++;
+        const week = addDays(day, 1), planned = Array.from({length: 7}, (_, i) => (S.menu[addDays(week, i)] || {}).cena).filter(Boolean).length;
+        if (planned >= 5) continue;
+        list.push({id: 6000 + found, title: '🗓️ Pianifica la settimana', body: 'Ti propongo le cene dei prossimi 7 giorni: le cambi con un tocco e la spesa si prepara da sola.', schedule: {at, allowWhileIdle: true}, extra: {act: 'plan', week}});
+      }
+    }
+    if (S.settings.monthRem && on('conti')) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}, allowWhileIdle: true}, extra: {tab: 'conti', act: 'csv'}});
     if (list.length) await LN.schedule({notifications: list.slice(0, 60)});
   } catch (e) { /* le notifiche sono un aiuto: se il telefono le rifiuta l'app funziona lo stesso */ }
 }
@@ -699,6 +771,8 @@ if (LN) {
       if (x.bill && billById(x.bill)) sheetBill(x.bill);
       if (x.rem && S.rems.some(r => r.id === x.rem)) sheetRem(x.rem);
       if (x.act === 'csv') { ui.month = prevMonth(); render(); A.importCsv(); }
+      if (x.act === 'dinner' && x.r && recipeById(x.r)) { ui.serv = null; sheetRecipe(x.r); }
+      if (x.act === 'plan') { ui.week = x.week; setTab('menu'); ui.plan = planWeek(ui.week); sheetWeekPlan(); }
     });
   } catch (e) {}
 }
@@ -992,6 +1066,178 @@ async function dictate() {
   try { rec.start(); } catch (e) { listening = false; if (btn) btn.classList.remove('on'); }
 }
 
+/* ---------- sezioni scelte dalla famiglia ---------- */
+const MODS = [['ricette','Ricette e menù','🍝','Ricettario, cosa ho in frigo, menù della settimana'],['spesa','Lista della spesa','🛒','Divisa per reparti, si compila dalle ricette'],['bollette','Bollette e scadenze','🧾','Luce, gas, bollo, revisione, documenti, con gli avvisi'],['conti','Entrate e spese','💶','Il mese a colpo d\'occhio e l\'import dell\'estratto conto'],['promemoria','Promemoria','🔔','Scritti o dettati a voce, con l\'avviso all\'ora giusta']];
+const DIETS = [['vegetariano','Vegetariano'],['senza glutine','Senza glutine'],['bambini','Bambini piccoli'],['veloce','Piatti veloci']];
+const on = k => S.settings.mods[k] !== false;
+const TAB_MOD = {ricette: 'ricette', menu: 'ricette', spesa: 'spesa', bollette: 'bollette', conti: 'conti'};
+const tabOn = k => !TAB_MOD[k] || on(TAB_MOD[k]);
+
+/* premium: per ora solo la prova di 14 giorni sul dispositivo; l'abbonamento arriverà con Google Play */
+const isPremium = () => !!(S.premium && (S.premium.sub || (S.premium.trialEnd && S.premium.trialEnd >= today())));
+const pBadge = '<span class="pbadge">Premium</span>';
+function premiumRows(mods) {
+  const r = [];
+  if (mods.ricette) r.push('Ricetta su misura con l\'assistente, da quello che hai in casa');
+  if (mods.bollette) r.push('Bolletta compilata da una foto');
+  if (mods.conti) r.push('Scontrino da foto e categorie delle spese scelte dall\'assistente');
+  r.push('Famiglia condivisa su più telefoni (in arrivo)');
+  return r;
+}
+function startTrial() {
+  if (S.premium.trialStart) return false;
+  S.premium = {...S.premium, trialStart: today(), trialEnd: addDays(today(), 14)}; save(); return true;
+}
+function sheetPremium() {
+  const st = isPremium() ? (S.premium.sub ? 'Premium attivo' : `Premium in prova fino al ${fmtFull(S.premium.trialEnd)}`) : S.premium.trialStart ? 'La prova di 14 giorni è finita' : '';
+  openSheet('Casa in Ordine Premium', `${st ? `<p class="${isPremium() ? 'st-good' : 'st-warn'}" style="margin:0 0 12px">${st}</p>` : ''}
+    <ul class="plist">${premiumRows(S.settings.mods).map(x => `<li>${ic('check','sm')} ${x}</li>`).join('')}</ul>
+    <p class="hint" style="text-align:left;margin:0 0 14px">Tutto il resto dell'app è gratis, per sempre. Premium: prova gratuita di 14 giorni, poi 2,99 € al mese. Disdici quando vuoi.</p>
+    <div class="actions">${!S.premium.trialStart ? `<button class="btn primary" data-a="trial">Prova Premium gratis per 14 giorni</button>` : !isPremium() ? `<p class="hint">L'abbonamento sarà disponibile con la versione sul Play Store.</p>` : ''}<button class="btn ghost" data-a="close">${isPremium() ? 'Ok' : 'Non ora'}</button></div>`);
+}
+
+/* idee per la cena: ricettario e ricette di famiglia, con preferenze, frigo e varietà */
+const MAIN_CATS = ['Primi','Secondi','Zuppe','Pizze e lievitati'];
+const GLUTEN_W = ['pasta','spaghett','penne','fusill','rigaton','ziti','bucatin','tonnarell','trofie','orecchiett','ditalin','maccheron','tagliatell','lasagn','gnocch','farina','pane','pangrattato','savoiardi','frolla','couscous','orzo','farro','biscott','crackers'];
+const MEAT_W = ['carne','pollo','manzo','maiale','vitello','salsicc','macinat','prosciutt','salame','pancett','guancial','muscolo','lacerto','girello','tracchie','spezzatino','costolett','fettine','pesce','orat','vongol','cozze','acciugh','tonno','gamber','calamar','polp','salmone','merluzz','strutto','brodo di carne'];
+const ingAny = (r, list) => r.ingredients.some(i => { const n = norm(i.name); return list.some(w => n.includes(w)); });
+function dietOk(r) {
+  const d = S.settings.diet;
+  if (d.includes('vegetariano') && ingAny(r, MEAT_W)) return false;
+  if (d.includes('senza glutine') && !(r.tags || []).includes('senza glutine') && ingAny(r, GLUTEN_W)) return false;
+  return true;
+}
+function seeded(seed) { let x = 7; for (const c of seed) x = (x * 31 + c.charCodeAt(0)) >>> 0; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
+function recentIds(back = 21, ahead = 7) {
+  const out = new Set(), t = today();
+  for (const [day, m] of Object.entries(S.menu)) { const dd = diffDays(t, day); if (dd >= -back && dd <= ahead) for (const v of Object.values(m)) if (v && v.r) out.add(v.r); }
+  return out;
+}
+function rankDinners(seed, opts = {}) {
+  const rnd = seeded(seed), recent = recentIds(), F = S.fridge, d = S.settings.diet;
+  return allRecipes().filter(r => (r.lib ? MAIN_CATS.includes(r.cat) : r.cat !== 'Dolci') && dietOk(r) && !(opts.exclude && opts.exclude.has(r.id)) && (!opts.cat || r.cat === opts.cat))
+    .map(r => {
+      let sc = rnd() * 2;
+      if (F.length) { const main = r.ingredients.filter(i => !isStaple(i)), have = main.filter(i => F.some(t => ingHas(i.name, t))).length; sc += have * 2 - (main.length - have) * 0.3; }
+      if (isFav(r.id)) sc += 3; if (!r.lib) sc += 1;
+      if (d.includes('bambini') && (r.tags || []).includes('bambini')) sc += 1.5;
+      if (d.includes('veloce') && r.time && r.time <= 30) sc += 1.5;
+      if (opts.weekday && r.time > 60) sc -= 2;
+      if (recent.has(r.id)) sc -= 6;
+      return {r, sc};
+    }).sort((a, b) => b.sc - a.sc).map(x => x.r);
+}
+function ideaFor(day, used = new Set()) {
+  const wd = (parseD(day).getDay() + 6) % 7;
+  return rankDinners('idea' + day, {cat: WEEK_PATTERN[wd], exclude: used, weekday: wd < 5})[0] || rankDinners('idea' + day, {exclude: used, weekday: wd < 5})[0] || null;
+}
+const dinnerIdea = day => ideaFor(day);
+const fmtMin = m => m < 60 ? `${m} minuti` : m % 60 ? `${Math.floor(m / 60)} ${m < 120 ? 'ora' : 'ore'} e ${m % 60} minuti` : `${m / 60} ${m < 120 ? 'ora' : 'ore'}`;
+/* cosa preparare il giorno prima, dal menù */
+function prepFor(day) {
+  const m = S.menu[day] || {}, out = [];
+  for (const [k] of MEALS) {
+    const r = m[k] && m[k].r && recipeById(m[k].r); if (!r) continue;
+    const n = r.ingredients.map(i => norm(i.name)).join(' | ');
+    if (/(ceci|fagioli|cicerchie)[^|]*secch|baccal/.test(n)) out.push(`metti in ammollo i legumi per ${r.name}`);
+    if (/(carne|pollo|manzo|maiale|vitello|salsicc|macinat|muscolo|lacerto|girello|spezzatino|costolett|fettine|petto di|pesce|orata|calamar|polpo|salmone|merluzz|gamber)/.test(n)) out.push(`tira fuori dal congelatore carne o pesce per ${r.name}, se sono congelati`);
+    if (/lievito di birra/.test(n)) out.push(`l'impasto di ${r.name} va preparato con qualche ora di anticipo`);
+  }
+  return out.join('; ');
+}
+/* la settimana: una cena al giorno, alternando primi, secondi, zuppe e la pizza del sabato */
+const WEEK_PATTERN = ['Primi', 'Secondi', 'Zuppe', 'Secondi', 'Primi', 'Pizze e lievitati', 'Primi'];
+function planWeek(week) {
+  const t = today(), used = new Set(), days = [];
+  for (let i = 0; i < 7; i++) {
+    const day = addDays(week, i), cur = (S.menu[day] || {}).cena;
+    if (day < t || cur) { days.push({day, fixed: cur ? slotLabel(cur) : 'passato', id: null}); continue; }
+    const wk = i < 5, pick = rankDinners('plan' + week + i, {cat: WEEK_PATTERN[i], exclude: used, weekday: wk})[0] || rankDinners('plan' + week + i, {exclude: used, weekday: wk})[0];
+    if (pick) used.add(pick.id);
+    days.push({day, id: pick ? pick.id : null, i});
+  }
+  return {week, days, shop: on('spesa')};
+}
+function swapPlan(i) {
+  const pl = ui.plan, row = pl.days[i]; if (!row || row.fixed) return;
+  const used = new Set(pl.days.map(x => x.id).filter(Boolean)); used.add(row.id);
+  (row.seen = row.seen || []).push(row.id);
+  row.seen.forEach(x => used.add(x));
+  const next = rankDinners('plan' + pl.week + i, {cat: WEEK_PATTERN[i], exclude: used, weekday: i < 5})[0] || rankDinners('plan' + pl.week + i, {exclude: used, weekday: i < 5})[0];
+  if (next) row.id = next.id; else { row.seen = []; }
+}
+function sheetWeekPlan() {
+  const pl = ui.plan; if (!pl) return;
+  const n = pl.days.filter(x => x.id).length;
+  openSheet('Le cene della settimana', `<p class="empty-s" style="margin:0 0 12px;font-size:14px">Ti propongo una cena al giorno${S.settings.diet.length ? ' secondo le vostre preferenze' : ''}${S.fridge.length ? ', partendo da quello che hai in casa' : ''}. Cambiale con un tocco.</p>
+    <div class="list" style="margin-bottom:14px">${pl.days.map((x, i) => { const r = x.id && recipeById(x.id), dl = `${GIORNI[parseD(x.day).getDay()]} ${parseD(x.day).getDate()}`;
+      if (x.fixed === 'passato') return '';
+      if (x.fixed) return `<div class="row plan-row"><span class="rt"><small>${dl}</small><b class="muted">${esc(x.fixed)}</b></span></div>`;
+      return `<div class="row plan-row"><span class="rt"><small>${dl}</small><b>${r ? esc(r.name) : 'Libera'}</b>${r ? `<small>${[r.cat, r.time ? r.time + ' min' : ''].filter(Boolean).join(' · ')}</small>` : ''}</span><button class="btn sm" data-a="planSwap" data-i="${i}">Cambia</button><button class="icon-btn" data-a="planFree" data-i="${i}" aria-label="Lascia libera">${ic('x','sm')}</button></div>`; }).join('')}</div>
+    ${on('spesa') ? `<label class="switch"><input type="checkbox" id="plan-shop" ${pl.shop ? 'checked' : ''}><span><b>Prepara la lista della spesa</b><small>Ingredienti per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'}</small></span></label>` : ''}
+    <div class="actions"><button class="btn primary" data-a="planOk" ${n ? '' : 'disabled'}>Metti ${n} ${n === 1 ? 'cena' : 'cene'} nel menù</button></div>`);
+}
+
+/* ---------- tour del primo avvio ---------- */
+const tour = {step: 0, d: null};
+function startTour() {
+  const st = S.settings;
+  tour.step = 0; tour.d = {people: st.people, diet: [...st.diet], mods: {...st.mods}, remindDays: st.remindDays, monthDay: st.monthDay, dinner: st.dinner, dinnerTime: st.dinnerTime, sunday: st.sunday, notif: st.notif, monthRem: st.monthRem};
+  if (sheetOpen) hideSheet();
+  $('#tour').hidden = false; document.body.style.overflow = 'hidden'; renderTour();
+}
+const tourSteps = () => ['welcome', 'family', 'mods', ...(tour.d.mods.bollette || tour.d.mods.conti ? ['prefs'] : []), 'notifs', 'premium'];
+const tgl = (act, k, pressed, emo, title, sub, extra = '') => `<button class="mod" data-a="${act}" data-k="${k}" aria-pressed="${!!pressed}"><span class="emo">${emo}</span><span class="rt"><b>${title}</b><small>${sub}</small></span><span class="tick">${ic('check','sm')}</span></button>${extra}`;
+function renderTour() {
+  const steps = tourSteps(), k = steps[tour.step], d = tour.d;
+  let body = '', foot = `<button class="btn primary wide" data-a="tourNext">Avanti</button>`;
+  if (k === 'welcome') {
+    body = `<div class="tour-hero">🏡</div><h1>Benvenuti in Casa in Ordine</h1><p class="lead">Ricette, spesa, bollette e promemoria della famiglia in un'app sola. In un minuto la prepariamo su misura per voi.</p>`;
+    foot = `<button class="btn primary wide" data-a="tourNext">Iniziamo</button>`;
+  } else if (k === 'family') {
+    body = `<h2>La vostra famiglia</h2><p class="lead">Serve per le dosi delle ricette e per le idee della cena.</p>
+      <div class="stepper"><b>Quante persone siete?</b><div><button data-a="tourPeople" data-d="-1" aria-label="Una persona in meno">−</button><output>${d.people}</output><button data-a="tourPeople" data-d="1" aria-label="Una persona in più">+</button></div></div>
+      <p class="h3" style="margin-top:18px">A tavola</p><div class="chipline">${DIETS.map(([v, l]) => `<button class="chip" data-a="tourDiet" data-k="${v}" aria-pressed="${d.diet.includes(v)}">${l}</button>`).join('')}</div>
+      <p class="hint" style="text-align:left;margin-top:10px">Vegetariano e senza glutine escludono le ricette non adatte; bambini e piatti veloci le mettono per prime.</p>`;
+  } else if (k === 'mods') {
+    const any = Object.values(d.mods).some(Boolean);
+    body = `<h2>Cosa volete gestire?</h2><p class="lead">L'app mostrerà solo quello che scegliete. Potete cambiarlo quando volete dalle impostazioni.</p>${MODS.map(([m, l, e, sub]) => tgl('tourMod', m, d.mods[m], e, l, sub)).join('')}`;
+    foot = `<button class="btn primary wide" data-a="tourNext" ${any ? '' : 'disabled'}>${any ? 'Avanti' : 'Scegli almeno una sezione'}</button>`;
+  } else if (k === 'prefs') {
+    body = `<h2>Due dettagli</h2><p class="lead">Si cambiano anche dopo, dalle impostazioni.</p>
+      ${d.mods.bollette ? `<label class="field"><span>Quanto prima avvisarvi delle scadenze?</span><select data-tk="remindDays">${[1, 3, 5, 7, 10, 14].map(n => `<option value="${n}" ${d.remindDays == n ? 'selected' : ''}>${n} ${n === 1 ? 'giorno' : 'giorni'} prima</option>`).join('')}</select></label>` : ''}
+      ${d.mods.conti ? `<label class="field"><span>In che giorno del mese registrate le spese del mese prima?</span><select data-tk="monthDay">${Array.from({length: 28}, (_, i) => i + 1).map(n => `<option value="${n}" ${d.monthDay == n ? 'selected' : ''}>il ${n}</option>`).join('')}</select><small>Le banche di solito chiudono il mese entro il 2-3</small></label>` : ''}`;
+  } else if (k === 'notifs') {
+    const rows = [];
+    if (d.mods.ricette) rows.push(tgl('tourTog', 'dinner', d.dinner, '🍽️', 'Stasera a tavola', 'Ogni giorno: la cena in programma o un\'idea con quello che hai, e cosa preparare per domani', d.dinner ? `<label class="field tour-time"><span>Alle</span><select data-tk="dinnerTime">${['17:00', '17:30', '18:00', '18:30', '19:00', '19:30'].map(x => `<option ${d.dinnerTime === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>` : ''));
+    if (d.mods.ricette) rows.push(tgl('tourTog', 'sunday', d.sunday, '🗓️', 'Pianifica la settimana', 'La domenica mattina: 5 minuti per menù e lista della spesa'));
+    if (d.mods.bollette) rows.push(tgl('tourTog', 'notif', d.notif, '🧾', 'Scadenze', 'Prima di ogni bolletta e scadenza, e il giorno stesso'));
+    if (d.mods.conti) rows.push(tgl('tourTog', 'monthRem', d.monthRem, '💶', 'Spese del mese', 'Una volta al mese, per registrare le spese'));
+    body = `<h2>Gli avvisi utili</h2><p class="lead">Pochi e solo quando servono: al massimo uno al giorno, oltre a quelli che chiedete voi.</p>${rows.join('')}${d.mods.promemoria ? '<p class="hint" style="text-align:left">I promemoria suonano sempre all\'ora che scegliete.</p>' : ''}${LN ? '' : '<p class="hint" style="text-align:left">Gli avvisi arrivano con l\'app Android. Qui li trovate nella schermata Oggi.</p>'}`;
+    foot = LN && notifPerm !== 'granted' ? `<button class="btn primary wide" data-a="tourNotif">Attiva gli avvisi</button><button class="btn ghost wide" data-a="tourNext">Non ora</button>` : foot;
+  } else if (k === 'premium') {
+    const free = MODS.filter(([m]) => d.mods[m]).map(([, l]) => l);
+    body = `<h2>Gratis o Premium?</h2><p class="lead">Quello che avete scelto è gratis, per sempre. Premium aggiunge l'assistente e la famiglia condivisa.</p>
+      <table class="cmp"><thead><tr><th></th><th class="c">Gratis</th><th class="c">Premium</th></tr></thead><tbody>
+      ${free.map(l => `<tr><td>${l}</td><td class="c st-good">✓</td><td class="c st-good">✓</td></tr>`).join('')}<tr><td>Avvisi e notifiche</td><td class="c st-good">✓</td><td class="c st-good">✓</td></tr>
+      ${premiumRows(d.mods).map(l => `<tr><td>${l}</td><td class="c muted">—</td><td class="c st-good">✓</td></tr>`).join('')}</tbody></table>
+      <p class="hint" style="text-align:left">Prova gratuita di 14 giorni, poi 2,99 € al mese. Disdici quando vuoi.</p>`;
+    foot = S.premium.trialStart ? `<button class="btn primary wide" data-a="tourDone">Inizia</button>` : `<button class="btn primary wide" data-a="tourDone" data-trial="1">Prova Premium gratis per 14 giorni</button><button class="btn wide" data-a="tourDone">Continua gratis</button>`;
+  }
+  $('#tour').innerHTML = `<div class="tour-in"><div class="tour-top">${tour.step ? `<button class="icon-btn" data-a="tourBack" aria-label="Indietro">${ic('left')}</button>` : '<span class="sp"></span>'}<div class="dots" aria-label="Passo ${tour.step + 1} di ${steps.length}">${steps.map((_, i) => `<i class="${i === tour.step ? 'on' : i < tour.step ? 'past' : ''}"></i>`).join('')}</div>${k !== 'premium' ? '<button class="link" data-a="tourDone">Salta</button>' : '<span class="sp"></span>'}</div><div class="tour-body">${body}</div><div class="tour-foot">${foot}</div></div>`;
+  $('#tour').scrollTop = 0;
+}
+function finishTour(trial) {
+  const d = tour.d, st = S.settings;
+  Object.assign(st, {people: d.people, diet: d.diet, mods: d.mods, remindDays: +d.remindDays, monthDay: +d.monthDay, dinner: d.dinner, dinnerTime: d.dinnerTime, sunday: d.sunday, notif: d.notif, monthRem: d.monthRem});
+  S.onboarded = 'done';
+  const started = trial && startTrial();
+  save(); $('#tour').hidden = true; document.body.style.overflow = '';
+  if (!tabOn(tab)) tab = 'home';
+  render(); window.scrollTo(0, 0);
+  toast(started ? `Tutto pronto · Premium in prova fino al ${fmtD(S.premium.trialEnd)}` : 'Tutto pronto');
+}
+
 /* ---------- interfaccia ---------- */
 const TABS = [['home','Oggi','home'],['ricette','Ricette','book'],['menu','Menù','cal'],['spesa','Spesa','cart'],['bollette','Bollette','bill'],['conti','Conti','wallet']];
 const TITLES = {home:'Casa in Ordine', ricette:'Ricette', menu:'Menù della settimana', spesa:'Lista della spesa', bollette:'Bollette e scadenze', conti:'Entrate e spese'};
@@ -999,6 +1245,7 @@ let tab = TABS.some(t => t[0] === pref.get('tab')) ? pref.get('tab') : 'home';
 const ui = {q: '', tag: 'tutte', rview: 'lib', week: mondayOf(today()), bview: 'todo', year: new Date().getFullYear(), month: today().slice(0, 7), serv: null, rid: null, slot: null, ai: null, csv: null};
 
 function render() {
+  if (!tabOn(tab)) tab = 'home';
   $('#title').textContent = TITLES[tab];
   const act = {
     home: `<button class="icon-btn" data-a="settings" aria-label="Impostazioni">${ic('gear')}</button>`,
@@ -1014,7 +1261,9 @@ function render() {
   if (focusId === 'fi' && $('#fi')) $('#fi').focus();
   const toBuy = S.shopping.filter(i => !i.done).length;
   const late = S.bills.filter(b => !b.paid && diffDays(today(), b.due) <= S.settings.remindDays).length;
-  $('#nav').innerHTML = TABS.map(([k, l, i]) => {
+  const tabs = TABS.filter(t => tabOn(t[0]));
+  $('#nav').style.gridTemplateColumns = `repeat(${tabs.length}, 1fr)`;
+  $('#nav').innerHTML = tabs.map(([k, l, i]) => {
     const n = k === 'spesa' ? toBuy : k === 'bollette' ? late : 0;
     return `<button data-a="go" data-t="${k}" ${k === tab ? 'aria-current="page"' : ''}>${ic(i)}<span>${l}</span>${n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : ''}</button>`;
   }).join('');
@@ -1058,21 +1307,22 @@ const V = {
     const pm = prevMonth(), pmName = MESI[+pm.slice(5, 7) - 1];
     const monthCard = S.settings.monthRem && d.getDate() >= S.settings.monthDay && S.monthDone !== pm ? `<section class="card ai-card"><div class="card-h"><h2>${ic('wallet','sm')} Spese di ${pmName}</h2></div><p style="margin:0 0 10px">È il momento di registrare le spese del mese scorso: importa l'estratto conto della banca o aggiungile a mano.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="monthImport">${ic('upload','sm')} Importa</button><button class="btn ghost" data-a="monthDone">Fatto</button></div></section>` : '';
     const notifCard = LN && notifPerm === 'prompt' && (S.settings.notif || S.settings.monthRem) ? `<section class="card"><div class="card-h"><h2>Promemoria</h2></div><p style="margin:0 0 10px">Ricevi sul telefono un avviso prima delle scadenze delle bollette e a inizio mese per le spese.</p><button class="btn primary wide" data-a="askNotif">Attiva le notifiche</button></section>` : '';
-    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${notifCard}${monthCard}${remCard()}
-    <section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte le bollette</button></div>
+    const legacy = S.onboarded === 'legacy' ? `<section class="card ai-card"><div class="card-h"><h2>${ic('gear','sm')} Novità</h2></div><p style="margin:0 0 10px">Scegli le sezioni che ti servono, le preferenze a tavola e gli avvisi per la cena. Ci vuole un minuto.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="tour">Personalizza</button><button class="btn ghost" data-a="tourNo">No grazie</button></div></section>` : '';
+    const idea = on('ricette') && !(m.cena && m.cena.r) ? dinnerIdea(t) : null;
+    const stats = [on('conti') ? `<button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>` : '', on('bollette') ? `<button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>` : ''].filter(Boolean);
+    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${legacy}${notifCard}${on('conti') ? monthCard : ''}${on('promemoria') ? remCard() : ''}
+    ${on('bollette') ? `<section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte le bollette</button></div>
       ${due.length ? due.map(b => billRow(b)).join('') : `<p class="empty-s">Nessuna bolletta da pagare nei prossimi ${S.settings.remindDays} giorni.</p>`}
-    </section>
-    <section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù</button></div>
+    </section>` : ''}
+    ${on('ricette') ? `<section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù</button></div>
       <div class="meals">${MEALS.map(([k, l]) => { const lab = slotLabel(m[k]); const isR = m[k] && m[k].r && recipeById(m[k].r); return `<button class="meal" data-a="${isR ? 'recipe' : 'slot'}" data-id="${isR ? m[k].r : ''}" data-day="${t}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : 'Da decidere'}</b></button>`; }).join('')}</div>
+      ${idea ? `<button class="idea" data-a="recipe" data-id="${idea.id}"><span>💡 Idea per stasera</span><b>${esc(idea.name)}</b></button>` : ''}
       <button class="btn ghost wide" style="margin-top:10px" data-a="fridgeGo">${ic('fridge','sm')} Cosa cucino con quello che ho?</button>
-    </section>
-    <section class="card"><div class="card-h"><h2>Spesa</h2><button class="link" data-a="go" data-t="spesa">Apri la lista</button></div>
+    </section>` : ''}
+    ${on('spesa') ? `<section class="card"><div class="card-h"><h2>Spesa</h2><button class="link" data-a="go" data-t="spesa">Apri la lista</button></div>
       ${toBuy.length ? `<p class="empty-s" style="color:var(--ink)"><b>${toBuy.length}</b> ${toBuy.length === 1 ? 'cosa' : 'cose'} da comprare</p><div class="chipline">${toBuy.slice(0, 8).map(i => `<span class="tag">${esc(i.name)}</span>`).join('')}${toBuy.length > 8 ? `<span class="tag">+${toBuy.length - 8}</span>` : ''}</div>` : `<p class="empty-s">La lista è vuota.</p>`}
-    </section>
-    <div class="stats">
-      <button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>
-      <button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>
-    </div>`;
+    </section>` : ''}
+    ${stats.length ? `<div class="stats ${stats.length === 1 ? 'one' : ''}">${stats.join('')}</div>` : ''}`;
   },
 
   ricette() {
@@ -1090,6 +1340,8 @@ const V = {
     const a = parseD(w), b = parseD(end);
     const range = a.getMonth() === b.getMonth() ? `${a.getDate()} – ${b.getDate()} ${MESI[b.getMonth()]}` : `${a.getDate()} ${MB[a.getMonth()]} – ${b.getDate()} ${MB[b.getMonth()]}`;
     let html = `<div class="weeknav"><button class="icon-btn" data-a="wk" data-d="-7" aria-label="Settimana prima">${ic('left')}</button><b>${range}</b><button class="icon-btn" data-a="wk" data-d="7" aria-label="Settimana dopo">${ic('right')}</button></div>`;
+    const free = Array.from({length: 7}, (_, i) => addDays(w, i)).filter(day => day >= t && !(S.menu[day] || {}).cena).length;
+    if (free) html += `<button class="btn ghost wide plan-btn" data-a="planWeek">${ic('spark','sm')} Proponi le cene della settimana</button>`;
     let nR = 0;
     for (let i = 0; i < 7; i++) {
       const day = addDays(w, i), m = S.menu[day] || {};
@@ -1124,7 +1376,8 @@ const V = {
     const paidY = sum(S.bills.filter(b => b.paid && (b.paidOn || b.due).slice(0, 4) === String(y)).map(b => b.amount));
     const seg = (k, l) => `<button data-a="bview" data-v="${k}" aria-pressed="${ui.bview === k}">${l}</button>`;
     let html = `<div class="stats"><div class="stat"><div class="l">Da pagare</div><div class="v">${euro(sum(open.map(b => b.amount)))}</div><div class="s ${late.length ? 'st-bad' : ''}">${late.length ? `${late.length} scadut${late.length === 1 ? 'a' : 'e'}` : `${open.length} in arrivo`}</div></div><div class="stat"><div class="l">Pagato nel ${y}</div><div class="v">${euro(paidY)}</div></div></div>`;
-    if (AI_IMG) html += `<label class="btn ghost wide photo-btn" style="margin-bottom:12px">${ic('camera','sm')} Aggiungi da una foto della bolletta<input type="file" id="billphoto" accept="image/*" class="vh"></label>`;
+    if (AI_IMG && !isPremium()) html += `<button class="btn ghost wide" style="margin-bottom:12px" data-a="premium">${ic('camera','sm')} Aggiungi da una foto della bolletta ${pBadge}</button>`;
+    if (AI_IMG && isPremium()) html += `<label class="btn ghost wide photo-btn" style="margin-bottom:12px">${ic('camera','sm')} Aggiungi da una foto della bolletta<input type="file" id="billphoto" accept="image/*" class="vh"></label>`;
     html += `<div class="seg" role="group" aria-label="Vista">${seg('todo', 'Da pagare')}${seg('paid', 'Pagate')}${seg('sum', 'Riepilogo')}</div>`;
     if (!S.bills.length) return html + empty('🧾', 'Nessuna bolletta', `Aggiungi luce, gas, acqua, affitto, assicurazioni… ${AI_IMG ? 'Puoi anche fotografare la bolletta: i dati li legge l\'assistente. ' : ''}Per quelle che si ripetono, quando segni il pagamento la prossima si crea da sola.`, `<button class="btn primary" data-a="newBill">${ic('plus','sm')} Aggiungi una bolletta</button>`);
     if (ui.bview === 'todo') {
@@ -1159,7 +1412,7 @@ const V = {
       ${quickChips()}
       <div class="actions" style="margin:6px 0 14px"><button class="btn" data-a="importCsv">${ic('upload','sm')} Importa l'estratto conto (CSV o Excel)</button></div>`;
     const unsorted = S.moves.filter(m => m.src === 'csv' && (m.cat === 'uscite' || m.cat === 'entrate'));
-    if (AI && unsorted.length) html += `<section class="card ai-card"><p style="margin:0 0 10px">${unsorted.length} ${unsorted.length === 1 ? 'movimento importato è' : 'movimenti importati sono'} senza categoria.</p><button class="btn primary wide" data-a="aiSort">${ic('spark','sm')} Classificali con l'assistente</button><p class="hint" id="aisort-st"></p></section>`;
+    if (AI && isPremium() && unsorted.length) html += `<section class="card ai-card"><p style="margin:0 0 10px">${unsorted.length} ${unsorted.length === 1 ? 'movimento importato è' : 'movimenti importati sono'} senza categoria.</p><button class="btn primary wide" data-a="aiSort">${ic('spark','sm')} Classificali con l'assistente</button><p class="hint" id="aisort-st"></p></section>`;
     if (!mv.length) return html + empty('💶', `Nessun movimento a ${MESI[mm - 1]}`, 'Le bollette pagate finiscono qui da sole. Per avere tutte le spese, importa il file CSV dei movimenti scaricato dall\'app o dal sito della tua banca, oppure aggiungi le voci a mano.');
     const byC = MCATS.filter(c => c[3] === 'out').map(c => [`${c[2]} ${c[1]}`, sum(mv.filter(m => m.kind === 'out' && mcatOf(m.cat)[0] === c[0]).map(m => m.amount))]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
     if (byC.length) html += `<section class="card"><div class="card-h"><h2>Dove vanno i soldi</h2></div>${bars(byC)}</section>`;
@@ -1201,7 +1454,8 @@ function vFridge() {
   if (S.fridge.length) html += `<div class="chipline fridge">${S.fridge.map(f => `<button class="tag fchip" data-a="unfridge" data-v="${esc(f)}" aria-label="Togli ${esc(f)}">${esc(f)} ${ic('x','xs')}</button>`).join('')}<button class="link" data-a="clearFridge" style="margin-left:4px">Svuota</button></div>`;
   const sugg = FRIDGE_SUGG.filter(s => !S.fridge.some(f => norm(f) === s));
   html += `<div class="chipline" style="margin-bottom:14px">${sugg.slice(0, S.fridge.length ? 8 : 16).map(s => `<button class="tag sugg" data-a="addFridge" data-v="${s}">+ ${s}</button>`).join('')}</div>`;
-  if (AI) html += `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} Ricetta su misura</h2></div><p style="margin:0 0 10px">L'assistente inventa una ricetta per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'} con ${S.fridge.length ? 'quello che hai' : 'gli ingredienti che scrivi qui sopra'}.</p><label class="field" style="margin-bottom:10px"><span>Preferenze (facoltativo)</span><input id="ainote" maxlength="120" placeholder="es. veloce, senza glutine, piace ai bambini"></label><button class="btn primary wide" data-a="aiRecipe" ${S.fridge.length ? '' : 'disabled'}>${ic('spark','sm')} Inventa una ricetta</button></section>`;
+  if (AI && !isPremium()) html += `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} Ricetta su misura ${pBadge}</h2></div><p style="margin:0 0 10px">L'assistente inventa una ricetta con quello che hai in casa, per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'}.</p><button class="btn wide" data-a="premium">Scopri Premium</button></section>`;
+  if (AI && isPremium()) html += `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} Ricetta su misura</h2></div><p style="margin:0 0 10px">L'assistente inventa una ricetta per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'} con ${S.fridge.length ? 'quello che hai' : 'gli ingredienti che scrivi qui sopra'}.</p><label class="field" style="margin-bottom:10px"><span>Preferenze (facoltativo)</span><input id="ainote" maxlength="120" placeholder="es. veloce, senza glutine, piace ai bambini"></label><button class="btn primary wide" data-a="aiRecipe" ${S.fridge.length ? '' : 'disabled'}>${ic('spark','sm')} Inventa una ricetta</button></section>`;
   if (!S.fridge.length) return html + `<p class="hint">Aggiungi quello che hai in frigo e in dispensa: ti mostro le ricette che puoi preparare e cosa ti manca.</p>`;
   const res = fridgeMatches();
   if (!res.length) return html + `<p class="hint">Nessuna ricetta del ricettario usa questi ingredienti.${AI ? ' Prova a farne inventare una all\'assistente.' : ''}</p>`;
@@ -1340,7 +1594,7 @@ function sheetPay(id) {
 function sheetBillForm(id, pre) {
   const b = id ? billById(id) : (pre || null);
   openSheet(id ? 'Modifica bolletta' : 'Nuova bolletta', `<form data-form="bill" data-id="${id || ''}">
-    ${!id && AI_IMG ? `<label class="btn ghost wide photo-btn" style="margin-bottom:6px">${ic('camera','sm')} Compila da una foto<input type="file" id="billphoto2" accept="image/*" class="vh"></label><p class="hint" id="photo-st" style="margin:0 0 14px">${pre ? 'Dati letti dalla foto: controllali prima di salvare.' : 'Fotografa la prima pagina: importo, scadenza e fornitore li legge l\'assistente.'}</p>` : ''}
+    ${!id && AI_IMG && isPremium() ? `<label class="btn ghost wide photo-btn" style="margin-bottom:6px">${ic('camera','sm')} Compila da una foto<input type="file" id="billphoto2" accept="image/*" class="vh"></label><p class="hint" id="photo-st" style="margin:0 0 14px">${pre ? 'Dati letti dalla foto: controllali prima di salvare.' : 'Fotografa la prima pagina: importo, scadenza e fornitore li legge l\'assistente.'}</p>` : ''}
     ${!id ? `<p class="h3">Scadenze comuni</p><div class="chipline" style="margin:-2px 0 14px">${BILL_TPL.map((t, i) => `<button type="button" class="tag sugg" data-a="tpl" data-i="${i}">${esc(t[0])}</button>`).join('')}</div>` : ''}
     <label class="field"><span>Nome</span><input id="bf-name" name="name" required maxlength="80" value="${esc(b ? b.name : '')}" placeholder="es. Luce, Mutuo, RC auto"></label>
     <label class="field"><span>Categoria</span><select id="bf-cat" name="cat">${CATS.map(([k, l, e]) => `<option value="${k}" ${(b ? b.cat : 'luce') === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
@@ -1357,7 +1611,7 @@ function sheetMove(id, kind, pre) {
   const opt = c => `<option value="${c[0]}" ${(m ? m.cat : pre && pre.cat ? pre.cat : k === 'in' ? 'stipendio' : 'spesa') === c[0] ? 'selected' : ''}>${c[2]} ${c[1]}</option>`;
   const v = m || pre || null;
   openSheet(m ? 'Movimento' : k === 'in' ? 'Nuova entrata' : 'Nuova spesa', `<form data-form="move" data-id="${m ? m.id : ''}">
-    ${!m && AI_IMG ? `<label class="btn ghost wide photo-btn" style="margin-bottom:6px">${ic('camera','sm')} Compila da una foto dello scontrino<input type="file" id="receiptphoto" accept="image/*" class="vh"></label><p class="hint" id="rcpt-st" style="margin:0 0 14px">${pre ? 'Dati letti dallo scontrino: controllali prima di salvare.' : 'Negozio, totale e data li legge l\'assistente.'}</p>` : ''}
+    ${!m && AI_IMG && isPremium() ? `<label class="btn ghost wide photo-btn" style="margin-bottom:6px">${ic('camera','sm')} Compila da una foto dello scontrino<input type="file" id="receiptphoto" accept="image/*" class="vh"></label><p class="hint" id="rcpt-st" style="margin:0 0 14px">${pre ? 'Dati letti dallo scontrino: controllali prima di salvare.' : 'Negozio, totale e data li legge l\'assistente.'}</p>` : ''}
     ${m && m.src === 'bill' ? `<p class="hint" style="text-align:left;margin:0 0 14px">Viene dalla bolletta pagata: per cambiarlo modifica la bolletta.</p>` : ''}
     <label class="field"><span>Descrizione</span><input id="mf-desc" name="desc" required maxlength="140" value="${esc(v ? v.desc : '')}" placeholder="es. Spesa Conad, Stipendio"></label>
     <div class="two"><label class="field"><span>Importo (€)</span><input id="mf-amount" name="amount" inputmode="decimal" required value="${v && v.amount ? moneyIn(v.amount) : ''}" placeholder="0,00"></label>
@@ -1389,8 +1643,18 @@ function sheetSettings() {
     <label class="switch"><input type="checkbox" id="set-month" name="monthRem" ${S.settings.monthRem ? 'checked' : ''}><span><b>Spese del mese scorso</b><small>Ogni mese, il giorno scelto, ti ricordo di registrarle</small></span></label>
     <div class="two"><label class="field"><span>Giorno del mese</span><select id="set-mday" name="monthDay">${Array.from({length: 28}, (_, i) => i + 1).map(n => `<option value="${n}" ${S.settings.monthDay == n ? 'selected' : ''}>il ${n}</option>`).join('')}</select><small>Le banche di solito chiudono il mese entro il 2-3</small></label>
     ${LN ? `<label class="field"><span>Ora degli avvisi</span><select id="set-hour" name="notifHour">${Array.from({length: 15}, (_, i) => i + 7).map(h => `<option value="${h}" ${S.settings.notifHour == h ? 'selected' : ''}>${h}:00</option>`).join('')}</select></label>` : ''}</div>
+    ${on('ricette') ? `<label class="switch"><input type="checkbox" id="set-dinner" name="dinner" ${S.settings.dinner ? 'checked' : ''}><span><b>Stasera a tavola</b><small>La cena in programma o un'idea, e cosa preparare per domani</small></span></label>
+    <div class="two"><label class="field"><span>Avviso della cena</span><select id="set-dtime" name="dinnerTime">${['17:00', '17:30', '18:00', '18:30', '19:00', '19:30'].map(x => `<option ${S.settings.dinnerTime === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+    <label class="field"><span>Domenica, pianifica alle</span><select id="set-stime" name="sundayTime">${['09:00', '10:00', '11:00', '17:00', '18:00'].map(x => `<option ${S.settings.sundayTime === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div>
+    <label class="switch"><input type="checkbox" id="set-sunday" name="sunday" ${S.settings.sunday ? 'checked' : ''}><span><b>Pianifica la settimana</b><small>La domenica: le cene dei prossimi 7 giorni e la spesa</small></span></label>` : ''}
+    <p class="h3" style="margin-top:6px">Sezioni</p>
+    ${MODS.map(([m, l, e]) => `<label class="switch"><input type="checkbox" id="set-mod-${m}" name="mod_${m}" ${on(m) ? 'checked' : ''}><span><b>${e} ${l}</b></span></label>`).join('')}
+    <p class="h3" style="margin-top:6px">A tavola</p>
+    <div class="chipline" style="margin-bottom:14px">${DIETS.map(([v, l]) => `<label class="chip chk"><input type="checkbox" id="set-diet-${v.replace(' ', '-')}" name="diet_${v}" ${S.settings.diet.includes(v) ? 'checked' : ''}> ${l}</label>`).join('')}</div>
     <label class="field"><span>Aspetto</span><select id="set-theme" name="theme"><option value="auto" ${theme === 'auto' ? 'selected' : ''}>Come il telefono</option><option value="light" ${theme === 'light' ? 'selected' : ''}>Chiaro</option><option value="dark" ${theme === 'dark' ? 'selected' : ''}>Scuro</option></select></label>
     <div class="actions"><button class="btn primary">Salva impostazioni</button></div></form>
+    <p class="h3" style="margin-top:22px">Premium</p>
+    <div class="actions two-c" style="margin:0 0 6px"><button class="btn" data-a="premium">${isPremium() ? 'Premium attivo' : 'Scopri Premium'}</button><button class="btn ghost" data-a="tour">Rifai il tour</button></div>
     <p class="h3" style="margin-top:22px">Copia di sicurezza</p>
     <p class="empty-s" style="margin:0 0 10px;font-size:14px">I dati restano solo su questo dispositivo. Fai ogni tanto una copia: serve anche per passarli a un altro telefono.</p>
     ${DL || canDownload ? `<div class="actions two-c"><button class="btn" data-a="export">Scarica copia</button><button class="btn" data-a="copy">Copia testo</button></div>` : `<div class="actions"><button class="btn" data-a="copy">Copia il testo della copia</button></div>`}
@@ -1409,7 +1673,7 @@ function sheetAi() {
     <div class="actions"><button class="btn primary" data-a="aiSave">${ic('check','sm')} Salva nelle mie ricette</button><div class="actions two-c" style="margin:0"><button class="btn" data-a="aiShop">${ic('cart','sm')} In spesa</button><button class="btn ghost" data-a="aiRecipe" data-again="1">${ic('spark','sm')} Un'altra idea</button></div></div>`);
 }
 async function aiRecipe(again) {
-  if (!AI || !S.fridge.length) return;
+  if (!AI || !isPremium() || !S.fridge.length) return;
   const noteEl = $('#ainote'); if (noteEl) ui.aiNote = noteEl.value.trim();
   const people = S.settings.people;
   const prev = again && ui.ai && ui.ai.recipe ? `\nNon riproporre "${ui.ai.recipe.name}": serve un'idea diversa.` : '';
@@ -1438,7 +1702,7 @@ Regole: in "ingredients" la quantità va prima del nome, con unità tra g, kg, m
 
 /* ---------- assistente: bolletta da foto ---------- */
 async function billFromPhoto(file) {
-  if (!AI || !file) return;
+  if (!AI || !isPremium() || !file) return;
   const st = $('#photo-st');
   const draft = {name: '', cat: 'luce', amount: 0, due: today(), rec: 'm2', auto: false, notes: ''};
   sheetBillForm(null, null);
@@ -1465,7 +1729,7 @@ async function billFromPhoto(file) {
 
 /* ---------- assistente: scontrino da foto ---------- */
 async function receiptFromPhoto(file) {
-  if (!AI || !file) return;
+  if (!AI || !isPremium() || !file) return;
   sheetMove(null, 'out', null);
   const st = $('#rcpt-st'); if (st) { st.textContent = 'Sto leggendo lo scontrino…'; st.className = 'hint st-warn'; }
   const outCats = MCATS.filter(c => c[3] === 'out').map(c => c[0]).join(', ');
@@ -1569,6 +1833,28 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  tour: () => startTour(),
+  tourNo: () => { S.onboarded = 'done'; save(); render(); },
+  tourNext: () => { const n = tourSteps().length; if (tour.step < n - 1) { tour.step++; renderTour(); } },
+  tourBack: () => { if (tour.step > 0) { tour.step--; renderTour(); } },
+  tourDone: d => finishTour(!!d.trial),
+  tourPeople: d => { tour.d.people = Math.max(1, Math.min(20, tour.d.people + Number(d.d))); renderTour(); },
+  tourDiet: d => { const x = tour.d.diet; tour.d.diet = x.includes(d.k) ? x.filter(v => v !== d.k) : [...x, d.k]; renderTour(); },
+  tourMod: d => { tour.d.mods[d.k] = !tour.d.mods[d.k]; renderTour(); },
+  tourTog: d => { tour.d[d.k] = !tour.d[d.k]; renderTour(); },
+  tourNotif: async () => { await askNotifs(); A.tourNext(); },
+  premium: () => sheetPremium(),
+  trial: () => { if (startTrial()) { render(); closeSheet(); toast(`Premium in prova fino al ${fmtD(S.premium.trialEnd)}`); } },
+  planWeek: () => { ui.plan = planWeek(ui.week); sheetWeekPlan(); },
+  planSwap: d => { swapPlan(+d.i); sheetWeekPlan(); },
+  planFree: d => { const r = ui.plan.days[+d.i]; if (r) r.id = null; sheetWeekPlan(); },
+  planOk: () => {
+    const pl = ui.plan; if (!pl) return; const shop = !!($('#plan-shop') && $('#plan-shop').checked);
+    let n = 0, ing = 0;
+    for (const x of pl.days) if (x.id && !x.fixed) { const m = S.menu[x.day] = S.menu[x.day] || {}; m.cena = {r: x.id}; n++; if (shop) ing += addRecipeToShop(recipeById(x.id), S.settings.people); }
+    ui.plan = null; save(); closeSheet(); render();
+    toast(`${n} ${n === 1 ? 'cena' : 'cene'} nel menù${shop ? ` · ${ing} ingredienti nella spesa` : ''}`);
+  },
   dictate: () => dictate(),
   remAll: () => sheetRems(),
   remEdit: d => sheetRem(d.id),
@@ -1690,6 +1976,10 @@ const F = {
     S.settings.people = Math.max(1, Math.min(20, parseInt(v.people) || 1));
     S.settings.remindDays = parseInt(v.remindDays) || 5;
     S.settings.monthRem = !!v.monthRem;
+    if ('dinnerTime' in v) { S.settings.dinner = !!v.dinner; S.settings.sunday = !!v.sunday; S.settings.dinnerTime = v.dinnerTime; S.settings.sundayTime = v.sundayTime; }
+    const mods = {}; MODS.forEach(([m]) => { mods[m] = !!v['mod_' + m]; });
+    if (Object.values(mods).some(Boolean)) S.settings.mods = mods;
+    S.settings.diet = DIETS.map(([x]) => x).filter(x => v['diet_' + x]);
     S.settings.monthDay = Math.max(1, Math.min(28, parseInt(v.monthDay) || 3));
     if (LN) { S.settings.notif = !!v.notif; S.settings.notifHour = Math.max(0, Math.min(23, parseInt(v.notifHour) || 9)); }
     pref.set('theme', v.theme); applyTheme();
@@ -1725,6 +2015,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', async e => {
   const t = e.target;
+  if (t.dataset && t.dataset.tk && tour.d) { tour.d[t.dataset.tk] = t.value; }
   if ((t.id === 'billphoto' || t.id === 'billphoto2') && t.files[0]) { const file = t.files[0]; t.value = ''; billFromPhoto(file); }
   if (t.id === 'receiptphoto' && t.files[0]) { const file = t.files[0]; t.value = ''; receiptFromPhoto(file); }
   if (t.id === 'csvfile' && t.files[0]) {
@@ -1759,6 +2050,7 @@ autoPay();
 save();
 render();
 if (LN) notifStatus().then(() => render());
+if (S.onboarded === false) startTour();
 </script>
 </body>
 </html>
