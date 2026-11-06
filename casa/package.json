@@ -5,9 +5,10 @@
   "description": "Casa in Ordine — ricette, menù, lista della spesa e bollette della famiglia",
   "scripts": {
     "build": "node scripts/build-web.mjs",
-    "android": "npm run build && (test -d android || npx cap add android) && npx cap sync android"
+    "android": "npm run build && (test -d android || npx cap add android) && node scripts/patch-android.mjs && npx cap sync android"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "7.0.1",
     "@capacitor/android": "8.6.0",
     "@capacitor/core": "8.6.0",
     "@capacitor/local-notifications": "8.3.1"

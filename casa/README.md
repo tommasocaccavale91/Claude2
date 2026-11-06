@@ -5,6 +5,7 @@ App per gestire le faccende di famiglia: ricette, menù della settimana, lista d
 Sta tutta in un file: apri `index.html` nel browser del telefono. I dati si salvano da soli sul dispositivo.
 
 ## Le sezioni
+- **Promemoria** (nella schermata Oggi): si scrivono o si dettano a voce, e giorno e ora vengono capiti dalla frase ("chiamare il dentista giovedì alle 10", "pillola ogni giorno alle 8", "spegnere il forno tra 40 minuti"). Nell'app Android arriva la notifica all'ora giusta; quelli che si ripetono passano da soli alla volta successiva.
 - **Oggi**: le bollette in scadenza, cosa si mangia a pranzo e a cena, quante cose mancano nella spesa e quanto hai pagato nel mese.
 - **Ricette**: ingredienti, procedimento, tempo, etichette e preferite. Cambi le porzioni e le dosi si ricalcolano. Con un tocco mandi gli ingredienti alla spesa o metti la ricetta nel menù. Ci sono già quattro ricette di esempio.
 - **Menù**: pranzo e cena per ogni giorno della settimana, con una ricetta o un testo libero ("pizza fuori", "avanzi"). Un pulsante aggiunge alla spesa gli ingredienti di tutta la settimana, con le dosi per il numero di persone in famiglia.

@@ -201,6 +201,12 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .switch span small{color:var(--muted);font-size:13px}
 .actions{display:grid;gap:10px;margin-top:8px}
 .actions.two-c{grid-template-columns:1fr 1fr}
+.rem-q{margin:2px 0 0}
+.rem-q .mic{background:var(--surface2);padding:0 12px}
+.rem-q .mic.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite ease-in-out}
+.rem-prev{text-align:left;margin:6px 2px 4px;min-height:1.2em}
+.item .iname small{display:block;font-size:13px;color:var(--muted)}
+.item.done .iname small{text-decoration:none}
 .actions.three-c{grid-template-columns:repeat(3,1fr)}
 .actions.three-c .btn{padding:0 8px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -337,6 +343,8 @@ const P = {
   spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
   camera:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
   upload:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
   fridge:'<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M5 10h14M8.5 6v2M8.5 13v3"/>'
 };
 const ic = (n, c = '') => `<svg viewBox="0 0 24 24" class="ic ${c}" aria-hidden="true">${P[n]}</svg>`;
@@ -604,7 +612,7 @@ const LIB_CATS = ['Primi','Secondi','Contorni','Antipasti e fritti','Pizze e lie
 /* ---------- stato e salvataggio ---------- */
 const KEY = 'casa-in-ordine.v1';
 const DEF_SET = {people: 4, remindDays: 5, notif: true, notifHour: 9, monthRem: true, monthDay: 3};
-function fresh() { return {v: 2, monthDone: '', recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], settings: {...DEF_SET}}; }
+function fresh() { return {v: 2, monthDone: '', recipes: [], favs: [], fridge: [], shopping: [], menu: {}, bills: [], moves: [], rems: [], settings: {...DEF_SET}}; }
 function load() {
   try { const raw = localStorage.getItem(KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
   return fresh();
@@ -612,7 +620,7 @@ function load() {
 function normalize(d) {
   const s = Object.assign(fresh(), d || {});
   s.settings = {...DEF_SET, ...(s.settings || {})};
-  ['recipes','favs','fridge','shopping','bills','moves'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
+  ['recipes','favs','fridge','shopping','bills','moves','rems'].forEach(k => { if (!Array.isArray(s[k])) s[k] = []; });
   if (!s.menu || typeof s.menu !== 'object') s.menu = {};
   if ((d && d.v || 1) < 2) migrateV1(s);
   s.v = 2;
@@ -674,6 +682,10 @@ async function scheduleNotifs() {
       const late = open.filter(b => b.due < t && !b.auto);
       if (late.length) list.push({id: 3, title: late.length === 1 ? `${late[0].name}: bolletta scaduta` : `${late.length} bollette scadute`, body: `Da pagare: ${euro(sum(late.map(b => b.amount)))}. ${late.length === 1 ? 'Se l\'hai già pagata, segnalalo' : 'Se le hai già pagate, segnalalo'} nell'app.`, schedule: {at: at(addDays(t, 1)), allowWhileIdle: true}, extra: {tab: 'bollette'}});
     }
+    for (const r of S.rems.filter(r => !r.done && r.at)) {
+      const at = atDate(r.rep ? nextAt(r) : r.at); if (at.getTime() <= now) continue;
+      list.push({id: hashId(r.id + 'r'), title: '🔔 Promemoria', body: r.text, schedule: r.rep ? {at, repeats: true, every: r.rep === 'd' ? 'day' : r.rep === 'w' ? 'week' : 'month', allowWhileIdle: true} : {at, allowWhileIdle: true}, extra: {tab: 'home', rem: r.id}});
+    }
     if (S.settings.monthRem) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}, allowWhileIdle: true}, extra: {tab: 'conti', act: 'csv'}});
     if (list.length) await LN.schedule({notifications: list.slice(0, 60)});
   } catch (e) { /* le notifiche sono un aiuto: se il telefono le rifiuta l'app funziona lo stesso */ }
@@ -685,6 +697,7 @@ if (LN) {
       if (sheetOpen) hideSheet();
       if (x.tab) setTab(x.tab);
       if (x.bill && billById(x.bill)) sheetBill(x.bill);
+      if (x.rem && S.rems.some(r => r.id === x.rem)) sheetRem(x.rem);
       if (x.act === 'csv') { ui.month = prevMonth(); render(); A.importCsv(); }
     });
   } catch (e) {}
@@ -893,6 +906,92 @@ function parseBankRows(rows) {
 }
 const moveKey = m => `${m.date}|${m.kind}|${m.amount.toFixed(2)}|${norm(m.desc).slice(0, 24)}`;
 
+/* ---------- promemoria: capisce giorno e ora dalla frase, scritta o dettata ---------- */
+const WDRE = '(luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)';
+const wdIdx = w => ['domenica','luned','marted','mercoled','gioved','venerd','sabato'].findIndex(x => norm(w).startsWith(x));
+const REP_L = {d: 'ogni giorno', w: 'ogni settimana', m: 'ogni mese'};
+function parseWhen(raw, base = new Date()) {
+  let s = ' ' + String(raw).replace(/\s+/g, ' ').trim() + ' ', date = null, h = null, mi = 0, rep = '', m;
+  const take = re => { const x = s.match(re); if (x) s = s.replace(x[0], ' '); return x; };
+  const d0 = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  const addD = n => new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + n);
+  if (take(/\s(ogni giorno|tutti i giorni)(?=\s)/i)) rep = 'd';
+  else if ((m = take(new RegExp('\\s(?:ogni|tutti i|tutte le)\\s+' + WDRE + '(?=\\s)', 'i')))) { rep = 'w'; date = addD((wdIdx(m[1]) - d0.getDay() + 7) % 7); }
+  else if (take(/\s(ogni settimana)(?=\s)/i)) rep = 'w';
+  else if (take(/\s(ogni mese|tutti i mesi)(?=\s)/i)) rep = 'm';
+  if ((m = take(/\s(?:tra|fra)\s+(un|una|mezz'?ora|\d+)\s*(minut[oi]|or[ae]|giorn[oi]|settiman[ae]|mes[ei])?(?=\s)/i))) {
+    const q = /^mezz/i.test(m[1]) ? 30 : /^un/i.test(m[1]) ? 1 : +m[1], u = /^mezz/i.test(m[1]) ? 'minuti' : norm(m[2] || 'minuti');
+    if (/^(minut|or)/.test(u)) { const t = new Date(base.getTime() + q * (u.startsWith('or') ? 3600e3 : 60e3)); date = new Date(t.getFullYear(), t.getMonth(), t.getDate()); h = t.getHours(); mi = t.getMinutes(); }
+    else date = u.startsWith('mes') ? parseD(addMonths(isoOf(d0), q)) : addD(q * (u.startsWith('settiman') ? 7 : 1));
+  }
+  if ((m = take(/\s(dopodomani|domani|oggi|stasera|stamattina|stanotte)(?=\s)/i))) {
+    const w = m[1].toLowerCase(); date = addD(w === 'domani' ? 1 : w === 'dopodomani' ? 2 : 0);
+    if (w === 'stasera') h = 20; if (w === 'stamattina') h = 9; if (w === 'stanotte') h = 22;
+  }
+  if (!date && (m = take(new RegExp('\\s(?:(?:il|la|per)\\s+)?(?:prossim[oa]\\s+)?' + WDRE + '(?:\\s+prossim[oa])?(?=\\s)', 'i')))) { let k = (wdIdx(m[1]) - d0.getDay() + 7) % 7; date = addD(k || 7); }
+  if (!date && (m = take(new RegExp('\\s(?:(?:il|per il)\\s+|l\\x27)?(\\d{1,2})\\s+(' + MESI.join('|') + ')(?:\\s+(\\d{4}))?(?=\\s)', 'i')))) {
+    const mo = MESI.indexOf(m[2].toLowerCase()); let y = m[3] ? +m[3] : d0.getFullYear(); let d = new Date(y, mo, +m[1]); if (!m[3] && d < d0) d = new Date(y + 1, mo, +m[1]); date = d;
+  }
+  if (!date && (m = take(/\s(?:il\s+|per il\s+)?(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{2,4}))?(?=\s)/i))) {
+    let y = m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : d0.getFullYear(); let d = new Date(y, +m[2] - 1, +m[1]); if (!m[3] && d < d0) d = new Date(y + 1, +m[2] - 1, +m[1]); date = d;
+  }
+  if (!date && (m = take(/\s(?:il|per il)\s+(\d{1,2})(?=\s)/i))) { let d = new Date(d0.getFullYear(), d0.getMonth(), +m[1]); if (d < d0) d = new Date(d0.getFullYear(), d0.getMonth() + 1, +m[1]); date = d; }
+  if ((m = take(/\s(?:alle|per le|verso le|ore)\s+(?:ore\s+)?(\d{1,2})(?:[:.](\d{2})|\s+e\s+(mezza|un quarto|tre quarti))?(?:\s+(di sera|del pomeriggio|di notte|di mattina|del mattino))?(?=\s)/i)) || (m = take(/\s(\d{1,2})[:.](\d{2})(?=\s)/))) {
+    h = +m[1]; mi = m[2] ? +m[2] : m[3] === 'mezza' ? 30 : m[3] === 'un quarto' ? 15 : m[3] === 'tre quarti' ? 45 : 0;
+    if (m[4] ? /sera|pomeriggio|notte/i.test(m[4]) && h < 12 : h >= 1 && h <= 6) h += 12;
+  }
+  if (take(/\s(?:a\s+)?mezzogiorno(?=\s)/i)) { h = 12; mi = 0; }
+  if (h != null && (h > 23 || mi > 59)) { h = null; mi = 0; }
+  let text = s.replace(/^\s*(ricordami|ricordarmi|ricorda|promemoria|devo|nota)\s*(di|che|:)?\s+/i, '').replace(/\s+([,.;:])/g, '$1').replace(/[\s,.;:]+$/, '').replace(/\s+/g, ' ').trim();
+  text = text ? text[0].toUpperCase() + text.slice(1) : String(raw).trim();
+  if (!date && h == null && !rep) return {text, at: null, rep: ''};
+  if (!date) { date = d0; if (h != null && h * 60 + mi <= base.getHours() * 60 + base.getMinutes()) date = addD(1); }
+  if (h == null) h = S.settings.notifHour;
+  return {text, at: `${isoOf(date)}T${pad(h)}:${pad(mi)}`, rep};
+}
+const atDate = at => { const [d, t] = at.split('T'); const x = parseD(d); const [hh, mm] = t.split(':').map(Number); x.setHours(hh, mm, 0, 0); return x; };
+function nextAt(r, after = new Date()) {
+  if (!r.at || !r.rep) return r.at;
+  let d = atDate(r.at), guard = 0;
+  while (d <= after && guard++ < 2000) { if (r.rep === 'd') d.setDate(d.getDate() + 1); else if (r.rep === 'w') d.setDate(d.getDate() + 7); else d = atDate(addMonths(isoOf(d), 1) + 'T' + r.at.slice(11)); }
+  return `${isoOf(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function whenLabel(at, rep) {
+  if (!at) return {t: 'Senza data', c: ''};
+  const d = at.slice(0, 10), tm = at.slice(11), dd = diffDays(today(), d), late = atDate(at) < new Date();
+  const day = dd === 0 ? 'oggi' : dd === 1 ? 'domani' : dd === -1 ? 'ieri' : fmtD(d);
+  return {t: `${day} alle ${tm}${rep ? ' · ' + REP_L[rep] : ''}`, c: late ? 'st-bad' : dd <= 1 ? 'st-warn' : ''};
+}
+const remSort = (a, b) => (a.at || '9999') < (b.at || '9999') ? -1 : 1;
+const previewWhen = txt => { if (!txt.trim()) return ''; const r = parseWhen(txt); return r.at ? `🔔 ${whenLabel(r.at, r.rep).t}` : 'Senza data: resta nella lista finché non lo segni fatto'; };
+
+/* dettatura: sul telefono il riconoscimento vocale di Android, nel browser quello di Chrome */
+const SR = (() => { const C = window.Capacitor; try { if (!C || !C.isNativePlatform || !C.isNativePlatform()) return null; return (C.Plugins && C.Plugins.SpeechRecognition) || (C.registerPlugin && C.registerPlugin('SpeechRecognition')) || null; } catch (e) { return null; } })();
+const WEB_SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const canDictate = () => !!(SR || WEB_SR);
+let listening = false;
+async function dictate() {
+  const inp = $('#ri'), btn = $('#mic'); if (!inp) return;
+  const done = txt => { if (txt) { inp.value = txt; $('#ri-prev').textContent = previewWhen(txt); inp.focus(); } };
+  if (SR) {
+    try {
+      if (!(await SR.available()).available) return toast('Il riconoscimento vocale non è disponibile su questo telefono');
+      const p = await SR.requestPermissions(); if (p.speechRecognition !== 'granted') return toast('Per dettare serve il permesso del microfono');
+      const r = await SR.start({language: 'it-IT', maxResults: 1, prompt: 'Dimmi il promemoria', partialResults: false, popup: true});
+      done(r && r.matches && r.matches[0]);
+    } catch (e) { toast('Non ho capito, riprova'); }
+    return;
+  }
+  if (!WEB_SR) return;
+  if (listening) return;
+  const rec = new WEB_SR(); rec.lang = 'it-IT'; rec.interimResults = true; rec.maxAlternatives = 1;
+  listening = true; if (btn) btn.classList.add('on');
+  rec.onresult = e => done([...e.results].map(x => x[0].transcript).join(''));
+  rec.onerror = e => toast(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'Qui il microfono non è disponibile: usa il microfono della tastiera' : e.error === 'no-speech' ? 'Non ho sentito niente, riprova' : 'Non ho capito, riprova');
+  rec.onend = () => { listening = false; const b = $('#mic'); if (b) b.classList.remove('on'); };
+  try { rec.start(); } catch (e) { listening = false; if (btn) btn.classList.remove('on'); }
+}
+
 /* ---------- interfaccia ---------- */
 const TABS = [['home','Oggi','home'],['ricette','Ricette','book'],['menu','Menù','cal'],['spesa','Spesa','cart'],['bollette','Bollette','bill'],['conti','Conti','wallet']];
 const TITLES = {home:'Casa in Ordine', ricette:'Ricette', menu:'Menù della settimana', spesa:'Lista della spesa', bollette:'Bollette e scadenze', conti:'Entrate e spese'};
@@ -924,6 +1023,18 @@ function setTab(t) { if (t !== tab) { tab = t; pref.set('tab', t); window.scroll
 
 const empty = (emo, title, text, btn = '') => `<div class="empty"><div class="big">${emo}</div><b>${title}</b><p>${text}</p>${btn}</div>`;
 
+function remRow(r) {
+  const w = whenLabel(r.at, r.rep);
+  return `<div class="item ${r.done ? 'done' : ''}"><button class="check" data-a="remDone" data-id="${r.id}" role="checkbox" aria-checked="${!!r.done}"><span class="box">${ic('check','sm')}</span><span class="iname">${esc(r.text)}<small class="${r.done ? '' : w.c}">${r.done ? 'Fatto' : w.t}</small></span></button><button class="icon-btn" data-a="remEdit" data-id="${r.id}" aria-label="Modifica promemoria">${ic('pen','sm')}</button></div>`;
+}
+function remCard() {
+  const open = S.rems.filter(r => !r.done).sort(remSort), shown = open.slice(0, 5);
+  return `<section class="card"><div class="card-h"><h2>Promemoria</h2>${S.rems.length ? `<button class="link" data-a="remAll">Tutti${open.length > 5 ? ` (${open.length})` : ''}</button>` : ''}</div>
+    <form class="quick rem-q" data-form="rem" autocomplete="off"><label class="vh" for="ri">Nuovo promemoria</label><input id="ri" name="t" placeholder="Cosa devo ricordarti?" enterkeyhint="done">${canDictate() ? `<button type="button" class="btn mic" id="mic" data-a="dictate" aria-label="Detta il promemoria">${ic('mic')}</button>` : ''}<button class="btn primary" aria-label="Salva promemoria">${ic('plus')}</button></form>
+    <p class="hint rem-prev" id="ri-prev"></p>
+    ${shown.length ? `<div class="rem-list">${shown.map(remRow).join('')}</div>` : `<p class="empty-s" style="margin:0">${canDictate() ? 'Scrivi o detta' : 'Scrivi'} cosa ricordare, anche con giorno e ora: "pagare la mensa venerdì", "chiamare mamma stasera alle 21", "pillola ogni giorno alle 8".</p>`}
+  </section>`;
+}
 function billRow(b, quick = true) {
   const c = catOf(b.cat), d = dueInfo(b);
   return `<div class="row"><button class="row-main" data-a="bill" data-id="${b.id}"><span class="emo">${c[2]}</span><span class="rt"><b>${esc(b.name)}</b><small class="${d.c}">${d.t}</small></span><span class="amt">${amtLabel(b)}</span></button>${quick && !b.paid ? `<button class="pill" data-a="pay" data-id="${b.id}">${ic('check','sm')} ${b.amount ? 'Pagata' : 'Fatto'}</button>` : ''}</div>`;
@@ -947,7 +1058,7 @@ const V = {
     const pm = prevMonth(), pmName = MESI[+pm.slice(5, 7) - 1];
     const monthCard = S.settings.monthRem && d.getDate() >= S.settings.monthDay && S.monthDone !== pm ? `<section class="card ai-card"><div class="card-h"><h2>${ic('wallet','sm')} Spese di ${pmName}</h2></div><p style="margin:0 0 10px">È il momento di registrare le spese del mese scorso: importa l'estratto conto della banca o aggiungile a mano.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="monthImport">${ic('upload','sm')} Importa</button><button class="btn ghost" data-a="monthDone">Fatto</button></div></section>` : '';
     const notifCard = LN && notifPerm === 'prompt' && (S.settings.notif || S.settings.monthRem) ? `<section class="card"><div class="card-h"><h2>Promemoria</h2></div><p style="margin:0 0 10px">Ricevi sul telefono un avviso prima delle scadenze delle bollette e a inizio mese per le spese.</p><button class="btn primary wide" data-a="askNotif">Attiva le notifiche</button></section>` : '';
-    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${notifCard}${monthCard}
+    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${notifCard}${monthCard}${remCard()}
     <section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte le bollette</button></div>
       ${due.length ? due.map(b => billRow(b)).join('') : `<p class="empty-s">Nessuna bolletta da pagare nei prossimi ${S.settings.remindDays} giorni.</p>`}
     </section>
@@ -1190,6 +1301,20 @@ function sheetItem(id) {
     <div class="two"><label class="field"><span>Quantità</span><input id="it-qty" name="qty" value="${esc(fmtQty(i.qty))}" inputmode="decimal" placeholder="—"></label><label class="field"><span>Unità</span><input id="it-unit" name="unit" value="${esc(i.unit)}" placeholder="kg, pz…"></label></div>
     <label class="field"><span>Reparto</span><select id="it-aisle" name="aisle">${AISLES.map(([k, l, e]) => `<option value="${k}" ${aisleOf(i.aisle)[0] === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
     <div class="actions two-c"><button type="button" class="btn danger" data-a="delItem" data-id="${i.id}">${ic('trash','sm')} Elimina</button><button class="btn primary">Salva</button></div></form>`);
+}
+function sheetRems() {
+  const open = S.rems.filter(r => !r.done).sort(remSort), done = S.rems.filter(r => r.done).sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || '')).slice(0, 30);
+  openSheet('Promemoria', `${open.length ? `<div class="list" style="margin-bottom:14px">${open.map(remRow).join('')}</div>` : '<p class="hint">Nessun promemoria da fare.</p>'}
+    ${done.length ? `<p class="h3">Fatti</p><div class="list" style="margin-bottom:14px">${done.map(remRow).join('')}</div><div class="actions"><button class="btn ghost" data-a="remClear">${ic('trash','sm')} Togli quelli fatti</button></div>` : ''}`);
+}
+function sheetRem(id) {
+  const r = S.rems.find(x => x.id === id); if (!r) return;
+  openSheet('Promemoria', `<form data-form="remEdit" data-id="${r.id}">
+    <label class="field"><span>Cosa</span><input id="re-text" name="text" required maxlength="200" value="${esc(r.text)}"></label>
+    <div class="two"><label class="field"><span>Giorno</span><input id="re-date" name="date" type="date" value="${r.at ? r.at.slice(0, 10) : ''}"></label>
+    <label class="field"><span>Ora</span><input id="re-time" name="time" type="time" value="${r.at ? r.at.slice(11) : ''}"></label></div>
+    <label class="field"><span>Si ripete</span><select id="re-rep" name="rep"><option value="">No</option>${Object.entries(REP_L).map(([k, l]) => `<option value="${k}" ${r.rep === k ? 'selected' : ''}>${l[0].toUpperCase() + l.slice(1)}</option>`).join('')}</select></label>
+    <div class="actions two-c"><button type="button" class="btn danger" data-a="remDel" data-id="${r.id}">${ic('trash','sm')} Elimina</button><button class="btn primary">Salva</button></div></form>`);
 }
 function sheetBill(id) {
   const b = billById(id); if (!b) return;
@@ -1444,6 +1569,17 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  dictate: () => dictate(),
+  remAll: () => sheetRems(),
+  remEdit: d => sheetRem(d.id),
+  remDone: d => {
+    const r = S.rems.find(x => x.id === d.id); if (!r) return;
+    if (!r.done && r.rep && r.at) { const prev = r.at; r.at = nextAt(r, new Date(Math.max(Date.now(), atDate(r.at).getTime()))); save(); render(); if (sheetOpen) sheetRems(); return toast(`Fatto · prossimo ${whenLabel(r.at, '').t}`, () => { r.at = prev; save(); render(); }); }
+    r.done = !r.done; r.doneAt = r.done ? new Date().toISOString() : null; save(); render(); if (sheetOpen) sheetRems();
+    if (r.done) toast('Fatto', () => { r.done = false; r.doneAt = null; save(); render(); if (sheetOpen) sheetRems(); });
+  },
+  remDel: d => { closeSheet(); withUndo('Promemoria eliminato', () => { S.rems = S.rems.filter(x => x.id !== d.id); }); },
+  remClear: () => { closeSheet(); withUndo('Promemoria fatti tolti', () => { S.rems = S.rems.filter(x => !x.done); }); },
   qchip: d => { const i = $('#qm'); if (i) { i.value = d.v + ' '; i.focus(); } },
   askNotif: () => askNotifs().then(ok => toast(ok ? 'Notifiche attive' : 'Notifiche non attivate')),
   monthImport: () => { ui.month = prevMonth(); setTab('conti'); A.importCsv(); },
@@ -1473,6 +1609,20 @@ function setSlot(day, meal, v) {
 }
 
 const F = {
+  rem: v => {
+    const t = String(v.t || '').trim(); if (!t) return;
+    const r = parseWhen(t), rem = {id: uid(), text: r.text.slice(0, 200), at: r.at, rep: r.rep, done: false};
+    if (rem.at && rem.rep) rem.at = nextAt(rem, new Date(Date.now() - 60e3));
+    withUndo(rem.at ? `Promemoria: ${whenLabel(rem.at, rem.rep).t}` : 'Promemoria aggiunto', () => S.rems.push(rem));
+    if (LN && rem.at && notifPerm === 'prompt') askNotifs();
+  },
+  remEdit: (v, f) => {
+    const r = S.rems.find(x => x.id === f.dataset.id); if (!r) return;
+    r.text = String(v.text || '').trim() || r.text;
+    r.at = v.date ? `${v.date}T${v.time || pad(S.settings.notifHour) + ':00'}` : null;
+    r.rep = REP_L[v.rep] ? v.rep : '';
+    save(); render(); closeSheet(); toast('Promemoria salvato');
+  },
   qmove: v => {
     const t = String(v.t || '').trim(); if (!t) return;
     let m = t.match(/^([+-])?\s*(\d+(?:[.,]\d{1,2})?)\s*(?:€|euro)?\s*(.*)$/i), sign, amt, desc;
@@ -1569,6 +1719,7 @@ document.addEventListener('submit', e => {
   e.preventDefault(); fn(Object.fromEntries(new FormData(f)), f);
 });
 document.addEventListener('input', e => {
+  if (e.target.id === 'ri') { const pv = $('#ri-prev'); if (pv) pv.textContent = previewWhen(e.target.value); }
   if (e.target.id === 'rq') { ui.q = e.target.value; $('#rlist').innerHTML = recipeList(); }
   if (e.target.id === 'sq') { $('#slist').innerHTML = slotList(e.target.value, ui.slot && (S.menu[ui.slot.day] || {})[ui.slot.meal]); }
 });
