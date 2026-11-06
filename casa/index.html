@@ -1006,37 +1006,83 @@ function parseAnyDate(s) {
   const mo = +m[2], d = +m[1]; if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
   return `${y}-${pad(mo)}-${pad(d)}`;
 }
+/* CSV letto carattere per carattere: le descrizioni tra virgolette possono andare a capo */
+function splitCSV(text, delim) {
+  const rows = []; let row = [], cur = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; continue; }
+    if (c === '"') q = true;
+    else if (c === delim) { row.push(cur.replace(/\s+/g, ' ').trim()); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cur.replace(/\s+/g, ' ').trim()); cur = ''; if (row.some(x => x)) rows.push(row); row = []; if (rows.length > 6000) break; }
+    else cur += c;
+  }
+  row.push(cur.replace(/\s+/g, ' ').trim()); if (row.some(x => x)) rows.push(row);
+  return rows;
+}
 function parseBankCSV(text) {
   text = text.replace(/^﻿/, '');
-  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 6000);
-  if (!lines.length) return {error: 'Il file è vuoto.'};
-  const head = lines.slice(0, 40).join('\n');
+  if (!text.trim()) return {error: 'Il file è vuoto.'};
+  const head = text.split(/\r?\n/).slice(0, 40).join('\n');
   const delim = [';', '\t', ','].map(d => [d, head.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
-  const split = line => { const out = []; let cur = '', q = false; for (let i = 0; i < line.length; i++) { const c = line[i]; if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; } else if (c === '"') q = true; else if (c === delim) { out.push(cur.trim()); cur = ''; } else cur += c; } out.push(cur.trim()); return out; };
-  return parseBankRows(lines.map(split));
+  return parseBankRows(splitCSV(text, delim));
 }
-function parseBankRows(rows) {
+const isNumLike = v => /^[-+(]?\s*[€]?\s*\d[\d.,\s]*\)?-?\s*(€|eur)?$/i.test(v) || !!parseAnyDate(v);
+/* riconosce le colonne; "map" permette all'utente di sceglierle a mano */
+function parseBankRows(rows, map = {}) {
   rows = rows.slice(0, 6000);
   const h = rows.findIndex(r => r.some(c => /^data/.test(norm(c))) && r.some(c => /importo|dare|avere|addebit|accredit|uscit|entrat|amount/.test(norm(c))));
   if (h < 0) return {error: 'Non trovo le colonne "Data" e "Importo". Esporta dalla banca la lista movimenti in CSV o Excel (non il PDF).'};
-  const H = rows[h].map(norm);
+  const H = rows[h].map(norm), data = rows.slice(h + 1);
   const find = (re, not) => H.findIndex(c => re.test(c) && !(not && not.test(c)));
   let dI = find(/data (contabile|operazione|registrazione)/); if (dI < 0) dI = find(/^data/, /valuta/); if (dI < 0) dI = find(/^data/);
-  const descI = find(/descrizione|causale|dettagl|beneficiario|esercente|motivo|operazione|movimento|controparte/, /^data|importo/);
   const amtI = find(/importo|amount/), outI = find(/dare|addebit|uscit/), inI = find(/avere|accredit|entrat/);
+  const ncol = Math.max(...rows.slice(h, h + 60).map(r => r.length));
+  /* per ogni colonna: lunghezza media del testo e quante celle sono numeri o date */
+  const stats = Array.from({length: ncol}, (_, j) => {
+    const vals = data.slice(0, 80).map(r => String(r[j] || '').trim()).filter(Boolean);
+    const avg = vals.length ? vals.reduce((a, v) => a + v.length, 0) / vals.length : 0;
+    const num = vals.length ? vals.filter(isNumLike).length / vals.length : 1;
+    const uniq = new Set(vals).size;
+    return {j, avg, num, uniq, n: vals.length};
+  });
+  const skip = new Set([dI, amtI, outI, inI].filter(x => x >= 0));
+  const textCols = stats.filter(x => !skip.has(x.j) && x.n && x.num < 0.5 && !/^data|valuta|saldo|divisa|^stato|currency|balance/.test(H[x.j] || ''));
+  const named = textCols.filter(x => /descrizione|causale|dettagl|beneficiario|esercente|motivo|operazione|movimento|controparte|description/.test(H[x.j] || '') && x.avg >= 8);
+  const best = (named.length ? named : textCols).sort((a, b) => (b.avg * Math.min(1, b.uniq / 3)) - (a.avg * Math.min(1, a.uniq / 3)))[0];
+  const col = {d: map.d ?? dI, desc: map.desc ?? (best ? best.j : -1), amt: map.amt ?? amtI};
   const list = [];
-  for (const r of rows.slice(h + 1)) {
-    const date = parseAnyDate(r[dI]); if (!date) continue;
+  for (const r of data) {
+    const date = parseAnyDate(r[col.d]); if (!date) continue;
     let v = 0;
-    if (amtI >= 0 && r[amtI]) v = parseSigned(r[amtI]);
+    if (col.amt >= 0 && r[col.amt]) v = parseSigned(r[col.amt]);
     else { const o = outI >= 0 ? parseSigned(r[outI]) : 0, i = inI >= 0 ? parseSigned(r[inI]) : 0; v = o ? -Math.abs(o) : Math.abs(i); }
     if (!v) continue;
-    const desc = (descI >= 0 ? r[descI] : r.filter((c, j) => j !== dI && j !== amtI && j !== outI && j !== inI).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 140) || 'Movimento';
+    const desc = (col.desc >= 0 ? String(r[col.desc] || '') : r.filter((c, j) => !skip.has(j) && !isNumLike(String(c || ''))).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 140) || 'Movimento';
     const kind = v < 0 ? 'out' : 'in';
     list.push({date, amount: Math.abs(v), kind, desc, cat: guessMcat(desc, kind)});
   }
-  if (!list.length) return {error: 'Ho trovato le colonne ma nessun movimento valido.'};
-  return {list};
+  const sample = j => { const r = data.find(x => String(x[j] || '').trim()); return r ? String(r[j]).trim().slice(0, 28) : ''; };
+  const headers = Array.from({length: ncol}, (_, j) => ({j, name: rows[h][j] || `Colonna ${j + 1}`, ex: sample(j)}));
+  if (!list.length) return {error: 'Ho trovato le colonne ma nessun movimento valido. Controlla qui sotto quali colonne ho usato.', rows, col, headers, split: amtI < 0};
+  return {list, rows, col, headers, split: amtI < 0};
+}
+/* confronta con i movimenti già presenti: doppioni, bollette già registrate, descrizioni da correggere */
+function prepareImport(res) {
+  if (res.error) return {error: res.error, rows: res.rows, col: res.col, headers: res.headers, split: res.split};
+  const keys = new Set(S.moves.map(moveKey)), billMoves = S.moves.filter(m => m.src === 'bill');
+  const old = S.moves.filter(m => m.src && m.src.startsWith('csv'));
+  let dup = 0, bills = 0; const fresh = [], upd = [];
+  for (const m of res.list) {
+    if (keys.has(moveKey(m))) { dup++; continue; }
+    /* stesso giorno, stesso importo, già importato: è lo stesso movimento con una descrizione diversa */
+    const o = old.find(x => x.date === m.date && x.kind === m.kind && Math.abs(x.amount - m.amount) < 0.005 && !upd.some(u => u.id === x.id));
+    if (o) { upd.push({id: o.id, desc: m.desc, cat: m.cat}); continue; }
+    const bi = m.kind === 'out' ? billMoves.findIndex(b => Math.abs(b.amount - m.amount) < 0.01 && Math.abs(diffDays(b.date, m.date)) <= 10) : -1;
+    if (bi >= 0) { billMoves.splice(bi, 1); bills++; continue; }
+    keys.add(moveKey(m)); fresh.push(m);
+  }
+  return {list: res.list, fresh, upd, dup, bills, rows: res.rows, col: res.col, headers: res.headers, split: res.split};
 }
 const moveKey = m => `${m.date}|${m.kind}|${m.amount.toFixed(2)}|${norm(m.desc).slice(0, 24)}`;
 
@@ -1684,11 +1730,17 @@ function sheetCsv() {
   let body = `<p class="empty-s" style="margin:0 0 12px;font-size:15px">Dall'app o dal sito della banca scarica la lista movimenti in formato <b>CSV</b> o <b>Excel</b>. Le categorie vengono assegnate da sole e i movimenti già presenti non vengono duplicati.</p>
     <label class="btn primary wide photo-btn">${ic('upload','sm')} Scegli il file CSV o Excel<input type="file" id="csvfile" accept=".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="vh"></label>`;
   if (c && c.error) body += `<p class="st-bad" style="margin:14px 2px 0">${esc(c.error)}</p>`;
+  if (c && c.headers) {
+    const opt = (k, allowNone) => `${allowNone ? `<option value="-1" ${c.col[k] < 0 ? 'selected' : ''}>${k === 'amt' ? 'Dare e Avere separati' : 'Tutte le colonne di testo'}</option>` : ''}${c.headers.map(x => `<option value="${x.j}" ${c.col[k] === x.j ? 'selected' : ''}>${esc(x.name)}${x.ex ? ' · ' + esc(x.ex) : ''}</option>`).join('')}`;
+    body += `<details class="adv" style="margin-top:14px" ${c.error || c.colsOpen ? 'open' : ''}><summary>Colonne del file</summary>
+      <label class="field" style="margin-top:10px"><span>Descrizione</span><select data-cm="desc">${opt('desc', true)}</select></label>
+      <div class="two"><label class="field"><span>Data</span><select data-cm="d">${opt('d')}</select></label><label class="field"><span>Importo</span><select data-cm="amt">${opt('amt', c.split)}</select></label></div></details>`;
+  }
   if (c && c.list) {
     const n = c.list.length, dates = c.list.map(m => m.date).sort();
-    body += `<div class="kv" style="margin-top:16px"><div><dt>Movimenti nuovi</dt><dd>${c.fresh.length}</dd></div><div><dt>Periodo</dt><dd>${fmtD(dates[0])} – ${fmtD(dates[dates.length - 1])}</dd></div>${c.dup ? `<div><dt>Già presenti</dt><dd>${c.dup}</dd></div>` : ''}${c.bills ? `<div><dt>Già registrati come bollette</dt><dd>${c.bills}</dd></div>` : ''}<div><dt>Uscite / entrate</dt><dd>${euro(sum(c.fresh.filter(m => m.kind === 'out').map(m => m.amount)))} / ${euro(sum(c.fresh.filter(m => m.kind === 'in').map(m => m.amount)))}</dd></div></div>
-      ${c.fresh.length ? `<div class="list" style="margin-bottom:14px">${c.fresh.slice(0, 6).map(m => `<div class="row"><span class="row-main"><span class="emo">${mcatOf(m.cat)[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${fmtD(m.date)} · ${mcatOf(m.cat)[1]}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></span></div>`).join('')}${n > 6 ? `<p class="hint" style="margin:6px 0 10px">…e altri ${c.fresh.length - 6}</p>` : ''}</div>
-      <div class="actions"><button class="btn primary" data-a="csvImport">Importa ${c.fresh.length} movimenti</button></div>` : `<p class="hint">Non c'è niente di nuovo da importare.</p>`}`;
+    body += `<div class="kv" style="margin-top:16px"><div><dt>Movimenti nuovi</dt><dd>${c.fresh.length}</dd></div>${c.upd.length ? `<div><dt>Già importati, da correggere</dt><dd>${c.upd.length}</dd></div>` : ''}<div><dt>Periodo</dt><dd>${fmtD(dates[0])} – ${fmtD(dates[dates.length - 1])}</dd></div>${c.dup ? `<div><dt>Già presenti</dt><dd>${c.dup}</dd></div>` : ''}${c.bills ? `<div><dt>Già registrati come bollette</dt><dd>${c.bills}</dd></div>` : ''}${c.fresh.length ? `<div><dt>Uscite / entrate</dt><dd>${euro(sum(c.fresh.filter(m => m.kind === 'out').map(m => m.amount)))} / ${euro(sum(c.fresh.filter(m => m.kind === 'in').map(m => m.amount)))}</dd></div>` : ''}</div>
+      ${c.fresh.length || c.upd.length ? `<div class="list" style="margin-bottom:14px">${(c.fresh.length ? c.fresh : c.list).slice(0, 6).map(m => `<div class="row"><span class="row-main"><span class="emo">${mcatOf(m.cat)[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${fmtD(m.date)} · ${mcatOf(m.cat)[1]}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></span></div>`).join('')}${(c.fresh.length || c.list.length) > 6 ? `<p class="hint" style="margin:6px 0 10px">…e altri ${(c.fresh.length || c.list.length) - 6}</p>` : ''}</div>
+      ` : ''}${c.fresh.length || c.upd.length ? `<div class="actions"><button class="btn primary" data-a="csvImport">${[c.fresh.length ? `Importa ${c.fresh.length} movimenti` : '', c.upd.length ? `correggi ${c.upd.length}` : ''].filter(Boolean).join(' e ').replace(/^c/, 'C')}</button></div>` : `<p class="hint">Non c'è niente di nuovo da importare.</p>`}`;
   }
   openSheet('Importa estratto conto', body);
 }
@@ -1891,10 +1943,14 @@ const A = {
   delMove: d => { closeSheet(); withUndo('Movimento eliminato', () => { const m = S.moves.find(x => x.id === d.id); S.moves = S.moves.filter(x => x.id !== d.id); if (m && m.billId) unpayBill(m.billId); }); },
   importCsv: () => { ui.csv = null; sheetCsv(); },
   csvImport: () => {
-    const c = ui.csv; if (!c || !c.fresh) return;
-    const n = c.fresh.length, months = [...new Set(c.fresh.map(m => m.date.slice(0, 7)))].sort();
+    const c = ui.csv; if (!c || !c.fresh || (!c.fresh.length && !c.upd.length)) return;
+    const n = c.fresh.length, u = c.upd.length, months = [...new Set([...c.fresh, ...c.list].map(m => m.date.slice(0, 7)))].sort();
     closeSheet();
-    withUndo(`${n} movimenti importati`, () => { c.fresh.forEach(m => S.moves.push({id: uid(), ...m, src: 'csv'})); ui.month = months[months.length - 1] || ui.month; if (months.includes(prevMonth())) S.monthDone = prevMonth(); });
+    withUndo([n ? `${n} movimenti importati` : '', u ? `${u} corretti` : ''].filter(Boolean).join(' · '), () => {
+      c.fresh.forEach(m => S.moves.push({id: uid(), ...m, src: 'csv'}));
+      c.upd.forEach(x => { const m = S.moves.find(y => y.id === x.id); if (m) { m.desc = x.desc; m.cat = x.cat; m.src = 'csv'; } });
+      ui.month = months[months.length - 1] || ui.month; if (months.includes(prevMonth())) S.monthDone = prevMonth();
+    });
     ui.csv = null;
   },
   aiSort: () => aiSort(),
@@ -2099,21 +2155,13 @@ document.addEventListener('change', async e => {
     try {
       const buf = await file.arrayBuffer();
       const res = /\.xlsx$/i.test(file.name) || new Uint8Array(buf.slice(0, 2)).join() === '80,75' ? parseBankRows(await readXlsx(buf)) : /\.xls$/i.test(file.name) ? {error: 'I file .xls del vecchio Excel non si leggono: aprilo e salvalo come .xlsx o CSV.'} : parseBankCSV(decodeText(buf));
-      if (res.error) ui.csv = {error: res.error};
-      else {
-        const keys = new Set(S.moves.map(moveKey)), billMoves = S.moves.filter(m => m.src === 'bill');
-        let dup = 0, bills = 0; const freshL = [];
-        for (const m of res.list) {
-          if (keys.has(moveKey(m))) { dup++; continue; }
-          /* una bolletta già segnata pagata compare anche nell'estratto conto: non contarla due volte */
-          const bi = m.kind === 'out' && billMoves.findIndex(b => Math.abs(b.amount - m.amount) < 0.01 && Math.abs(diffDays(b.date, m.date)) <= 10);
-          if (bi !== false && bi >= 0) { billMoves.splice(bi, 1); bills++; continue; }
-          keys.add(moveKey(m)); freshL.push(m);
-        }
-        ui.csv = {list: res.list, fresh: freshL, dup, bills};
-      }
+      ui.csv = prepareImport(res);
     } catch (err) { ui.csv = {error: 'Non riesco a leggere il file.'}; }
     sheetCsv();
+  }
+  if (t.dataset && t.dataset.cm && ui.csv && ui.csv.rows) {
+    const map = {...ui.csv.col, [t.dataset.cm]: +t.value};
+    ui.csv = {...prepareImport(parseBankRows(ui.csv.rows, map)), colsOpen: true}; sheetCsv();
   }
 });
 window.addEventListener('scroll', () => $('#top').classList.toggle('scrolled', window.scrollY > 4), {passive: true});
