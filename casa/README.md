@@ -19,6 +19,9 @@ Sta tutta in un file: apri `index.html` nel browser del telefono. I dati si salv
 
 Dalle impostazioni (in alto nella schermata Oggi) scegli il numero di persone, il preavviso per le bollette e il tema chiaro o scuro, e puoi fare o ripristinare una copia di sicurezza dei dati.
 
+## Modalità personale (chiave API)
+Per uso personale, in Impostazioni › Avanzate si può inserire una propria chiave API di Anthropic: l'assistente (ricetta su misura, bolletta e scontrino da foto, categorie delle spese) funziona anche nell'app Android, e le funzioni Premium sono sbloccate. La chiave resta solo sul dispositivo e non entra nelle copie di sicurezza. Non è pensata per la versione pubblica: lì l'assistente passerà da un server.
+
 ## App Android
 Ogni modifica alla cartella `casa/` avvia la build su GitHub Actions (*Casa in Ordine — APK Android*). L'APK si scarica dagli artefatti della build e si installa sul telefono.
 

@@ -201,6 +201,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .switch span small{color:var(--muted);font-size:13px}
 .actions{display:grid;gap:10px;margin-top:8px}
 .actions.two-c{grid-template-columns:1fr 1fr}
+.adv{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.adv summary{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;min-height:28px;display:flex;align-items:center}
 .tour{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto}
 .tour[hidden]{display:none}
 .tour-in{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
@@ -782,6 +784,62 @@ const pref = {get(k, d) { try { return localStorage.getItem('casa.' + k) ?? d; }
 /* ---------- Claude (solo quando l'app è aperta dentro Claude) ---------- */
 let AI = null, AI_IMG = false, DL = null;
 let canDownload = true; try { canDownload = window.top === window; } catch (e) { canDownload = false; }
+/* modalità personale: fuori da Claude, con una chiave API di Anthropic salvata solo su questo dispositivo */
+const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
+const API_MODEL = 'claude-opus-5-5';
+const hasKey = () => !IN_CLAUDE && !!pref.get('apikey', '');
+function parseLooseJSON(t) {
+  try { return JSON.parse(t); } catch (e) {}
+  const f = t.match(/```(?:json)?\s*([\s\S]*?)```/); if (f) { try { return JSON.parse(f[1]); } catch (e) {} }
+  const a = t.search(/[\[{]/), b = Math.max(t.lastIndexOf('}'), t.lastIndexOf(']'));
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch (e) {} }
+  return undefined;
+}
+/* le foto vengono rimpicciolite prima dell'invio: bastano 1568 pixel per lato */
+async function imgToBase64(blob) {
+  const bmp = await createImageBitmap(blob);
+  const k = Math.min(1, 1568 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const out = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+  const url = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(out); });
+  return {media_type: 'image/jpeg', data: String(url).split(',')[1]};
+}
+/* stessa forma dell'assistente dentro Claude: sample(input, opzioni), sample.json(...), sample.limits() */
+function keyAI(key) {
+  async function call(input, opts = {}) {
+    const msgs = typeof input === 'string' ? [{role: 'user', content: input}] : input.map(m => ({...m}));
+    if (opts.images) {
+      const list = opts.images instanceof Blob ? [opts.images] : [...opts.images];
+      const blocks = await Promise.all(list.map(async b => ({type: 'image', source: {type: 'base64', ...(await imgToBase64(b))}})));
+      const last = msgs[msgs.length - 1]; last.content = [...blocks, {type: 'text', text: last.content}];
+    }
+    const body = {model: API_MODEL, max_tokens: 16000, messages: msgs, output_config: {effort: opts.modelTier === 'quick' ? 'low' : 'medium'}, fallbacks: 'default'};
+    const headers = {'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true', 'anthropic-beta': 'server-side-fallback-2026-07-01'};
+    const send = () => fetch('https://api.anthropic.com/v1/messages', {method: 'POST', headers, body: JSON.stringify(body), signal: opts.signal});
+    let res;
+    try {
+      res = await send();
+      /* se il ripiego automatico su un altro modello non è disponibile, riprova senza */
+      if (res.status === 400 && /fallback/i.test(await res.clone().text())) { delete body.fallbacks; delete headers['anthropic-beta']; res = await send(); }
+    } catch (e) { throw {code: e && e.name === 'AbortError' ? 'cancelled' : 'upstream_error', message: String(e && e.message || e)}; }
+    if (!res.ok) {
+      let msg = ''; try { msg = (await res.json()).error.message; } catch (e) {}
+      throw {code: res.status === 401 || res.status === 403 ? 'bad_key' : res.status === 429 ? 'rate_limited' : res.status === 400 ? 'invalid_request' : 'upstream_error', message: msg};
+    }
+    const j = await res.json();
+    if (j.stop_reason === 'refusal') throw {code: 'refused'};
+    const text = (j.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    if (!text) throw {code: 'empty_completion'};
+    return {text, truncated: j.stop_reason === 'max_tokens'};
+  }
+  const fn = (input, opts) => call(input, opts);
+  fn.json = async (input, opts) => { const {text} = await call(input, opts); const v = parseLooseJSON(text); if (v === undefined) throw {code: 'invalid_json', text}; return v; };
+  fn.limits = async () => ({maxPromptBytes: 262144, images: {maxCount: 5, maxInputBytes: 20e6, mediaTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']}});
+  return fn;
+}
+function useKeyAI() { if (IN_CLAUDE) return; const k = pref.get('apikey', ''); AI = k ? keyAI(k) : null; AI_IMG = !!k; }
+useKeyAI();
 (async () => {
   const c = window.claude; if (!c || typeof c.use !== 'function') return;
   try { DL = await c.use('downloads'); } catch (e) { DL = null; }
@@ -798,7 +856,9 @@ function aiErr(e) {
     refused: 'L\'assistente non ha risposto a questa richiesta: prova a cambiarla.',
     invalid_json: 'La risposta non era leggibile: riprova.',
     session_expired: 'Devi accedere di nuovo a Claude.',
-    cancelled: 'Interrotto.'
+    cancelled: 'Interrotto.',
+    bad_key: 'La chiave API non è valida o è stata revocata: controllala in Impostazioni › Avanzate.',
+    invalid_request: 'La richiesta non è andata a buon fine: riprova.'
   }[code] || 'Non è andata a buon fine: riprova.';
 }
 
@@ -1074,7 +1134,7 @@ const TAB_MOD = {ricette: 'ricette', menu: 'ricette', spesa: 'spesa', bollette: 
 const tabOn = k => !TAB_MOD[k] || on(TAB_MOD[k]);
 
 /* premium: per ora solo la prova di 14 giorni sul dispositivo; l'abbonamento arriverà con Google Play */
-const isPremium = () => !!(S.premium && (S.premium.sub || (S.premium.trialEnd && S.premium.trialEnd >= today())));
+const isPremium = () => hasKey() || !!(S.premium && (S.premium.sub || (S.premium.trialEnd && S.premium.trialEnd >= today())));
 const pBadge = '<span class="pbadge">Premium</span>';
 function premiumRows(mods) {
   const r = [];
@@ -1655,6 +1715,11 @@ function sheetSettings() {
     <div class="actions"><button class="btn primary">Salva impostazioni</button></div></form>
     <p class="h3" style="margin-top:22px">Premium</p>
     <div class="actions two-c" style="margin:0 0 6px"><button class="btn" data-a="premium">${isPremium() ? 'Premium attivo' : 'Scopri Premium'}</button><button class="btn ghost" data-a="tour">Rifai il tour</button></div>
+    ${!IN_CLAUDE ? `<details class="adv" ${hasKey() ? 'open' : ''}><summary>Avanzate</summary>
+      <p class="empty-s" style="margin:8px 0 10px;font-size:14px">Solo per uso personale: con una tua chiave API di Anthropic l'assistente funziona anche qui, con tutte le funzioni Premium. La chiave resta su questo dispositivo e non finisce nelle copie di sicurezza. Ogni richiesta costa qualche centesimo sul tuo account Anthropic.</p>
+      ${hasKey() ? `<p class="st-good" style="margin:0 0 10px">Chiave attiva: ${esc(pref.get('apikey', '').slice(0, 10))}…${esc(pref.get('apikey', '').slice(-4))}</p><div class="actions two-c"><button class="btn" data-a="keyTest">Prova la chiave</button><button class="btn danger" data-a="keyDel">Rimuovi</button></div><p class="hint" id="key-st" style="text-align:left"></p>`
+      : `<form data-form="apikey" autocomplete="off"><label class="field"><span>Chiave API di Anthropic</span><input id="set-key" name="key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"><small>La crei su console.anthropic.com, alla voce API Keys.</small></label><div class="actions"><button class="btn primary">Salva la chiave</button></div></form>`}
+    </details>` : ''}
     <p class="h3" style="margin-top:22px">Copia di sicurezza</p>
     <p class="empty-s" style="margin:0 0 10px;font-size:14px">I dati restano solo su questo dispositivo. Fai ogni tanto una copia: serve anche per passarli a un altro telefono.</p>
     ${DL || canDownload ? `<div class="actions two-c"><button class="btn" data-a="export">Scarica copia</button><button class="btn" data-a="copy">Copia testo</button></div>` : `<div class="actions"><button class="btn" data-a="copy">Copia il testo della copia</button></div>`}
@@ -1833,6 +1898,12 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  keyDel: () => { pref.set('apikey', ''); useKeyAI(); render(); sheetSettings(); toast('Chiave rimossa'); },
+  keyTest: async () => {
+    const st = $('#key-st'); if (st) { st.textContent = 'Provo la chiave…'; st.className = 'hint st-warn'; }
+    try { const r = await AI('Rispondi solo con la parola: ok', {modelTier: 'quick'}); const s2 = $('#key-st'); if (s2) { s2.textContent = `Funziona (risposta: ${r.text.slice(0, 20)})`; s2.className = 'hint st-good'; } }
+    catch (e) { const s2 = $('#key-st'); if (s2) { s2.textContent = aiErr(e); s2.className = 'hint st-bad'; } }
+  },
   tour: () => startTour(),
   tourNo: () => { S.onboarded = 'done'; save(); render(); },
   tourNext: () => { const n = tourSteps().length; if (tour.step < n - 1) { tour.step++; renderTour(); } },
@@ -1895,6 +1966,11 @@ function setSlot(day, meal, v) {
 }
 
 const F = {
+  apikey: v => {
+    const k = String(v.key || '').trim();
+    if (!/^sk-ant-[\w-]{20,}$/.test(k)) return toast('La chiave deve iniziare con sk-ant-');
+    pref.set('apikey', k); useKeyAI(); render(); sheetSettings(); toast('Chiave salvata: assistente attivo');
+  },
   rem: v => {
     const t = String(v.t || '').trim(); if (!t) return;
     const r = parseWhen(t), rem = {id: uid(), text: r.text.slice(0, 200), at: r.at, rep: r.rep, done: false};
