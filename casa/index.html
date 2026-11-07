@@ -238,6 +238,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .idea span{display:block;font-size:12.5px;color:var(--olive);font-weight:700}
 .idea b{display:block;font-weight:600;margin-top:2px}
 .plan-btn{margin-bottom:12px}
+.ai-go{margin:0 0 12px}
+.ai-go span{display:flex;align-items:center;gap:6px}
 .plan-row{gap:8px}
 .plan-row .rt small{display:block;font-size:12.5px;color:var(--muted);text-transform:capitalize}
 .plan-row .rt small+b+small{text-transform:none}
@@ -1403,6 +1405,22 @@ function parseBankCSV(text) {
   const delim = [';', '\t', ','].map(d => [d, head.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
   return parseBankRows(splitCSV(text, delim));
 }
+function cleanBankDesc(raw) {
+  const src = String(raw || '').replace(/\s+/g, ' ').trim(); if (!src) return '';
+  const tc = x => /[a-z]/.test(x) ? x : x.toLowerCase().replace(/(^|[\s.'-])\S/g, c => c.toUpperCase());
+  const stop = '(?=\\s+(?:carta|card|n\\.|nr\\.?|num\\.?|ore|ora|alle|del|il|cro|trn|rif\\.?|importo|in data|data|cod\\.?|id)\\b|\\s*$)';
+  const m = src.match(new RegExp('\\b(?:presso|c\\/o|esercente|beneficiario|a favore di|ordinante|bonifico (?:sepa )?(?:istantaneo )?da)\\s*[:\\-]?\\s+(.+?)' + stop, 'i'));
+  if (m && m[1].replace(/[^a-z]/gi, '').length >= 3) return tc(m[1].replace(/[\s,.;:-]+$/, '')).slice(0, 80);
+  let x = ' ' + src + ' ';
+  x = x.replace(/\b(?:del|il|in data|data)\s+\d{1,2}[\/.-]\d{1,2}(?:[\/.-]\d{2,4})?/gi, ' ')
+    .replace(/\b(?:ore|ora|alle|h)\s*\d{1,2}[:.]\d{2}(?:[:.]\d{2})?/gi, ' ')
+    .replace(/\b(?:carta|card)\s*(?:n\.?|nr\.?|num\.?)?\s*[\d*xX]{4,}[\d*xX ]*/gi, ' ')
+    .replace(/\*{2,}\d*|\b\d{6,}\b/g, ' ')
+    .replace(/\b(?:cro|trn|sdd|sepa|addebito diretto)\b/gi, ' ')
+    .replace(/^\s*(?:pagament[oi]\s+(?:paesi ue|pos|con carta|carta|contactless|tramite pos|effettuato su pos)|operazione\s+(?:pos|carta)|acquisto\s+(?:pos|carta)|addebito\s+(?:carta|pos))\b/i, ' ')
+    .replace(/\s+/g, ' ').trim();
+  return tc(x || src).slice(0, 80);
+}
 const isNumLike = v => /^[-+(]?\s*[€]?\s*\d[\d.,\s]*\)?-?\s*(€|eur)?$/i.test(v) || !!parseAnyDate(v);
 /* riconosce le colonne; "map" permette all'utente di sceglierle a mano */
 function parseBankRows(rows, map = {}) {
@@ -1434,9 +1452,10 @@ function parseBankRows(rows, map = {}) {
     if (col.amt >= 0 && r[col.amt]) v = parseSigned(r[col.amt]);
     else { const o = outI >= 0 ? parseSigned(r[outI]) : 0, i = inI >= 0 ? parseSigned(r[inI]) : 0; v = o ? -Math.abs(o) : Math.abs(i); }
     if (!v) continue;
-    const desc = (col.desc >= 0 ? String(r[col.desc] || '') : r.filter((c, j) => !skip.has(j) && !isNumLike(String(c || ''))).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 140) || 'Movimento';
+    const raw = (col.desc >= 0 ? String(r[col.desc] || '') : r.filter((c, j) => !skip.has(j) && !isNumLike(String(c || ''))).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 400);
+    const desc = cleanBankDesc(raw) || 'Movimento';
     const kind = v < 0 ? 'out' : 'in';
-    list.push({date, amount: Math.abs(v), kind, desc, cat: guessMcat(desc, kind)});
+    list.push({date, amount: Math.abs(v), kind, desc, raw, cat: guessMcat(raw + ' ' + desc, kind)});
   }
   const sample = j => { const r = data.find(x => String(x[j] || '').trim()); return r ? String(r[j]).trim().slice(0, 28) : ''; };
   const headers = Array.from({length: ncol}, (_, j) => ({j, name: rows[h][j] || `Colonna ${j + 1}`, ex: sample(j)}));
@@ -1452,8 +1471,8 @@ function prepareImport(res) {
   for (const m of res.list) {
     if (keys.has(moveKey(m))) { dup++; continue; }
     /* stesso giorno, stesso importo, già importato: è lo stesso movimento con una descrizione diversa */
-    const o = old.find(x => x.date === m.date && x.kind === m.kind && Math.abs(x.amount - m.amount) < 0.005 && !upd.some(u => u.id === x.id));
-    if (o) { upd.push({id: o.id, desc: m.desc, cat: m.cat}); continue; }
+    const o = old.filter(x => x.kind === m.kind && Math.abs(x.amount - m.amount) < 0.005 && Math.abs(diffDays(x.date, m.date)) <= 4 && !upd.some(u => u.id === x.id)).sort((a, b) => Math.abs(diffDays(a.date, m.date)) - Math.abs(diffDays(b.date, m.date)))[0];
+    if (o) { upd.push({id: o.id, desc: m.desc, cat: m.cat, date: m.date}); continue; }
     const bi = m.kind === 'out' ? billMoves.findIndex(b => Math.abs(b.amount - m.amount) < 0.01 && Math.abs(diffDays(b.date, m.date)) <= 10) : -1;
     if (bi >= 0) { billMoves.splice(bi, 1); bills++; continue; }
     keys.add(moveKey(m)); fresh.push(m);
@@ -1810,9 +1829,10 @@ const V = {
   ricette() {
     const seg = `<div class="seg two" role="group" aria-label="Vista"><button data-a="rview" data-v="lib" aria-pressed="${ui.rview === 'lib'}">${ic('book','sm')} Ricettario</button><button data-a="rview" data-v="frigo" aria-pressed="${ui.rview === 'frigo'}">${ic('fridge','sm')} Cosa ho in frigo</button></div>`;
     if (ui.rview === 'frigo') return seg + vFridge();
+    const aiBtn = (AI || (!IN_CLAUDE && isPremium())) ? `<button class="idea ai-go" data-a="aiGo"><span>${ic('spark','sm')} Assistente${isPremium() ? '' : ' · Premium'}</span><b>Crea una ricetta con gli ingredienti che hai</b></button>` : '';
     const userTags = [...new Set(S.recipes.flatMap(r => r.tags || []))].sort((a, b) => a.localeCompare(b, 'it'));
     const chip = (k, l) => `<button class="chip" data-a="tag" data-t="${esc(k)}" aria-pressed="${ui.tag === k}">${l}</button>`;
-    return seg + `<label class="search">${ic('search')}<span class="vh">Cerca</span><input type="search" id="rq" placeholder="Cerca tra ${allRecipes().length} ricette o per ingrediente" value="${esc(ui.q)}" autocomplete="off"></label>
+    return seg + aiBtn + `<label class="search">${ic('search')}<span class="vh">Cerca</span><input type="search" id="rq" placeholder="Cerca tra ${allRecipes().length} ricette o per ingrediente" value="${esc(ui.q)}" autocomplete="off"></label>
       <div class="chips">${chip('tutte', 'Tutte')}${S.favs.length ? chip('preferite', '★ Preferite') : ''}${chip('mediterranea', 'Mediterranea')}${S.recipes.length ? chip('mie', 'Le mie') : ''}${LIB_CATS.map(c => chip('cat:' + c, c)).join('')}${userTags.map(t => chip('tag:' + t, esc(t))).join('')}</div>
       <div id="rlist">${recipeList()}</div>`;
   },
@@ -1945,6 +1965,7 @@ function vFridge() {
     const t = top ? (res.length ? 'Nessuna ricetta usa bene tutti questi ingredienti' : 'Nessuna ricetta del ricettario usa questi ingredienti') : 'Vuoi qualcosa di diverso?';
     if (AI && isPremium()) return `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} ${t}</h2></div><p style="margin:0 0 10px">L'assistente crea una ricetta con <b>${esc(list)}</b>, per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'}.</p><label class="field" style="margin-bottom:10px"><span>Preferenze (facoltativo)</span><input id="ainote" maxlength="120" placeholder="es. veloce, al forno, piace ai bambini"></label><button class="btn primary wide" data-a="aiRecipe">${ic('spark','sm')} Crea una ricetta con questi ingredienti</button></section>`;
     if (AI) return `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} ${t}</h2></div><p style="margin:0 0 10px">Con Premium l'assistente crea una ricetta apposta con ${esc(list)}.</p><button class="btn wide" data-a="premium">Scopri Premium ${pBadge}</button></section>`;
+    if (!IN_CLAUDE && isPremium()) return `<section class="card ai-card"><div class="card-h"><h2>${ic('spark','sm')} ${t}</h2></div><p style="margin:0 0 10px">Sul telefono l'assistente che crea la ricetta con <b>${esc(list)}</b> funziona con la tua chiave API di Anthropic: inseriscila in Impostazioni › Avanzate.</p><button class="btn primary wide" data-a="keySetup">Inserisci la chiave</button></section>`;
     return top ? `<p class="hint" style="margin-bottom:14px">${t}.</p>` : '';
   };
   if (!strong) html += aiCard(true);
@@ -2102,6 +2123,7 @@ function sheetMove(id, kind, pre) {
   openSheet(m ? 'Movimento' : k === 'in' ? 'Nuova entrata' : 'Nuova spesa', `<form data-form="move" data-id="${m ? m.id : ''}">
     ${!m && AI_IMG && isPremium() ? `<label class="btn ghost wide photo-btn" style="margin-bottom:6px">${ic('camera','sm')} Compila da una foto dello scontrino<input type="file" id="receiptphoto" accept="image/*" class="vh"></label><p class="hint" id="rcpt-st" style="margin:0 0 14px">${pre ? 'Dati letti dallo scontrino: controllali prima di salvare.' : 'Negozio, totale e data li legge l\'assistente.'}</p>` : ''}
     ${m && m.src === 'bill' ? `<p class="hint" style="text-align:left;margin:0 0 14px">Viene dalla bolletta pagata: per cambiarlo modifica la bolletta.</p>` : ''}
+    ${m && m.raw && m.raw !== m.desc ? `<p class="hint" style="text-align:left;margin:0 0 14px">Testo della banca: ${esc(m.raw)}</p>` : ''}
     <label class="field"><span>Descrizione</span><input id="mf-desc" name="desc" required maxlength="140" value="${esc(v ? v.desc : '')}" placeholder="es. Spesa Conad, Stipendio"></label>
     <div class="two"><label class="field"><span>Importo (€)</span><input id="mf-amount" name="amount" inputmode="decimal" required value="${v && v.amount ? moneyIn(v.amount) : ''}" placeholder="0,00"></label>
     <label class="field"><span>Data</span><input id="mf-date" name="date" type="date" required value="${v && v.date ? v.date : today()}"></label></div>
@@ -2331,12 +2353,14 @@ const A = {
     closeSheet();
     withUndo([n ? `${n} movimenti importati` : '', u ? `${u} corretti` : ''].filter(Boolean).join(' · '), () => {
       c.fresh.forEach(m => S.moves.push({id: uid(), ...m, src: 'csv'}));
-      c.upd.forEach(x => { const m = S.moves.find(y => y.id === x.id); if (m) { m.desc = x.desc; m.cat = x.cat; m.src = 'csv'; } });
+      c.upd.forEach(x => { const m = S.moves.find(y => y.id === x.id); if (m) { m.desc = x.desc; m.cat = x.cat; m.date = x.date; m.src = 'csv'; } });
       ui.month = months[months.length - 1] || ui.month; if (months.includes(prevMonth())) S.monthDone = prevMonth();
     });
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  keySetup: () => { sheetSettings(); const d = $('.sheet details.adv'); if (d) { d.open = true; setTimeout(() => { d.scrollIntoView({block: 'center'}); const k = $('#set-key'); if (k) k.focus(); }, 60); } },
+  aiGo: () => { ui.rview = 'frigo'; render(); const f = $('#fi'); if (f) f.focus(); },
   keyDel: () => { pref.set('apikey', ''); useKeyAI(); render(); sheetSettings(); toast('Chiave rimossa'); },
   keyTest: async () => {
     const st = $('#key-st'); if (st) { st.textContent = 'Provo la chiave…'; st.className = 'hint st-warn'; }
