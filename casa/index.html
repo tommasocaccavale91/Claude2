@@ -111,7 +111,7 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .chipline{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 
 /* ricette */
-.search{position:relative;margin-bottom:10px}
+.search{display:block;position:relative;margin-bottom:10px}
 .search input{width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 14px 0 40px}
 .search .ic{position:absolute;left:12px;top:12px;color:var(--muted)}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
@@ -238,6 +238,14 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .idea span{display:block;font-size:12.5px;color:var(--olive);font-weight:700}
 .idea b{display:block;font-weight:600;margin-top:2px}
 .plan-btn{margin-bottom:12px}
+.past-tgl{display:block;margin:-4px 2px 10px}
+.idea small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.start .step{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:46px;border-top:1px solid var(--line)}
+.start .step:first-of-type{border-top:0}
+.start .step span:nth-child(2){flex:1}
+.start .step > .ic{color:var(--muted)}
+.start .step.ok span:nth-child(2){color:var(--muted);text-decoration:line-through}
+.start .step.ok .box{background:var(--olive);border-color:var(--olive);color:var(--surface)}
 .src{font-size:14px;color:var(--muted);margin:-8px 2px 16px}
 .src a{color:var(--accent);font-weight:600}
 .ai-go{margin:0 0 12px}
@@ -1957,7 +1965,7 @@ function sheetPremium() {
 /* idee per la cena: ricettario e ricette di famiglia, con preferenze, frigo e varietà */
 const MAIN_CATS = ['Primi','Secondi','Zuppe','Pizze e lievitati'];
 const GLUTEN_W = ['pasta','spaghett','penne','fusill','rigaton','ziti','bucatin','tonnarell','trofie','orecchiett','ditalin','maccheron','tagliatell','lasagn','gnocch','farina','pane','pangrattato','savoiardi','frolla','couscous','orzo','farro','biscott','crackers'];
-const MEAT_W = ['carne','pollo','manzo','maiale','vitello','salsicc','macinat','prosciutt','salame','pancett','guancial','muscolo','lacerto','girello','tracchie','spezzatino','costolett','fettine','pesce','orat','vongol','cozze','acciugh','tonno','gamber','calamar','polp','salmone','merluzz','strutto','brodo di carne'];
+const MEAT_W = ['carne','pollo','manzo','maiale','vitello','salsicc','macinat','prosciutt','salame','pancett','guancial','muscolo','lacerto','girello','tracchie','spezzatino','costolett','fettine','pesce','orat','vongol','cozze','acciugh','tonno','gamber','calamar','polp','salmone','merluzz','strutto','brodo di carne','tacchino','fesa','coniglio','agnello','lonza','arista','ossibuc','ossobuc','bistecc','controfiletto','cappello del prete','hamburger','speck','wurstel','cotechino','trippa','fegato','sgombr','baccal','alici','sarde','seppie','totani','pesce spada','platessa','scorfano','moscardin','paranza','pesciolini','frutti di mare','brodo di pesce','branzin','spigol','dentice','trota','acciug','salsicc','pancett','lardo','nduja','alghe di mare'];
 const ingAny = (r, list) => r.ingredients.some(i => { const n = norm(i.name); return list.some(w => n.includes(w)); });
 function dietOk(r) {
   const d = S.settings.diet;
@@ -1971,6 +1979,8 @@ function recentIds(back = 21, ahead = 7) {
   for (const [day, m] of Object.entries(S.menu)) { const dd = diffDays(t, day); if (dd >= -back && dd <= ahead) for (const v of Object.values(m)) if (v && v.r) out.add(v.r); }
   return out;
 }
+const SEASON_TAGS = {pasqua: [3, 4], natale: [12, 1], capodanno: [12, 1], carnevale: [1, 2, 3], marzo: [3], estate: [6, 7, 8, 9], inverno: [11, 12, 1, 2, 3], autunno: [9, 10, 11, 12], primavera: [3, 4, 5, 6]};
+const FEAST_TAGS = ['pasqua', 'natale', 'capodanno', 'carnevale', 'marzo'];
 function rankDinners(seed, opts = {}) {
   const rnd = seeded(seed), recent = recentIds(), F = S.fridge, d = S.settings.diet;
   return allRecipes().filter(r => (r.lib ? MAIN_CATS.includes(r.cat) : r.cat !== 'Dolci') && dietOk(r) && !(opts.exclude && opts.exclude.has(r.id)) && (!opts.cat || r.cat === opts.cat))
@@ -1981,6 +1991,10 @@ function rankDinners(seed, opts = {}) {
       if (d.includes('bambini') && (r.tags || []).includes('bambini')) sc += 1.5;
       if (d.includes('veloce') && r.time && r.time <= 30) sc += 1.5;
       if (opts.weekday && r.time > 60) sc -= 2;
+      if (r.time > 150) sc -= 3;
+      /* niente pastiera a novembre: i piatti delle feste e di stagione solo nel loro periodo */
+      const mo = new Date().getMonth() + 1;
+      for (const tg of r.tags || []) { const sm = SEASON_TAGS[tg]; if (sm && !sm.includes(mo)) sc -= FEAST_TAGS.includes(tg) ? 20 : 2; }
       if (recent.has(r.id)) sc -= 6;
       return {r, sc};
     }).sort((a, b) => b.sc - a.sc).map(x => x.r);
@@ -2151,7 +2165,8 @@ function moveRow(m) {
   return `<div class="row"><button class="row-main" data-a="move" data-id="${m.id}"><span class="emo">${c[2]}</span><span class="rt"><b>${esc(m.desc)}</b><small>${c[1]}${m.src === 'bill' ? ' · da Bollette' : m.src === 'csv' ? ' · da estratto conto' : ''}</small></span><span class="amt ${m.kind === 'in' ? 'st-good' : ''}">${m.kind === 'in' ? '+' : '−'}${euro(m.amount)}</span></button></div>`;
 }
 const slotLabel = v => { if (!v) return ''; if (v.r) { const r = recipeById(v.r); return r ? r.name : ''; } return v.t || ''; };
-const origBadge = r => r.lib ? '<span class="tag nap">Mediterranea</span>' : '<span class="tag mine">Mia</span>';
+/* "Mediterranea" vale per tutto il ricettario: sulle schede si segnano solo le ricette tue */
+const origBadge = (r, full) => r.lib ? (full ? '<span class="tag nap">Mediterranea</span>' : '') : '<span class="tag mine">Mia</span>';
 
 const V = {
   home() {
@@ -2163,24 +2178,40 @@ const V = {
     const outM = sum(mv.filter(x => x.kind === 'out').map(x => x.amount)), inM = sum(mv.filter(x => x.kind === 'in').map(x => x.amount));
     const openM = S.bills.filter(b => !b.paid && b.due.slice(0, 7) <= ym);
     const pm = prevMonth(), pmName = MESI[+pm.slice(5, 7) - 1];
-    const monthCard = S.settings.monthRem && d.getDate() >= S.settings.monthDay && S.monthDone !== pm ? `<section class="card ai-card"><div class="card-h"><h2>${ic('wallet','sm')} Spese di ${pmName}</h2></div><p style="margin:0 0 10px">È il momento di registrare le spese del mese scorso: importa l'estratto conto della banca o aggiungile a mano.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="monthImport">${ic('upload','sm')} Importa</button><button class="btn ghost" data-a="monthDone">Fatto</button></div></section>` : '';
-    const notifCard = LN && notifPerm === 'prompt' && (S.settings.notif || S.settings.monthRem) ? `<section class="card"><div class="card-h"><h2>Promemoria</h2></div><p style="margin:0 0 10px">Ricevi sul telefono un avviso prima delle scadenze delle bollette e a inizio mese per le spese.</p><button class="btn primary wide" data-a="askNotif">Attiva le notifiche</button></section>` : '';
+    /* il promemoria delle spese del mese ha senso solo per chi usa già Entrate e spese */
+    const usesConti = S.moves.some(x => x.src !== 'bill');
+    const monthCard = on('conti') && usesConti && S.settings.monthRem && d.getDate() >= S.settings.monthDay && S.monthDone !== pm ? `<section class="card ai-card"><div class="card-h"><h2>${ic('wallet','sm')} Spese di ${pmName}</h2></div><p style="margin:0 0 10px">È il momento di registrare le spese del mese scorso: importa l'estratto conto della banca o aggiungile a mano.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="monthImport">${ic('upload','sm')} Importa</button><button class="btn ghost" data-a="monthDone">Fatto</button></div></section>` : '';
+    const snoozed = pref.get('notifSnooze', '') >= t;
+    const notifCard = LN && notifPerm === 'prompt' && !snoozed && (S.settings.notif || S.settings.monthRem || S.settings.dinner) ? `<section class="card"><div class="card-h"><h2>${ic('bell','sm')} Avvisi sul telefono</h2></div><p style="margin:0 0 10px">Ricevi l'idea per la cena, i promemoria e un avviso prima delle scadenze.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="askNotif">Attiva</button><button class="btn ghost" data-a="notifLater">Non ora</button></div></section>` : '';
     const legacy = S.onboarded === 'legacy' ? `<section class="card ai-card"><div class="card-h"><h2>${ic('gear','sm')} Novità</h2></div><p style="margin:0 0 10px">Scegli le sezioni che ti servono, le preferenze a tavola e gli avvisi per la cena. Ci vuole un minuto.</p><div class="actions two-c" style="margin:0"><button class="btn primary" data-a="tour">Personalizza</button><button class="btn ghost" data-a="tourNo">No grazie</button></div></section>` : '';
     const idea = on('ricette') && !(m.cena && m.cena.r) ? dinnerIdea(t) : null;
-    const stats = [on('conti') ? `<button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>` : '', on('bollette') ? `<button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>` : ''].filter(Boolean);
-    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${legacy}${notifCard}${on('conti') ? monthCard : ''}${on('promemoria') ? remCard() : ''}
-    ${on('bollette') ? `<section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte le bollette</button></div>
-      ${due.length ? due.map(b => billRow(b)).join('') : `<p class="empty-s">Nessuna bolletta da pagare nei prossimi ${S.settings.remindDays} giorni.</p>`}
-    </section>` : ''}
-    ${on('ricette') ? `<section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù</button></div>
+    /* primi passi per chi è nuovo: si spuntano da soli e il riquadro sparisce quando hai iniziato */
+    const steps = [
+      on('ricette') && ['Scegli la cena di stasera', !!m.cena, `data-a="slot" data-day="${t}" data-meal="cena"`],
+      on('spesa') && ['Scrivi cosa manca nella spesa', S.shopping.length > 0, 'data-a="go" data-t="spesa"'],
+      on('bollette') && ['Aggiungi una bolletta o una scadenza', S.bills.length > 0, 'data-a="newBillGo"'],
+      on('promemoria') && ['Aggiungi un promemoria', S.rems.length > 0, 'data-a="remFocus"'],
+      on('conti') && ['Registra una spesa', usesConti, 'data-a="go" data-t="conti"']
+    ].filter(Boolean);
+    const doneN = steps.filter(x => x[1]).length;
+    const startCard = !S.startDone && steps.length && doneN < Math.min(3, steps.length) ? `<section class="card start"><div class="card-h"><h2>Per iniziare</h2><button class="link" data-a="startHide">Nascondi</button></div>
+      ${steps.map(([l, ok, act]) => `<button class="step ${ok ? 'ok' : ''}" ${act}><span class="box">${ic('check','sm')}</span><span>${l}</span>${ok ? '' : ic('right','sm')}</button>`).join('')}</section>` : '';
+    const stats = (S.moves.length || S.bills.length) ? [on('conti') && usesConti ? `<button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>` : '', on('bollette') && S.bills.length ? `<button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>` : ''].filter(Boolean) : [];
+    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${legacy}
+    ${on('ricette') ? `<section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù della settimana</button></div>
       <div class="meals">${MEALS.map(([k, l]) => { const lab = slotLabel(m[k]); const isR = m[k] && m[k].r && recipeById(m[k].r); return `<button class="meal" data-a="${isR ? 'recipe' : 'slot'}" data-id="${isR ? m[k].r : ''}" data-day="${t}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : 'Da decidere'}</b></button>`; }).join('')}</div>
-      ${idea ? `<button class="idea" data-a="recipe" data-id="${idea.id}"><span>💡 Idea per stasera</span><b>${esc(idea.name)}</b></button>` : ''}
+      ${idea ? `<button class="idea" data-a="recipe" data-id="${idea.id}"><span>💡 Idea per stasera</span><b>${esc(idea.name)}</b><small>${[idea.time ? idea.time + ' minuti' : '', idea.cat].filter(Boolean).join(' · ')}</small></button>` : ''}
       <button class="btn ghost wide" style="margin-top:10px" data-a="fridgeGo">${ic('fridge','sm')} Cosa cucino con quello che ho?</button>
     </section>` : ''}
-    ${on('spesa') ? `<section class="card"><div class="card-h"><h2>Spesa</h2><button class="link" data-a="go" data-t="spesa">Apri la lista</button></div>
-      ${toBuy.length ? `<p class="empty-s" style="color:var(--ink)"><b>${toBuy.length}</b> ${toBuy.length === 1 ? 'cosa' : 'cose'} da comprare</p><div class="chipline">${toBuy.slice(0, 8).map(i => `<span class="tag">${esc(i.name)}</span>`).join('')}${toBuy.length > 8 ? `<span class="tag">+${toBuy.length - 8}</span>` : ''}</div>` : `<p class="empty-s">La lista è vuota.</p>`}
+    ${startCard}
+    ${on('bollette') && due.length ? `<section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte</button></div>${due.map(b => billRow(b)).join('')}</section>` : ''}
+    ${monthCard}
+    ${on('promemoria') ? remCard() : ''}
+    ${on('spesa') && toBuy.length ? `<section class="card"><div class="card-h"><h2>Spesa</h2><button class="link" data-a="go" data-t="spesa">Apri la lista</button></div>
+      <p class="empty-s" style="color:var(--ink)"><b>${toBuy.length}</b> ${toBuy.length === 1 ? 'cosa' : 'cose'} da comprare</p><div class="chipline">${toBuy.slice(0, 8).map(i => `<span class="tag">${esc(i.name)}</span>`).join('')}${toBuy.length > 8 ? `<span class="tag">+${toBuy.length - 8}</span>` : ''}</div>
     </section>` : ''}
-    ${stats.length ? `<div class="stats ${stats.length === 1 ? 'one' : ''}">${stats.join('')}</div>` : ''}`;
+    ${stats.length ? `<div class="stats ${stats.length === 1 ? 'one' : ''}">${stats.join('')}</div>` : ''}
+    ${notifCard}`;
   },
 
   ricette() {
@@ -2190,7 +2221,7 @@ const V = {
     const userTags = [...new Set(S.recipes.flatMap(r => r.tags || []))].sort((a, b) => a.localeCompare(b, 'it'));
     const chip = (k, l) => `<button class="chip" data-a="tag" data-t="${esc(k)}" aria-pressed="${ui.tag === k}">${l}</button>`;
     return seg + aiBtn + `<label class="search">${ic('search')}<span class="vh">Cerca</span><input type="search" id="rq" placeholder="Cerca tra ${allRecipes().length} ricette o per ingrediente" value="${esc(ui.q)}" autocomplete="off"></label>
-      <div class="chips">${chip('tutte', 'Tutte')}${S.favs.length ? chip('preferite', '★ Preferite') : ''}${chip('mediterranea', 'Mediterranea')}${S.recipes.length ? chip('mie', 'Le mie') : ''}${LIB_CATS.map(c => chip('cat:' + c, c)).join('')}${userTags.map(t => chip('tag:' + t, esc(t))).join('')}</div>
+      <div class="chips">${chip('tutte', 'Tutte')}${S.favs.length ? chip('preferite', '★ Preferite') : ''}${chip('veloci', 'Veloci')}${chip('mediterranea', 'Mediterranea')}${S.recipes.length ? chip('mie', 'Le mie') : ''}${LIB_CATS.map(c => chip('cat:' + c, c)).join('')}${userTags.map(t => chip('tag:' + t, esc(t))).join('')}</div>
       <div id="rlist">${recipeList()}</div>`;
   },
 
@@ -2200,10 +2231,15 @@ const V = {
     const range = a.getMonth() === b.getMonth() ? `${a.getDate()} – ${b.getDate()} ${MESI[b.getMonth()]}` : `${a.getDate()} ${MB[a.getMonth()]} – ${b.getDate()} ${MB[b.getMonth()]}`;
     let html = `<div class="weeknav"><button class="icon-btn" data-a="wk" data-d="-7" aria-label="Settimana prima">${ic('left')}</button><b>${range}</b><button class="icon-btn" data-a="wk" data-d="7" aria-label="Settimana dopo">${ic('right')}</button></div>`;
     const free = Array.from({length: 7}, (_, i) => addDays(w, i)).filter(day => day >= t && !(S.menu[day] || {}).cena).length;
-    if (free) html += `<button class="btn ghost wide plan-btn" data-a="planWeek">${ic('spark','sm')} Proponi le cene della settimana</button>`;
+    const left = w === mondayOf(t) ? 7 - Array.from({length: 7}, (_, i) => addDays(w, i)).filter(x => x < t).length : 7;
+    if (free && left > 2) html += `<button class="btn ghost wide plan-btn" data-a="planWeek">${ic('spark','sm')} Proponi le cene della settimana</button>`;
+    if (left <= 2) html += `<button class="btn ghost wide plan-btn" data-a="planNext">${ic('spark','sm')} Pianifica la prossima settimana</button>`;
     let nR = 0;
+    const past = w === mondayOf(t) ? Array.from({length: 7}, (_, i) => addDays(w, i)).filter(x => x < t).length : 0;
+    if (past) html += `<button class="link past-tgl" data-a="togglePast">${ui.showPast ? 'Nascondi i giorni passati' : `Mostra i giorni passati (${past})`}</button>`;
     for (let i = 0; i < 7; i++) {
       const day = addDays(w, i), m = S.menu[day] || {};
+      if (past && day < t && !ui.showPast) { for (const [k] of MEALS) if (m[k] && m[k].r && recipeById(m[k].r)) nR++; continue; }
       html += `<div class="day ${day === t ? 'today' : ''}"><div class="day-h">${GIORNI[parseD(day).getDay()]} ${parseD(day).getDate()}${day === t ? '<em>oggi</em>' : ''}</div><div class="slots">${MEALS.map(([k, l]) => {
         const v = m[k], lab = slotLabel(v); if (v && v.r && recipeById(v.r)) nR++;
         return `<button class="slot ${v && v.r ? 'has-r' : ''}" data-a="slot" data-day="${day}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : '+ Aggiungi'}</b></button>`;
@@ -2234,7 +2270,7 @@ const V = {
     const late = open.filter(b => b.due < t);
     const paidY = sum(S.bills.filter(b => b.paid && (b.paidOn || b.due).slice(0, 4) === String(y)).map(b => b.amount));
     const seg = (k, l) => `<button data-a="bview" data-v="${k}" aria-pressed="${ui.bview === k}">${l}</button>`;
-    let html = `<div class="stats"><div class="stat"><div class="l">Da pagare</div><div class="v">${euro(sum(open.map(b => b.amount)))}</div><div class="s ${late.length ? 'st-bad' : ''}">${late.length ? `${late.length} scadut${late.length === 1 ? 'a' : 'e'}` : `${open.length} in arrivo`}</div></div><div class="stat"><div class="l">Pagato nel ${y}</div><div class="v">${euro(paidY)}</div></div></div>`;
+    let html = !S.bills.length ? '' : `<div class="stats"><div class="stat"><div class="l">Da pagare</div><div class="v">${euro(sum(open.map(b => b.amount)))}</div><div class="s ${late.length ? 'st-bad' : ''}">${late.length ? `${late.length} scadut${late.length === 1 ? 'a' : 'e'}` : `${open.length} in arrivo`}</div></div><div class="stat"><div class="l">Pagato nel ${y}</div><div class="v">${euro(paidY)}</div></div></div>`;
     if (AI_IMG && !isPremium()) html += `<button class="btn ghost wide" style="margin-bottom:12px" data-a="premium">${ic('camera','sm')} Aggiungi da una foto della bolletta ${pBadge}</button>`;
     if (AI_IMG && isPremium()) html += `<label class="btn ghost wide photo-btn" style="margin-bottom:12px">${ic('camera','sm')} Aggiungi da una foto della bolletta<input type="file" id="billphoto" accept="image/*" class="vh"></label>`;
     html += `<div class="seg" role="group" aria-label="Vista">${seg('todo', 'Da pagare')}${seg('paid', 'Pagate')}${seg('sum', 'Riepilogo')}</div>`;
@@ -2301,11 +2337,13 @@ function recipeCard(r, extra = '') {
 function recipeList() {
   const q = norm(ui.q.trim()), tg = ui.tag;
   const list = allRecipes().filter(r =>
-    (tg === 'tutte' || (tg === 'preferite' ? isFav(r.id) : tg === 'mie' ? !r.lib : tg === 'mediterranea' ? r.lib : tg.startsWith('cat:') ? r.cat === tg.slice(4) : tg.startsWith('tag:') ? (r.tags || []).includes(tg.slice(4)) : true)) &&
+    (tg === 'tutte' || (tg === 'veloci' ? r.time && r.time <= 30 : tg === 'preferite' ? isFav(r.id) : tg === 'mie' ? !r.lib : tg === 'mediterranea' ? r.lib : tg.startsWith('cat:') ? r.cat === tg.slice(4) : tg.startsWith('tag:') ? (r.tags || []).includes(tg.slice(4)) : true)) &&
     (!q || norm(r.name).includes(q) || r.ingredients.some(i => norm(i.name).includes(q)) || (r.tags || []).some(t => norm(t).includes(q))))
     .sort((a, b) => (isFav(b.id) - isFav(a.id)) || a.name.localeCompare(b.name, 'it'));
   if (!list.length) return `<p class="hint" style="margin-top:24px">Nessuna ricetta trovata.</p>`;
-  return `<p class="count">${list.length} ${list.length === 1 ? 'ricetta' : 'ricette'}</p><div class="rgrid">${list.map(r => recipeCard(r)).join('')}</div>`;
+  const wd = [1, 2, 3, 4, 5].includes(new Date().getDay());
+  const ideas = tg === 'tutte' && !q ? rankDinners('list' + today(), {weekday: wd}).slice(0, 3) : [];
+  return `${ideas.length ? `<p class="h3" style="margin-top:4px">💡 Idee per stasera</p><div class="rgrid" style="margin-bottom:18px">${ideas.map(r => recipeCard(r)).join('')}</div><p class="h3">Tutte le ricette</p>` : ''}<p class="count">${list.length} ${list.length === 1 ? 'ricetta' : 'ricette'}</p><div class="rgrid">${list.map(r => recipeCard(r)).join('')}</div>`;
 }
 const FRIDGE_SUGG = ['uova','pasta','pomodori','mozzarella','zucchine','patate','melanzane','pollo','carne macinata','parmigiano','cipolla','fagioli','salsicce','riso','limone','ricotta'];
 function vFridge() {
@@ -2368,7 +2406,7 @@ function sheetRecipe(id) {
   ui.rid = id; if (ui.serv == null) ui.serv = S.settings.people;
   const f = ui.serv / r.servings;
   openSheet(esc(r.name), `
-    <div class="r-meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} minuti</span>` : ''}${r.cat ? `<span>${esc(r.cat)}</span>` : ''}${origBadge(r)}${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <div class="r-meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} minuti</span>` : ''}${r.cat ? `<span>${esc(r.cat)}</span>` : ''}${origBadge(r, true)}${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
     <div class="stepper"><b>Per quante persone?<small>Ricetta originale per ${r.servings}</small></b><div><button data-a="serv" data-d="-1" aria-label="Una persona in meno">−</button><output>${ui.serv}</output><button data-a="serv" data-d="1" aria-label="Una persona in più">+</button></div></div>
     <div class="chipline serv-q">${[1, 2, 3, 4, 6, 8, 10, 12].map(n => `<button class="chip" data-a="servSet" data-n="${n}" aria-pressed="${ui.serv === n}">${n}</button>`).join('')}</div>
     ${recipeBody(r, f, ui.serv)}
@@ -2831,6 +2869,12 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  planNext: () => { ui.week = addDays(mondayOf(today()), 7); render(); ui.plan = planWeek(ui.week); sheetWeekPlan(); },
+  togglePast: () => { ui.showPast = !ui.showPast; render(); },
+  startHide: () => { S.startDone = true; save(); render(); },
+  newBillGo: () => { setTab('bollette'); sheetBillForm(null); },
+  remFocus: () => { const i = $('#ri'); if (i) { i.scrollIntoView({block: 'center'}); i.focus(); } },
+  notifLater: () => { pref.set('notifSnooze', addDays(today(), 7)); render(); },
   shopVoice: () => shopByVoice(),
   itemQty: d => { const q = $('#it-qty'); if (!q) return; const v = (parseQty(q.value) || 0) + Number(d.d); q.value = v > 0 ? fmtQty(v) : ''; },
   keySetup: () => { sheetSettings(); const d = $('.sheet details.adv'); if (d) { d.open = true; setTimeout(() => { d.scrollIntoView({block: 'center'}); const k = $('#set-key'); if (k) k.focus(); }, 60); } },
