@@ -238,6 +238,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .idea span{display:block;font-size:12.5px;color:var(--olive);font-weight:700}
 .idea b{display:block;font-weight:600;margin-top:2px}
 .plan-btn{margin-bottom:12px}
+.src{font-size:14px;color:var(--muted);margin:-8px 2px 16px}
+.src a{color:var(--accent);font-weight:600}
 .ai-go{margin:0 0 12px}
 .ai-go span{display:flex;align-items:center;gap:6px}
 .plan-row{gap:8px}
@@ -2360,6 +2362,7 @@ function recipeBody(r, f, people) {
     ${steps.length ? `<p class="h3">Procedimento</p><ol class="steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
     ${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ''}`;
 }
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
 function sheetRecipe(id) {
   const r = recipeById(id); if (!r) return;
   ui.rid = id; if (ui.serv == null) ui.serv = S.settings.people;
@@ -2369,15 +2372,18 @@ function sheetRecipe(id) {
     <div class="stepper"><b>Per quante persone?<small>Ricetta originale per ${r.servings}</small></b><div><button data-a="serv" data-d="-1" aria-label="Una persona in meno">−</button><output>${ui.serv}</output><button data-a="serv" data-d="1" aria-label="Una persona in più">+</button></div></div>
     <div class="chipline serv-q">${[1, 2, 3, 4, 6, 8, 10, 12].map(n => `<button class="chip" data-a="servSet" data-n="${n}" aria-pressed="${ui.serv === n}">${n}</button>`).join('')}</div>
     ${recipeBody(r, f, ui.serv)}
+    ${r.source ? `<p class="src">Fonte: <a href="${esc(r.source)}" target="_blank" rel="noopener">${esc(hostOf(r.source) || r.source)}</a></p>` : ''}
     <div class="actions">
       <button class="btn primary" data-a="toShop" data-id="${r.id}">${ic('cart','sm')} Ingredienti nella spesa (per ${ui.serv})</button>
       <div class="actions two-c" style="margin:0"><button class="btn" data-a="planRecipe" data-id="${r.id}">${ic('cal','sm')} Nel menù</button><button class="btn" data-a="fav" data-id="${r.id}">${ic('star', 'sm' + (isFav(r.id) ? ' fav-on' : ''))} ${isFav(r.id) ? 'Preferita' : 'Preferiti'}</button></div>
       ${r.lib ? `<button class="btn ghost" data-a="editRecipe" data-id="${r.id}">${ic('pen','sm')} Crea la mia versione</button>` : `<div class="actions two-c" style="margin:0"><button class="btn ghost" data-a="editRecipe" data-id="${r.id}">${ic('pen','sm')} Modifica</button><button class="btn danger" data-a="delRecipe" data-id="${r.id}">${ic('trash','sm')} Elimina</button></div>`}
     </div>`);
 }
-function sheetRecipeForm(id) {
-  const src = id ? recipeById(id) : null, copy = src && src.lib, r = src;
-  openSheet(copy ? 'La mia versione' : r ? 'Modifica ricetta' : 'Nuova ricetta', `<form data-form="recipe" data-id="${r && !copy ? r.id : ''}">
+function sheetRecipeForm(id, pre) {
+  const src = id ? recipeById(id) : null, copy = src && src.lib, r = src || pre || null;
+  openSheet(copy ? 'La mia versione' : src ? 'Modifica ricetta' : pre ? 'Controlla e salva' : 'Nuova ricetta', `<form data-form="recipe" data-id="${src && !copy ? src.id : ''}">
+    ${pre ? `<p class="hint" style="text-align:left;margin:0 0 12px">${pre.source ? `Letta da ${esc(hostOf(pre.source))}. ` : ''}Controlla ingredienti e passaggi prima di salvare.</p>` : ''}
+    <input type="hidden" name="source" value="${esc(r && r.source || '')}">
     <label class="field"><span>Nome</span><input id="rf-name" name="name" required maxlength="120" value="${esc(r ? r.name : '')}" placeholder="es. Lasagne della nonna"></label>
     <div class="two"><label class="field"><span>Porzioni</span><input id="rf-serv" name="servings" type="number" min="1" max="50" inputmode="numeric" value="${r ? r.servings : S.settings.people}"></label>
     <label class="field"><span>Tempo (minuti)</span><input id="rf-time" name="time" type="number" min="0" max="2000" inputmode="numeric" value="${r && r.time ? r.time : ''}" placeholder="30"></label></div>
@@ -2541,6 +2547,114 @@ function sheetSettings() {
     <div class="actions" style="margin-top:22px"><button class="btn danger" data-a="reset">Cancella tutti i dati</button></div>`);
 }
 
+/* ---------- aggiungi ricetta da link, testo o foto ---------- */
+const HTTP = (() => { const C = window.Capacitor; try { if (!C || !C.isNativePlatform || !C.isNativePlatform()) return null; return (C.Plugins && C.Plugins.CapacitorHttp) || (C.registerPlugin && C.registerPlugin('CapacitorHttp')) || null; } catch (e) { return null; } })();
+const SHARE = (() => { const C = window.Capacitor; try { if (!C || !C.isNativePlatform || !C.isNativePlatform()) return null; return (C.Plugins && C.Plugins.CapacitorShareTarget) || (C.registerPlugin && C.registerPlugin('CapacitorShareTarget')) || null; } catch (e) { return null; } })();
+const isoMin = d => { const m = String(d || '').match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/i); return m ? (+(m[1] || 0)) * 1440 + (+(m[2] || 0)) * 60 + (+(m[3] || 0)) : 0; };
+const stripTags = h => { const d = new DOMParser().parseFromString(String(h || ''), 'text/html'); return (d.body ? d.body.textContent : '').replace(/\s+/g, ' ').trim(); };
+const guessCat = t => { const n = norm(t); return /primi|pasta|risott|minestr/.test(n) ? 'Primi' : /second|carne|pesce/.test(n) ? 'Secondi' : /contorn/.test(n) ? 'Contorni' : /antipast|fritt|finger/.test(n) ? 'Antipasti e fritti' : /dolc|dessert|torta|biscott/.test(n) ? 'Dolci' : /zupp|vellutat/.test(n) ? 'Zuppe' : /pizz|lievit|pane|focacc/.test(n) ? 'Pizze e lievitati' : ''; };
+/* "Spaghetti 320 g" (come scrivono molti siti) -> "320 g Spaghetti" */
+function normIngLine(x) {
+  x = stripTags(x).replace(/\s+/g, ' ').trim(); if (!x || /^\d/.test(x)) return x;
+  const m = x.match(new RegExp(`^(.+?)\\s+(\\d+(?:[.,]\\d+)?(?:\\s*\\/\\s*\\d+)?)\\s*(${UNITS})?\\.?$`, 'i'));
+  const low = t => /^[A-ZÀ-Ú][a-zà-ú]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t;
+  return m ? `${m[2]} ${m[3] || ''} ${low(m[1])}`.replace(/\s+/g, ' ').trim() : low(x);
+}
+/* molti siti di ricette includono la ricetta in un formato standard (schema.org/Recipe) per i motori di ricerca */
+function recipeFromHtml(html, url) {
+  const blocks = [...String(html).matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
+  const isR = o => o && (o['@type'] === 'Recipe' || (Array.isArray(o['@type']) && o['@type'].includes('Recipe')));
+  const find = o => { if (!o || typeof o !== 'object') return null; if (isR(o)) return o; for (const v of Array.isArray(o) ? o : Object.values(o)) { const r = find(v); if (r) return r; } return null; };
+  let R = null;
+  for (const b of blocks) { try { R = find(JSON.parse(b.trim())); } catch (e) {} if (R) break; }
+  if (!R || !R.name) return null;
+  const steps = [];
+  const walk = x => { if (!x) return; if (typeof x === 'string') { String(x).split(/<br\s*\/?>|<\/p>|<\/li>/i).map(stripTags).join('\n').split(/\n+|(?<=\.)\s+(?=[A-ZÀ-Ú])/).forEach(t => t.trim() && steps.push(t.trim())); return; } if (Array.isArray(x)) return x.forEach(walk); if (x.itemListElement) return walk(x.itemListElement); if (x.text) return walk(x.text); if (x.name) return walk(x.name); };
+  walk(R.recipeInstructions);
+  const y = Array.isArray(R.recipeYield) ? R.recipeYield.join(' ') : String(R.recipeYield || ''), serv = parseInt((y.match(/\d+/) || [])[0]) || 4;
+  const time = isoMin(R.totalTime) || isoMin(R.cookTime) + isoMin(R.prepTime);
+  const ings = (Array.isArray(R.recipeIngredient) ? R.recipeIngredient : []).map(normIngLine).map(parseIng).filter(Boolean);
+  if (!ings.length) return null;
+  return {name: stripTags(R.name).slice(0, 120), servings: Math.min(serv, 50), time, cat: guessCat([].concat(R.recipeCategory || []).join(' ') + ' ' + R.name), tags: [], ingredients: ings, steps: steps.join('\n'), notes: '', source: url};
+}
+/* testo leggibile di una pagina (anche la didascalia dei video, che i social mettono nella descrizione) */
+function pageText(html) {
+  const meta = [...String(html).matchAll(/<meta[^>]+(?:property|name)=["'](?:og:title|og:description|description|twitter:description)["'][^>]*>/gi)].map(m => (m[0].match(/content=["']([^"']*)["']/i) || [])[1]).filter(Boolean);
+  const body = stripTags(String(html).replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, ' '));
+  return [...new Set(meta.map(stripTags))].join('\n') + '\n' + body.slice(0, 14000);
+}
+async function aiRecipeFrom(text, images, source) {
+  const people = S.settings.people;
+  const prompt = `Qui sotto c'è ${images && images.length ? 'una serie di immagini (foto o screenshot) e ' : ''}il contenuto di una ricetta presa da un sito, un social o un messaggio. Ricava la ricetta e rispondi solo con un oggetto JSON in italiano, così:
+{"name":"Nome del piatto","time":30,"servings":4,"cat":"Primi","tags":["veloce"],"ingredients":["320 g spaghetti","2 spicchi aglio","sale q.b."],"steps":["Primo passaggio.","Secondo passaggio."],"notes":""}
+Regole: riporta fedelmente ingredienti e dosi della ricetta, con la quantità prima del nome (g, kg, ml, l, cucchiai, cucchiaini, spicchi, fette, oppure solo il numero per le cose che si contano; "q.b." quando non c'è una dose). Se le dosi mancano, stimale per ${people} persone e scrivilo nelle note. "cat" è uno tra ${LIB_CATS.join(', ')}. Passaggi brevi e chiari. Se nel contenuto non c'è nessuna ricetta, rispondi {"error":"nessuna ricetta"}.
+${text ? '\nContenuto:\n' + String(text).slice(0, 15000) : ''}`;
+  const d = await AI.json(prompt, images && images.length ? {images} : {});
+  if (!d || d.error || !d.name) throw {code: 'no_recipe'};
+  const ings = (Array.isArray(d.ingredients) ? d.ingredients : []).map(x => parseIng(String(x))).filter(Boolean);
+  if (!ings.length) throw {code: 'no_recipe'};
+  return {name: String(d.name).slice(0, 120), time: parseInt(d.time) || 0, servings: Math.max(1, parseInt(d.servings) || people), cat: LIB_CATS.includes(d.cat) ? d.cat : '', tags: Array.isArray(d.tags) ? d.tags.map(t => String(t).toLowerCase().slice(0, 30)).slice(0, 4) : [], ingredients: ings, steps: (Array.isArray(d.steps) ? d.steps : [String(d.steps || '')]).map(x => String(x).trim()).filter(Boolean).join('\n'), notes: String(d.notes || '').slice(0, 300), source: source || ''};
+}
+function sheetAddRecipe(text = '') {
+  const canAI = AI && isPremium();
+  openSheet('Aggiungi una ricetta', `<form data-form="imp" autocomplete="off">
+    <label class="field"><span>Link o testo della ricetta</span><textarea id="imp-src" name="src" rows="4" placeholder="Incolla il link di una ricetta, oppure il testo (anche la didascalia di un video o un messaggio)">${esc(text)}</textarea>
+    <small>${HTTP ? 'Dai siti di ricette la leggo direttamente. ' : 'Qui non posso aprire i link: incolla il testo della ricetta. '}${canAI ? 'Testi, didascalie e pagine senza ricetta strutturata li legge l\'assistente.' : 'Per testi e didascalie serve l\'assistente (Premium).'}</small></label>
+    <div class="actions"><button class="btn primary">${ic('book','sm')} Leggi la ricetta</button></div></form>
+    ${AI_IMG && canAI ? `<label class="btn wide photo-btn" style="margin-top:10px">${ic('camera','sm')} Da foto o screenshot<input type="file" id="imp-photos" accept="image/*" multiple class="vh"></label>` : AI ? `<button class="btn wide" style="margin-top:10px" data-a="premium">${ic('camera','sm')} Da foto o screenshot ${pBadge}</button>` : ''}
+    <p class="hint" id="imp-st" style="text-align:left;margin:10px 2px 0"></p>
+    ${SHARE ? `<p class="hint" style="text-align:left;margin:6px 2px 0">Puoi anche usare <b>Condividi › Casa in Ordine</b> da Chrome, TikTok, Instagram o dalla galleria.</p>` : ''}
+    <div class="actions" style="margin-top:16px"><button class="btn ghost" data-a="newRecipeManual">${ic('pen','sm')} Scrivi a mano</button></div>`);
+}
+const impSt = (t, c = 'st-warn') => { const e = $('#imp-st'); if (e) { e.textContent = t; e.className = 'hint ' + c; } };
+async function importRecipe(text, images) {
+  text = String(text || '').trim();
+  const url = (text.match(/https?:\/\/[^\s"'<>]+/) || [])[0] || '';
+  const rest = url ? text.replace(url, '').trim() : text;
+  const canAI = AI && isPremium();
+  try {
+    if (images && images.length) {
+      if (!canAI) return impSt('Le foto le legge l\'assistente: serve Premium.', 'st-bad');
+      impSt('L\'assistente sta leggendo le immagini…');
+      return sheetRecipeForm(null, await aiRecipeFrom(rest, images, url));
+    }
+    let html = '';
+    if (url && HTTP) {
+      impSt('Apro la pagina…');
+      try { const r = await HTTP.get({url, headers: {'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36', 'Accept-Language': 'it-IT,it;q=0.9'}, responseType: 'text'}); html = typeof r.data === 'string' ? r.data : ''; } catch (e) { html = ''; }
+      const rec = html && recipeFromHtml(html, url);
+      if (rec) return sheetRecipeForm(null, rec);
+    }
+    const content = [rest, html ? pageText(html) : ''].filter(Boolean).join('\n\n').trim();
+    if (!content) return impSt(url && !HTTP ? 'Qui non posso aprire i link: incolla il testo della ricetta.' : url ? 'Non riesco ad aprire la pagina. Copia il testo della ricetta e incollalo qui.' : 'Incolla un link o il testo di una ricetta.', 'st-bad');
+    if (!canAI) return impSt(url ? 'Questa pagina non ha la ricetta in un formato che so leggere da solo: con Premium la legge l\'assistente.' : 'Per leggere un testo serve l\'assistente (Premium).', 'st-bad');
+    impSt('L\'assistente sta leggendo la ricetta…');
+    sheetRecipeForm(null, await aiRecipeFrom(content, null, url));
+  } catch (e) {
+    impSt(e && e.code === 'no_recipe' ? 'Non ho trovato una ricetta in questo contenuto. Se è un video, prova con uno screenshot degli ingredienti.' : aiErr(e), 'st-bad');
+  }
+}
+/* condivisione da altre app (solo nell'app Android) */
+async function sharedFileBlob(f) {
+  const C = window.Capacitor; let u = f.uri || '';
+  if (!/^(https?|data|blob):/.test(u)) u = C && C.convertFileSrc ? C.convertFileSrc(u.startsWith('file://') ? u : 'file://' + u) : u;
+  const r = await fetch(u); return await r.blob();
+}
+if (SHARE) {
+  try {
+    SHARE.addListener('shareReceived', async ev => {
+      const texts = [ev.title, ...(ev.texts || [])].filter(Boolean).join('\n');
+      const imgs = (ev.files || []).filter(f => /^image\//.test(f.mimeType || '')).slice(0, 5);
+      if (!tabOn('ricette')) { S.settings.mods.ricette = true; save(); }
+      if (sheetOpen) hideSheet();
+      ui.rview = 'lib'; setTab('ricette'); sheetAddRecipe(texts);
+      let blobs = [];
+      try { blobs = await Promise.all(imgs.map(sharedFileBlob)); } catch (e) { blobs = []; }
+      if (texts || blobs.length) importRecipe(texts, blobs);
+    });
+  } catch (e) {}
+}
+
 /* ---------- assistente: ricetta su misura ---------- */
 let aiCtl = null;
 function sheetAi() {
@@ -2651,7 +2765,8 @@ const A = {
   tag: d => { ui.tag = d.t; render(); },
   rview: d => { ui.rview = d.v; render(); },
   fridgeGo: () => { ui.rview = 'frigo'; setTab('ricette'); },
-  newRecipe: () => sheetRecipeForm(null),
+  newRecipe: () => sheetAddRecipe(),
+  newRecipeManual: () => sheetRecipeForm(null),
   recipe: d => { if (!d.id || !recipeById(d.id)) return A.slot(d); ui.serv = null; sheetRecipe(d.id); },
   serv: d => { if (!recipeById(ui.rid)) return; ui.serv = Math.max(1, Math.min(50, ui.serv + Number(d.d))); sheetRecipe(ui.rid); },
   servSet: d => { if (!recipeById(ui.rid)) return; ui.serv = Number(d.n); sheetRecipe(ui.rid); },
@@ -2788,6 +2903,7 @@ function setSlot(day, meal, v) {
 }
 
 const F = {
+  imp: v => importRecipe(v.src, null),
   apikey: v => {
     const k = String(v.key || '').trim();
     if (!/^sk-ant-[\w-]{20,}$/.test(k)) return toast('La chiave deve iniziare con sk-ant-');
@@ -2835,7 +2951,7 @@ const F = {
   recipe: (v, f) => {
     const data = {name: v.name.trim(), servings: Math.max(1, parseInt(v.servings) || 1), time: parseInt(v.time) || 0, cat: LIB_CATS.includes(v.cat) ? v.cat : '',
       ingredients: String(v.ings || '').split('\n').map(parseIng).filter(Boolean), steps: String(v.steps || '').trim(),
-      tags: [...new Set(String(v.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean))], notes: String(v.notes || '').trim()};
+      tags: [...new Set(String(v.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean))], notes: String(v.notes || '').trim(), source: /^https?:\/\//.test(v.source || '') ? String(v.source).slice(0, 500) : ''};
     if (!data.name) return;
     let r = f.dataset.id && S.recipes.find(x => x.id === f.dataset.id);
     if (r) Object.assign(r, data); else { r = {id: uid(), ...data}; S.recipes.push(r); }
@@ -2915,6 +3031,7 @@ document.addEventListener('change', async e => {
   const t = e.target;
   if (t.dataset && t.dataset.tk && tour.d) { tour.d[t.dataset.tk] = t.value; }
   if ((t.id === 'billphoto' || t.id === 'billphoto2') && t.files[0]) { const file = t.files[0]; t.value = ''; billFromPhoto(file); }
+  if (t.id === 'imp-photos' && t.files.length) { const files = [...t.files].slice(0, 5); t.value = ''; importRecipe($('#imp-src') ? $('#imp-src').value : '', files); }
   if (t.id === 'receiptphoto' && t.files[0]) { const file = t.files[0]; t.value = ''; receiptFromPhoto(file); }
   if (t.id === 'csvfile' && t.files[0]) {
     const file = t.files[0]; t.value = '';
