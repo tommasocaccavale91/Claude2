@@ -1,0 +1,52 @@
+name: Casa in Ordine — APK Android
+
+on:
+  push:
+    paths:
+      - 'casa/**'
+      - '.github/workflows/casa-android.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: casa-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: casa
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: casa/package-lock.json
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate the Android project and copy the web app into it
+        run: npm run android
+
+      - name: Use the Android SDK preinstalled on the runner
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+
+      - name: Build APK
+        working-directory: casa/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: casa-in-ordine-apk
+          path: casa/android/app/build/outputs/apk/debug/*.apk
