@@ -247,6 +247,9 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .chip.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .chip.chk input{accent-color:var(--accent)}
 .rem-q{margin:2px 0 0}
+.qty-step{display:flex;gap:8px;margin:-6px 0 14px}
+.quick .mic{background:var(--surface2);padding:0 12px}
+.quick .mic.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite ease-in-out}
 .rem-q .mic{background:var(--surface2);padding:0 12px}
 .rem-q .mic.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite ease-in-out}
 .rem-prev{text-align:left;margin:6px 2px 4px;min-height:1.2em}
@@ -398,14 +401,14 @@ const ic = (n, c = '') => `<svg viewBox="0 0 24 24" class="ic ${c}" aria-hidden=
 /* ---------- dati di riferimento ---------- */
 const AISLES = [['frutta','Frutta e verdura','🥬'],['pane','Pane e forno','🥖'],['carne','Carne e pesce','🥩'],['latte','Latticini e uova','🧀'],['dispensa','Dispensa','🥫'],['surgelati','Surgelati','🧊'],['bevande','Bevande','🧃'],['casa','Casa e igiene','🧽'],['altro','Altro','🛒']];
 const AISLE_KW = {
-  frutta:['mela','mele','pera','pere','banan','aranc','limon','mandarin','fragol','uva ','kiwi','pesch','albicoc','ciliegi','anguri','melone','insalat','lattug','rucola','spinac','pomodor','zucchin','melanzan','peperon','carot','cipoll','aglio','patat','sedano','finocch','broccol','cavol','zucca','funghi','basilico','prezzemol','rosmarin','salvia','menta','avocado','porr','fagiolin','asparag','carciof','cetriol','frutta','verdur','zenzero','scalogn','radicchi','bietol','prugn','ananas','lime','scarola','friariell','cime di rapa','papaccell','cicoria','piselli','verza','cavolo','fave','fiori di zucca','alghe','finocchietto','arance','mentuccia','amarene'],
+  frutta:['mela','mele','pera','pere','banan','aranc','limon','mandarin','fragol','uva ','kiwi','pesch','albicoc','ciliegi','anguri','melone','insalat','lattug','rucola','spinac','pomodor','zucchin','melanzan','peperon','carot','cipoll','aglio','patat','sedano','finocch','broccol','cavol','zucca','funghi','basilico','prezzemol','rosmarin','salvia','menta','avocado','porr','fagiolin','asparag','carciof','cetriol','frutta','verdur','zenzero','scalogn','radicchi','bietol','prugn','ananas','lime','scarola','friariell','cime di rapa','papaccell','cicoria','piselli','verza','castagne','cavolo','fave','fiori di zucca','alghe','finocchietto','arance','mentuccia','amarene'],
   pane:['pane','panin','focacc','pizza','grissin','fette biscottate','piadin','brioche','cornett','pangrattato','pan grattato','pasta sfoglia','pasta brisé','pasta frolla','savoiardi'],
-  carne:['carne','pollo','manzo','maiale','vitello','tacchino','agnello','salsicc','macinat','prosciutt','salame','mortadell','speck','pancett','guancial','bresaola','wurstel','pesce','salmone','merluzz','orata','branzin','gamber','cozze','vongol','calamar','polpo','seppi','hamburger','fettine','bistecc','petto di','cotolett','costolett','spezzatino','tonno fresco','muscolo','lacerto','girello','tracchie','lonza','orat','coniglio','fesa','sarde','alici','seppie','baccal'],
-  latte:['latte','yogurt','burro','panna','mozzarell','fior di latte','parmigian','grana','pecorin','ricott','stracchin','gorgonzol','formagg','mascarpon','scamorz','provola','provolone','fontina','emmental','uova','uovo','tuorl','album','feta','crema pasticcera'],
+  carne:['carne','pollo','manzo','maiale','vitello','tacchino','agnello','salsicc','macinat','prosciutt','salame','mortadell','speck','pancett','guancial','bresaola','wurstel','pesce','salmone','merluzz','orata','branzin','gamber','cozze','vongol','calamar','polpo','seppi','hamburger','fettine','bistecc','petto di','cotolett','costolett','spezzatino','tonno fresco','muscolo','lacerto','girello','tracchie','lonza','orat','coniglio','cotechino','trippa','sgombri','pesciolini','totani','platessa','fesa','sarde','alici','seppie','baccal'],
+  latte:['latte','yogurt','burro','panna','mozzarell','fior di latte','parmigian','grana','pecorin','ricott','stracchin','gorgonzol','formagg','mascarpon','scamorz','provola','provolone','fontina','emmental','uova','uovo','tuorl','album','feta','crema pasticcera','caciocavall'],
   surgelati:['surgelat','gelato','bastoncini','sofficini'],
   bevande:['acqua','vino','birra','succo','bibita','coca','aranciata','tè freddo','spremuta','latte di soia','latte di mandorla','caffè in'],
   casa:['detersiv','sapone','shampoo','bagnoschiuma','dentifric','spazzolin','carta igienic','scottex','carta da cucina','carta forno','tovagliol','sacchett','pellicol','alluminio','spugn','candeggin','ammorbident','pannolin','assorbent','deodorant','salviett','lavastovigl','pastiglie','sgrassator','anticalcare','crema mani','cotton fioc'],
-  dispensa:['pasta','spaghett','penne','fusill','rigaton','tagliatell','lasagn','ziti','bucatin','tonnarell','trofie','orecchiett','ditalin','maccheron','riso','farina','zucchero','sale','pepe','olio','olio di semi','olio extravergine','aceto','passata','passata di pomodoro','pomodori pelati','concentrato di pomodoro','pelati','fagioli','ceci','lenticch','tonno','sgombro','biscott','cereali','marmellat','miele','nutella','cioccolat','caffè','tè','camomill','lievito','brodo','dado','origano','curry','paprika','noce moscata','cannella','pinoli','noci','mandorl','olive','capperi','acciugh','maionese','ketchup','senape','cacao','vanillin','amido','fecola','polenta','couscous','orzo','farro','crackers','gallette','sugo','pesto','besciamella','vino bianco','vino rosso','uvetta','zafferano','canditi','strutto','grano cotto','colla di pesce','peperoncino','diavolilli','aroma','gnocchi','semolino','farina di mais','sottaceti','pistacchi','gocce di cioccolato','limoncello','rum','marmellata','vaniglia','linguin','cannellon']
+  dispensa:['pasta','spaghett','penne','fusill','rigaton','tagliatell','lasagn','ziti','bucatin','tonnarell','trofie','orecchiett','ditalin','maccheron','riso','farina','zucchero','sale','pepe','olio','olio di semi','olio extravergine','aceto','passata','passata di pomodoro','pomodori pelati','concentrato di pomodoro','pelati','fagioli','ceci','lenticch','tonno','sgombro','biscott','cereali','marmellat','miele','nutella','cioccolat','caffè','tè','camomill','lievito','brodo','dado','origano','curry','paprika','noce moscata','cannella','pinoli','noci','mandorl','olive','capperi','acciugh','maionese','ketchup','senape','cacao','vanillin','amido','fecola','polenta','couscous','orzo','farro','crackers','gallette','sugo','pesto','besciamella','vino bianco','vino rosso','uvetta','zafferano','canditi','strutto','grano cotto','colla di pesce','peperoncino','diavolilli','aroma','gnocchi','semolino','farina di mais','sottaceti','pistacchi','gocce di cioccolato','limoncello','rum','marmellata','vaniglia','linguin','cannellon','scialatiell','paccher','pizzoccher','tortellin','casarecc','mezze maniche','anellett','farfall','cicerch','chiodi di garofano','pisto','vodka']
 };
 /* vince la parola chiave più lunga: "concentrato di pomodoro" va in dispensa, non in frutta e verdura */
 const guessAisle = name => { const n = ' ' + String(name).toLowerCase() + ' '; let best = 'altro', len = 0; for (const [k, list] of Object.entries(AISLE_KW)) for (const w of list) if (w.length > len && n.includes(w)) { best = k; len = w.length; } return best; };
@@ -455,7 +458,7 @@ function guessMcat(desc, kind) {
 }
 
 /* ingredienti: "200 g farina" -> {qty:200, unit:'g', name:'farina'} */
-const UNITS = 'kg|gr|g|hg|mg|lt|l|dl|cl|ml|cucchiai|cucchiaio|cucchiaini|cucchiaino|pz|pezzi|pezzo|spicchi|spicchio|bicchieri|bicchiere|tazze|tazza|fette|fetta|confezioni|confezione|scatole|scatola|barattoli|barattolo|bottiglie|bottiglia|vasetti|vasetto|mazzi|mazzo|rametti|rametto|foglie|pizzico|pizzichi|bustine|bustina|panetti|panetto|vaschette|vaschetta|buste|busta|lattine|lattina|rotoli|rotolo|fiale|fiala|cespi|cespo|filetti|filetto|coste|costa|bacche|bacca|croste|crosta';
+const UNITS = 'kg|gr|g|hg|mg|lt|l|dl|cl|ml|cucchiai|cucchiaio|cucchiaini|cucchiaino|pz|pezzi|pezzo|spicchi|spicchio|bicchieri|bicchiere|tazze|tazza|fette|fetta|confezioni|confezione|scatole|scatola|barattoli|barattolo|bottiglie|bottiglia|vasetti|vasetto|mazzi|mazzo|rametti|rametto|foglie|pizzico|pizzichi|bustine|bustina|panetti|panetto|vaschette|vaschetta|buste|busta|lattine|lattina|rotoli|rotolo|conf\\.|fiale|fiala|cespi|cespo|filetti|filetto|coste|costa|bacche|bacca|croste|crosta';
 const ING_RE = new RegExp(`^\\s*(\\d+(?:[.,]\\d+)?(?:\\s*\\/\\s*\\d+)?)?\\s*(?:(${UNITS})\\.?\\s+)?(?:di\\s+|d')?(.+?)\\s*$`, 'i');
 function parseQty(t) { if (!t) return null; t = String(t).replace(',', '.').replace(/\s/g, ''); if (t.includes('/')) { const [a, b] = t.split('/').map(Number); return b ? a / b : null; } const n = parseFloat(t); return isNaN(n) ? null : n; }
 function parseIng(line) { const m = String(line).match(ING_RE); if (!m) return null; const name = (m[3] || '').trim(); if (!name) return null; const qty = parseQty(m[1]); return {qty, unit: qty == null ? '' : (m[2] || '').toLowerCase(), name}; }
@@ -1017,7 +1020,326 @@ const LIB_RAW = [
  'Scalda il latte con la scorza di limone.|Sbatti tuorli, zucchero e amido.|Versa il latte caldo sui tuorli, rimetti sul fuoco e cuoci mescolando finché si addensa.|Copri con pellicola a contatto e lascia raffreddare.'],
 ['Dolci','Mediterranea','Graffe',10,180,'fritto,carnevale',
  '500 g farina manitoba|250 g patate|50 g zucchero|2 uova|50 g burro|15 g lievito di birra fresco|200 ml latte|1 limone|1 l olio di semi|zucchero q.b.',
- 'Lessa e schiaccia le patate.|Impasta farina, patate, zucchero, uova, burro, lievito sciolto nel latte e scorza di limone.|Lascia lievitare 2 ore, forma le ciambelle e lasciale lievitare ancora un\'ora.|Friggile in olio caldo e passale nello zucchero.']
+ 'Lessa e schiaccia le patate.|Impasta farina, patate, zucchero, uova, burro, lievito sciolto nel latte e scorza di limone.|Lascia lievitare 2 ore, forma le ciambelle e lasciale lievitare ancora un\'ora.|Friggile in olio caldo e passale nello zucchero.'],
+/* ===== Terzo gruppo: altri classici di casa e regionali ===== */
+['Primi','Mediterranea','Pasta e fave',4,40,'vegetariano,primavera,economico',
+ '300 g pasta mista|500 g fave fresche sgranate|1 cipolla|80 g pancetta|200 g pomodorini|40 g pecorino|4 cucchiai olio extravergine|sale q.b.',
+ 'Rosola cipolla e pancetta nell\'olio, aggiungi i pomodorini.|Unisci le fave e copri con acqua calda, cuoci 15 minuti.|Butta la pasta e cuocila nella pentola, aggiungendo acqua se serve.|Completa con pecorino e un filo d\'olio. Con le fave secche: ammollo per una notte e cottura di un\'ora.'],
+['Primi','Mediterranea','Pasta e cicerchie',4,90,'vegetariano,inverno,economico',
+ '250 g cicerchie secche|250 g pasta mista|1 spicchio aglio|1 rametto rosmarino|200 g pomodorini|4 cucchiai olio extravergine|sale q.b.',
+ 'Le cicerchie vanno ammollate per una notte, poi lessate per un\'ora.|Soffriggi aglio e rosmarino nell\'olio, aggiungi pomodorini e cicerchie con la loro acqua.|Cuoci la pasta nella pentola.|Servi con olio crudo.'],
+['Primi','Mediterranea','Pasta patate e cozze',4,50,'pesce',
+ '300 g pasta mista|1 kg cozze|600 g patate|200 g pomodorini|1 spicchio aglio|1 peperoncino|4 cucchiai olio extravergine|prezzemolo q.b.',
+ 'Apri le cozze in padella coperta, sgusciale e filtra il liquido.|Soffriggi aglio e peperoncino, aggiungi patate a cubetti e pomodorini.|Copri con acqua e il liquido delle cozze, cuoci 15 minuti.|Cuoci la pasta nella pentola, aggiungi le cozze e il prezzemolo alla fine.'],
+['Primi','Mediterranea','Pasta e verza',4,40,'vegetariano,inverno,economico',
+ '300 g pasta mista|1/2 verza|1 cipolla|1 crosta di parmigiano|40 g parmigiano|4 cucchiai olio extravergine|sale q.b.',
+ 'Rosola la cipolla nell\'olio, aggiungi la verza a striscioline.|Copri con acqua, aggiungi la crosta e cuoci 20 minuti.|Cuoci la pasta nella pentola.|Completa con parmigiano.'],
+['Primi','Mediterranea','Pasta e provola',4,30,'bambini,economico',
+ '320 g pasta mista|400 g passata di pomodoro|200 g provola|1 cipolla|40 g parmigiano|3 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Rosola la cipolla nell\'olio, aggiungi la passata e un litro d\'acqua.|Porta a bollore e cuoci la pasta nel sugo, mescolando.|A fuoco spento unisci provola a dadini, parmigiano e basilico.|Lascia riposare un minuto: la provola deve filare.'],
+['Primi','Mediterranea','Scialatielli ai frutti di mare',4,40,'pesce,costiera',
+ '400 g scialatielli|500 g cozze|500 g vongole|200 g gamberi|300 g pomodorini|2 spicchi aglio|1/2 bicchiere vino bianco|5 cucchiai olio extravergine|prezzemolo q.b.',
+ 'Apri cozze e vongole in padella e filtra il liquido.|Rosola aglio e gamberi, sfuma con il vino e aggiungi i pomodorini.|Unisci frutti di mare e liquido.|Salta gli scialatielli al dente nel sugo con il prezzemolo.'],
+['Primi','Mediterranea','Spaghetti con le cozze',4,30,'pesce',
+ '360 g spaghetti|1,5 kg cozze|2 spicchi aglio|1 peperoncino|200 g pomodorini|5 cucchiai olio extravergine|prezzemolo q.b.',
+ 'Apri le cozze in padella coperta, sgusciane metà e filtra il liquido.|Soffriggi aglio e peperoncino, aggiungi i pomodorini.|Unisci cozze e liquido.|Salta gli spaghetti al dente nel sugo con il prezzemolo.'],
+['Primi','Mediterranea','Paccheri con calamari e pomodorini',4,35,'pesce',
+ '400 g paccheri|500 g calamari|400 g pomodorini|2 spicchi aglio|1/2 bicchiere vino bianco|5 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Taglia i calamari ad anelli.|Rosolali con olio e aglio, sfuma con il vino.|Aggiungi i pomodorini e cuoci 15 minuti.|Condisci i paccheri e completa con prezzemolo.'],
+['Primi','Mediterranea','Pasta con pesto di zucchine',4,20,'vegetariano,veloce,estate',
+ '320 g fusilli|3 zucchine|40 g mandorle|40 g parmigiano|5 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Sbollenta le zucchine a pezzi per 3 minuti.|Frullale con mandorle, parmigiano, basilico e olio.|Condisci la pasta con il pesto e un po\' d\'acqua di cottura.'],
+['Primi','Mediterranea','Pasta alla norcina',4,25,'umbra',
+ '320 g penne|300 g salsiccia|200 ml panna|1/2 bicchiere vino bianco|40 g pecorino|1 cucchiaio olio extravergine|pepe q.b.',
+ 'Sbriciola la salsiccia e rosolala con l\'olio.|Sfuma con il vino, aggiungi la panna e cuoci 5 minuti.|Condisci la pasta con il sugo, pecorino e pepe.'],
+['Primi','Mediterranea','Pasta salsiccia e funghi',4,30,'autunno',
+ '320 g fusilli|300 g salsiccia|300 g funghi champignon|1 spicchio aglio|1/2 bicchiere vino bianco|3 cucchiai olio extravergine|prezzemolo q.b.|40 g parmigiano',
+ 'Rosola la salsiccia sbriciolata con olio e aglio.|Aggiungi i funghi affettati e sfuma con il vino.|Cuoci 10 minuti e condisci la pasta.|Completa con parmigiano e prezzemolo.'],
+['Primi','Mediterranea','Pizzoccheri',4,45,'valtellina,inverno',
+ '350 g pizzoccheri|300 g verza|2 patate|200 g formaggio fontina|60 g parmigiano|80 g burro|2 spicchi aglio|salvia q.b.',
+ 'Cuoci patate a cubetti e verza in acqua salata per 5 minuti, poi butta i pizzoccheri.|Sciogli il burro con aglio e salvia.|Scola tutto e alterna a strati con fontina e parmigiano.|Condisci con il burro e servi.'],
+['Zuppe','Mediterranea','Canederli in brodo',4,50,'trentino,inverno',
+ '250 g pane raffermo|150 g speck|2 uova|250 ml latte|30 g farina|1 cipolla|1,5 l brodo di carne|erba cipollina q.b.|sale q.b.',
+ 'Taglia il pane a cubetti e bagnalo con il latte.|Rosola cipolla e speck e uniscili al pane con uova, farina ed erba cipollina.|Forma delle palline grandi come un mandarino.|Cuocile nel brodo bollente per 15 minuti.'],
+['Primi','Mediterranea','Risi e bisi',4,40,'veneto,primavera,senza glutine',
+ '300 g riso vialone nano|500 g piselli|1 cipolla|50 g pancetta|1,2 l brodo vegetale|40 g burro|50 g parmigiano|prezzemolo q.b.',
+ 'Rosola cipolla e pancetta nel burro, aggiungi i piselli.|Unisci il riso e il brodo poco alla volta.|Cuoci 18 minuti: deve restare morbido, quasi una minestra.|Manteca con parmigiano e prezzemolo.'],
+['Zuppe','Mediterranea','Tortellini in brodo',4,20,'natale,emiliana',
+ '400 g tortellini|1,5 l brodo di carne|50 g parmigiano',
+ 'Porta il brodo a bollore.|Cuoci i tortellini nel brodo per il tempo indicato.|Servi con parmigiano grattugiato.'],
+['Primi','Mediterranea','Ravioli burro e salvia',4,15,'veloce,vegetariano',
+ '500 g ravioli ricotta e spinaci|60 g burro|50 g parmigiano|salvia q.b.',
+ 'Cuoci i ravioli in acqua salata.|Sciogli il burro con le foglie di salvia finché fa la schiuma.|Condisci i ravioli con il burro e il parmigiano.'],
+['Primi','Mediterranea','Pasta al pesto di pistacchi',4,20,'veloce,vegetariano,siciliana',
+ '320 g casarecce|100 g pistacchi|40 g parmigiano|1/2 spicchio aglio|6 cucchiai olio extravergine|basilico q.b.|sale q.b.',
+ 'Frulla pistacchi, parmigiano, aglio, basilico e olio con un cucchiaio d\'acqua fredda.|Cuoci la pasta e condiscila con il pesto e poca acqua di cottura.|Completa con granella di pistacchi.'],
+['Primi','Mediterranea','Pasta melanzane e provola',4,35,'vegetariano',
+ '320 g rigatoni|2 melanzane|400 g passata di pomodoro|150 g provola|1 spicchio aglio|1 l olio di semi|3 cucchiai olio extravergine|basilico q.b.',
+ 'Friggi le melanzane a cubetti.|Prepara il sugo con olio, aglio e passata.|Unisci le melanzane e condisci la pasta.|Aggiungi la provola a dadini a fuoco spento.'],
+['Primi','Mediterranea','Pasta zucca e salsiccia',4,35,'autunno',
+ '320 g mezze maniche|400 g zucca|250 g salsiccia|1 cipolla|40 g parmigiano|3 cucchiai olio extravergine|rosmarino q.b.',
+ 'Rosola cipolla e salsiccia sbriciolata.|Aggiungi la zucca a cubetti e un po\' d\'acqua, cuoci 15 minuti finché si sfalda.|Condisci la pasta con un po\' d\'acqua di cottura.|Completa con parmigiano.'],
+['Primi','Mediterranea','Pasta con i broccoli arriminati',4,35,'siciliana',
+ '320 g bucatini|1 cavolfiore verde|4 filetti acciughe|30 g uvetta|30 g pinoli|1 cipolla|1 bustina zafferano|40 g pangrattato|5 cucchiai olio extravergine',
+ 'Lessa il cavolfiore e tieni l\'acqua per la pasta.|Rosola cipolla e acciughe, aggiungi cavolfiore, uvetta, pinoli e zafferano e "arrimina", cioè mescola schiacciando.|Cuoci i bucatini nell\'acqua del cavolfiore e condiscili.|Completa con pangrattato tostato.'],
+['Primi','Mediterranea','Spaghetti alla carrettiera',4,15,'veloce,vegetariano,siciliana',
+ '360 g spaghetti|4 pomodori maturi|2 spicchi aglio|1 peperoncino|40 g pecorino|5 cucchiai olio extravergine|basilico q.b.',
+ 'Trita i pomodori crudi con aglio, basilico, peperoncino e olio.|Lascia insaporire mentre cuoci gli spaghetti.|Condisci la pasta con il sugo crudo e il pecorino.'],
+['Primi','Mediterranea','Pasta al limone',4,15,'veloce,vegetariano,costiera',
+ '320 g spaghetti|2 limoni|50 g burro|60 g parmigiano|pepe q.b.',
+ 'Grattugia la scorza dei limoni e spremine uno.|Cuoci gli spaghetti e scolali tenendo l\'acqua.|Mantecali con burro, succo, scorza, parmigiano e un po\' d\'acqua.|Completa con pepe.'],
+['Primi','Mediterranea','Risotto zucchine e gamberi',4,35,'pesce,senza glutine',
+ '320 g riso carnaroli|2 zucchine|300 g gamberi|1 scalogno|1 l brodo vegetale|1/2 bicchiere vino bianco|30 g burro|2 cucchiai olio extravergine',
+ 'Rosola scalogno e zucchine a cubetti con l\'olio.|Tosta il riso, sfuma con il vino e cuoci con il brodo.|A 5 minuti dalla fine aggiungi i gamberi.|Manteca con il burro.'],
+['Primi','Mediterranea','Risotto alla salsiccia',4,35,'senza glutine,inverno',
+ '320 g riso carnaroli|300 g salsiccia|1 cipolla|1 l brodo di carne|1/2 bicchiere vino rosso|30 g burro|50 g parmigiano',
+ 'Rosola cipolla e salsiccia sbriciolata.|Tosta il riso e sfuma con il vino.|Cuoci con il brodo per 18 minuti.|Manteca con burro e parmigiano.'],
+['Primi','Mediterranea','Gnocchi burro e salvia',4,15,'veloce,vegetariano,bambini',
+ '1 kg gnocchi di patate|60 g burro|50 g parmigiano|salvia q.b.',
+ 'Cuoci gli gnocchi e scolali appena salgono a galla.|Sciogli il burro con la salvia.|Condisci gli gnocchi con il burro e il parmigiano.'],
+['Primi','Mediterranea','Gnocchi al pesto',4,15,'veloce,vegetariano',
+ '1 kg gnocchi di patate|150 g pesto alla genovese|30 g parmigiano',
+ 'Cuoci gli gnocchi in acqua salata.|Scolali e condiscili con il pesto allungato con un cucchiaio d\'acqua di cottura.|Completa con parmigiano.'],
+['Primi','Mediterranea','Lasagna di Carnevale',8,180,'carnevale,forno,domenica',
+ '500 g lasagne|500 g carne macinata|1 l passata di pomodoro|500 g ricotta|300 g fior di latte|150 g salame napoletano|4 uova|100 g parmigiano|3 cucchiai olio extravergine|sale q.b.',
+ 'Prepara un ragù con la passata e cuocilo un\'ora; con metà carne forma delle polpettine e friggile.|Rassoda le uova e affettale; lavora la ricotta con un po\' di ragù.|Alterna sfoglie, ragù, ricotta, polpettine, fior di latte, salame, uova e parmigiano.|Cuoci a 180 °C per un\'ora e lascia riposare.'],
+['Primi','Mediterranea','Pasta \'ncasciata',6,90,'siciliana,forno',
+ '500 g anelletti|2 melanzane|400 g carne macinata|700 ml passata di pomodoro|150 g caciocavallo|80 g pecorino|1 cipolla|1 l olio di semi|3 cucchiai olio extravergine',
+ 'Friggi le melanzane a fette.|Prepara un ragù con cipolla, carne e passata.|Condisci la pasta con ragù e formaggi.|Fodera uno stampo con le melanzane, riempi con la pasta e cuoci a 180 °C per 30 minuti.'],
+['Primi','Mediterranea','Pasta al ragù bianco',4,60,'classico',
+ '320 g tagliatelle|400 g carne macinata mista|1 carota|1 costa sedano|1 cipolla|1/2 bicchiere vino bianco|250 ml brodo|3 cucchiai olio extravergine|40 g parmigiano|sale q.b.',
+ 'Rosola il trito di verdure nell\'olio, aggiungi la carne.|Sfuma con il vino e cuoci 40 minuti aggiungendo brodo.|Condisci la pasta e completa con parmigiano.'],
+['Primi','Mediterranea','Spaghetti all\'assassina',4,30,'pugliese,veloce',
+ '360 g spaghetti|400 ml passata di pomodoro|1 l acqua|2 spicchi aglio|2 peperoncini|5 cucchiai olio extravergine|sale q.b.',
+ 'Diluisci la passata con l\'acqua e sala: è il "brodo" di cottura.|In una padella di ferro rosola aglio e peperoncino, aggiungi gli spaghetti crudi e falli abbrustolire.|Cuocili aggiungendo il brodo un mestolo alla volta, lasciando che si attacchino un po\'.|In 15 minuti sono pronti, croccanti fuori.'],
+['Primi','Mediterranea','Trofie patate e fagiolini',4,25,'vegetariano,ligure',
+ '400 g trofie|2 patate|200 g fagiolini|150 g pesto alla genovese|30 g parmigiano',
+ 'Cuoci patate a cubetti e fagiolini nella stessa acqua per 10 minuti.|Aggiungi le trofie e cuoci.|Scola tutto e condisci con il pesto e un po\' d\'acqua di cottura.'],
+['Primi','Mediterranea','Penne alla vodka',4,25,'veloce,classico',
+ '360 g penne|200 ml panna|200 ml passata di pomodoro|100 g prosciutto cotto|1 bicchierino vodka|1 scalogno|20 g burro|40 g parmigiano',
+ 'Rosola lo scalogno nel burro con il prosciutto a listarelle.|Sfuma con la vodka, aggiungi passata e panna e cuoci 5 minuti.|Condisci le penne e completa con parmigiano.'],
+['Primi','Mediterranea','Farfalle panna, piselli e prosciutto',4,20,'veloce,bambini',
+ '320 g farfalle|200 g piselli|100 g prosciutto cotto|200 ml panna|20 g burro|40 g parmigiano',
+ 'Cuoci i piselli nel burro con un po\' d\'acqua per 8 minuti.|Aggiungi prosciutto e panna.|Condisci la pasta e completa con parmigiano.'],
+['Primi','Mediterranea','Pasta al burro e parmigiano',4,12,'veloce,bambini,vegetariano',
+ '320 g pasta corta|60 g burro|60 g parmigiano',
+ 'Cuoci la pasta e scolala tenendo un po\' d\'acqua.|Mantecala con burro, parmigiano e un cucchiaio d\'acqua di cottura.'],
+['Zuppe','Mediterranea','Minestra maritata',8,180,'natale,inverno',
+ '1 kg carne di maiale mista|300 g salsiccia|1 scarola|1/2 verza|500 g cicoria|300 g bietole|1 crosta di parmigiano|50 g parmigiano|sale q.b.',
+ 'Cuoci la carne in abbondante acqua per due ore, schiumando: è il brodo.|Lessa le verdure separatamente e strizzale.|Uniscile al brodo con la carne a pezzi e la crosta, cuoci altri 30 minuti.|Servi con parmigiano.'],
+['Zuppe','Mediterranea','Zuppa di cipolle',4,60,'inverno,vegetariano',
+ '1 kg cipolle|40 g burro|1 cucchiaio farina|1,2 l brodo vegetale|4 fette pane casereccio|100 g formaggio emmental|sale q.b.',
+ 'Affetta le cipolle e falle appassire nel burro a fuoco basso per 30 minuti.|Aggiungi la farina, poi il brodo, e cuoci 20 minuti.|Versa nelle ciotole, copri con pane e formaggio.|Gratina in forno finché il formaggio è dorato.'],
+['Zuppe','Mediterranea','Passato di verdure',4,45,'vegetariano,senza glutine,bambini',
+ '2 patate|2 carote|2 zucchine|1 porro|1 costa sedano|100 g piselli|1,2 l brodo vegetale|3 cucchiai olio extravergine|sale q.b.',
+ 'Taglia le verdure a pezzi.|Cuocile nel brodo per 30 minuti.|Frulla fino a una crema e condisci con olio crudo.'],
+['Zuppe','Mediterranea','Zuppa di pesce',4,60,'pesce,domenica',
+ '1,2 kg pesce misto da zuppa|500 g cozze|500 g vongole|300 g calamari|400 g pomodori pelati|2 spicchi aglio|1 peperoncino|5 cucchiai olio extravergine|8 fette pane casereccio|prezzemolo q.b.',
+ 'Apri cozze e vongole in padella.|Soffriggi aglio e peperoncino, aggiungi calamari e pelati.|Aggiungi i pesci, prima quelli più grossi, e un po\' d\'acqua; cuoci 20 minuti senza mescolare.|Unisci frutti di mare e prezzemolo e servi sul pane abbrustolito.'],
+['Zuppe','Mediterranea','Zuppa di cozze',4,30,'pesce',
+ '2 kg cozze|400 g pomodorini|2 spicchi aglio|1 peperoncino|5 cucchiai olio extravergine|8 fette pane casereccio|prezzemolo q.b.',
+ 'Soffriggi aglio e peperoncino, aggiungi i pomodorini.|Unisci le cozze pulite, copri e cuoci finché si aprono.|Completa con prezzemolo e servi sul pane abbrustolito.'],
+['Zuppe','Mediterranea','Zuppa di fagioli',4,50,'vegetariano,inverno,economico',
+ '600 g fagioli borlotti lessati|1 carota|1 cipolla|1 costa sedano|200 g pomodori pelati|1 rametto rosmarino|4 cucchiai olio extravergine|sale q.b.',
+ 'Soffriggi carota, cipolla e sedano nell\'olio.|Aggiungi fagioli, pelati e rosmarino, copri d\'acqua.|Cuoci 30 minuti e frulla metà della zuppa.|Servi con pane e olio crudo.'],
+['Zuppe','Mediterranea','Brodo di carne',8,180,'base,senza glutine',
+ '1 kg muscolo di manzo|1 osso di manzo|1 carota|1 cipolla|1 costa sedano|1 pomodoro|3 l acqua|sale q.b.',
+ 'Metti carne, osso e verdure in acqua fredda.|Porta a bollore e cuoci a fuoco minimo 3 ore, schiumando.|Sala alla fine e filtra.|La carne si serve come bollito.'],
+['Zuppe','Mediterranea','Zuppa di castagne e ceci',4,60,'autunno,vegetariano',
+ '300 g castagne lessate|400 g ceci lessati|1 cipolla|1 rametto rosmarino|1 l brodo vegetale|4 cucchiai olio extravergine|sale q.b.',
+ 'Rosola cipolla e rosmarino nell\'olio.|Aggiungi castagne, ceci e brodo.|Cuoci 30 minuti e frulla una parte.|Servi con olio crudo.'],
+['Contorni','Mediterranea','Cicoria e fagioli',4,30,'vegetariano,senza glutine',
+ '800 g cicoria|400 g fagioli cannellini lessati|2 spicchi aglio|1 peperoncino|4 cucchiai olio extravergine|sale q.b.',
+ 'Lessa la cicoria e strizzala.|Soffriggi aglio e peperoncino, aggiungi cicoria e fagioli.|Cuoci 10 minuti con un po\' d\'acqua dei fagioli.'],
+['Secondi','Mediterranea','Ossobuco alla milanese',4,120,'lombarda',
+ '4 ossibuchi di vitello|1 cipolla|40 g burro|2 cucchiai farina|1/2 bicchiere vino bianco|500 ml brodo|1 limone|1 spicchio aglio|prezzemolo q.b.',
+ 'Infarina gli ossibuchi e rosolali nel burro con la cipolla.|Sfuma con il vino e cuoci coperto un\'ora e mezza, bagnando con il brodo.|Prepara la gremolada tritando scorza di limone, aglio e prezzemolo.|Servi gli ossibuchi con la gremolada.'],
+['Secondi','Mediterranea','Brasato al vino rosso',6,180,'domenica,inverno,senza glutine',
+ '1,2 kg cappello del prete di manzo|750 ml vino rosso|1 carota|1 cipolla|1 costa sedano|2 chiodi di garofano|40 g burro|sale q.b.',
+ 'Marina la carne nel vino con le verdure per una notte.|Rosolala nel burro, poi aggiungi verdure e vino della marinata.|Cuoci coperto a fuoco basso 3 ore.|Frulla il fondo e servilo con la carne affettata.'],
+['Secondi','Mediterranea','Bollito con salsa verde',6,180,'inverno,piemontese',
+ '1,5 kg carne da bollito mista|1 carota|1 cipolla|1 costa sedano|50 g prezzemolo|20 g capperi|4 filetti acciughe|1 uovo sodo|50 g pane raffermo|1 cucchiaio aceto di vino bianco|100 ml olio extravergine',
+ 'Cuoci la carne in acqua bollente con le verdure per 3 ore.|Frulla prezzemolo, capperi, acciughe, uovo, pane bagnato nell\'aceto e olio.|Servi la carne affettata con la salsa verde.'],
+['Secondi','Mediterranea','Cotechino e lenticchie',6,60,'capodanno,senza glutine',
+ '1 cotechino precotto|400 g lenticchie secche|1 cipolla|1 carota|200 g pomodori pelati|3 cucchiai olio extravergine|sale q.b.',
+ 'Cuoci il cotechino nella sua confezione in acqua bollente per il tempo indicato.|Rosola cipolla e carota, aggiungi lenticchie e pelati, copri d\'acqua.|Cuoci le lenticchie 40 minuti.|Servi il cotechino a fette sulle lenticchie.'],
+['Secondi','Mediterranea','Spezzatino di vitello con piselli',4,90,'classico',
+ '800 g spezzatino di vitello|400 g piselli|1 cipolla|200 g passata di pomodoro|1/2 bicchiere vino bianco|2 cucchiai farina|4 cucchiai olio extravergine|sale q.b.',
+ 'Infarina la carne e rosolala con la cipolla.|Sfuma con il vino, aggiungi passata e un bicchiere d\'acqua.|Cuoci coperto un\'ora, poi aggiungi i piselli per altri 20 minuti.'],
+['Secondi','Mediterranea','Polpette al forno',4,40,'forno,bambini',
+ '500 g carne macinata|2 uova|60 g parmigiano|100 g pane raffermo|1 spicchio aglio|3 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Impasta carne, uova, parmigiano, pane ammollato, aglio, prezzemolo e sale.|Forma le polpette e mettile in teglia con un filo d\'olio.|Cuoci a 200 °C per 25 minuti, girandole a metà.'],
+['Secondi','Mediterranea','Spiedini di carne',4,30,'estate,griglia',
+ '600 g carne mista (pollo, maiale, salsiccia)|2 peperoni|1 cipolla rossa|4 cucchiai olio extravergine|rosmarino q.b.|sale q.b.',
+ 'Taglia carne e verdure a pezzi regolari.|Infilali alternati sugli spiedini.|Condisci con olio, rosmarino e sale.|Cuoci sulla griglia o in forno a 220 °C per 15-20 minuti.'],
+['Secondi','Mediterranea','Arista al forno',6,90,'forno,domenica,senza glutine',
+ '1,2 kg arista di maiale|3 spicchi aglio|1 rametto rosmarino|1/2 bicchiere vino bianco|4 cucchiai olio extravergine|sale q.b.|pepe q.b.',
+ 'Pratica dei tagli nella carne e inserisci aglio e rosmarino.|Massaggia con olio, sale e pepe.|Cuoci a 180 °C per un\'ora e un quarto, bagnando con il vino.|Lascia riposare 10 minuti prima di affettare.'],
+['Secondi','Mediterranea','Agnello a scottadito',4,20,'pasqua,griglia,senza glutine',
+ '1 kg costolette d\'agnello|1 rametto rosmarino|1 limone|4 cucchiai olio extravergine|sale q.b.|pepe q.b.',
+ 'Marina le costolette con olio, rosmarino e pepe per 30 minuti.|Cuocile sulla griglia caldissima 2-3 minuti per lato.|Sala e servi subito con il limone.'],
+['Secondi','Mediterranea','Pollo arrosto',4,80,'forno,domenica,senza glutine',
+ '1 pollo intero|1 limone|3 spicchi aglio|1 rametto rosmarino|4 cucchiai olio extravergine|sale q.b.|pepe q.b.',
+ 'Riempi il pollo con limone, aglio e rosmarino.|Massaggialo con olio, sale e pepe.|Cuoci a 190 °C per un\'ora e un quarto, bagnandolo con il fondo.'],
+['Secondi','Mediterranea','Pollo alle olive',4,50,'senza glutine',
+ '1 kg pollo a pezzi|100 g olive|20 g capperi|1 spicchio aglio|1/2 bicchiere vino bianco|300 g pomodorini|4 cucchiai olio extravergine|sale q.b.',
+ 'Rosola il pollo con olio e aglio.|Sfuma con il vino, aggiungi pomodorini, olive e capperi.|Cuoci coperto 35 minuti.'],
+['Secondi','Mediterranea','Pollo in umido con patate',4,60,'bambini,senza glutine',
+ '1 kg pollo a pezzi|600 g patate|1 cipolla|400 g passata di pomodoro|4 cucchiai olio extravergine|rosmarino q.b.|sale q.b.',
+ 'Rosola il pollo con cipolla e olio.|Aggiungi passata, patate a pezzi, rosmarino e un bicchiere d\'acqua.|Cuoci coperto 45 minuti.'],
+['Secondi','Mediterranea','Involtini di tacchino',4,35,'bambini',
+ '8 fettine di tacchino|8 fette prosciutto cotto|100 g provola|1/2 bicchiere vino bianco|30 g burro|2 cucchiai farina|sale q.b.',
+ 'Su ogni fettina metti prosciutto e un bastoncino di provola, arrotola e chiudi con uno stecchino.|Infarina gli involtini e rosolali nel burro.|Sfuma con il vino e cuoci coperto 15 minuti.'],
+['Secondi','Mediterranea','Hamburger fatti in casa',4,20,'bambini,veloce',
+ '600 g carne macinata di manzo|1 uovo|30 g parmigiano|4 panini per hamburger|1 pomodoro|insalata q.b.|sale q.b.',
+ 'Impasta carne, uovo, parmigiano e sale e forma 4 hamburger.|Cuocili sulla piastra 4 minuti per lato.|Servili nei panini con pomodoro e insalata.'],
+['Secondi','Mediterranea','Fegato alla veneziana',4,30,'veneto,senza glutine',
+ '500 g fegato di vitello|600 g cipolle|40 g burro|2 cucchiai olio extravergine|1/2 bicchiere vino bianco|prezzemolo q.b.|sale q.b.',
+ 'Affetta le cipolle e falle appassire in burro e olio a fuoco basso per 20 minuti.|Aggiungi il fegato a striscioline e cuoci a fuoco vivo 3 minuti.|Sfuma con il vino, sala e completa con prezzemolo.'],
+['Secondi','Mediterranea','Trippa alla romana',4,60,'romana',
+ '1 kg trippa precotta|400 g pomodori pelati|1 cipolla|1 carota|1 costa sedano|60 g pecorino romano|4 cucchiai olio extravergine|mentuccia q.b.|sale q.b.',
+ 'Taglia la trippa a listarelle.|Soffriggi le verdure tritate, aggiungi trippa e pelati.|Cuoci a fuoco basso 45 minuti.|Servi con pecorino e mentuccia.'],
+['Secondi','Mediterranea','Salsiccia e fagioli',4,40,'inverno,senza glutine',
+ '8 salsicce di maiale|500 g fagioli cannellini lessati|400 g pomodori pelati|1 spicchio aglio|salvia q.b.|3 cucchiai olio extravergine|sale q.b.',
+ 'Rosola le salsicce bucherellate con olio e aglio.|Aggiungi pelati e salvia e cuoci 15 minuti.|Unisci i fagioli e cuoci altri 15 minuti.'],
+['Secondi','Mediterranea','Tagliata di manzo con rucola',4,15,'veloce,senza glutine',
+ '800 g controfiletto di manzo|100 g rucola|200 g pomodorini|40 g grana|4 cucchiai olio extravergine|sale grosso q.b.',
+ 'Cuoci la carne su una piastra caldissima 4 minuti per lato.|Lasciala riposare 5 minuti e tagliala a fette.|Servi su rucola e pomodorini con scaglie di grana, olio e sale grosso.'],
+['Secondi','Mediterranea','Coniglio all\'ischitana',4,90,'campania,domenica,senza glutine',
+ '1,2 kg coniglio a pezzi|300 g pomodorini|1 testa d\'aglio|1 bicchiere vino bianco|1 peperoncino|5 cucchiai olio extravergine|basilico q.b.|rosmarino q.b.|sale q.b.',
+ 'Rosola il coniglio nell\'olio con l\'aglio in camicia finché è ben dorato.|Sfuma con il vino.|Aggiungi pomodorini, peperoncino ed erbe e cuoci coperto un\'ora.|Il sugo è ottimo per condire i bucatini.'],
+['Secondi','Mediterranea','Frittata di cipolle',4,30,'vegetariano,economico,senza glutine',
+ '6 uova|3 cipolle|40 g parmigiano|3 cucchiai olio extravergine|sale q.b.',
+ 'Affetta le cipolle e falle appassire nell\'olio per 15 minuti.|Sbatti le uova con parmigiano e sale e versale sulle cipolle.|Cuoci a fuoco basso e gira la frittata.'],
+['Secondi','Mediterranea','Gattò di patate',6,75,'forno,classico',
+ '1,2 kg patate|2 uova|80 g parmigiano|200 g provola|150 g salame napoletano|100 g prosciutto cotto|40 g burro|60 g pangrattato|sale q.b.',
+ 'Lessa e schiaccia le patate, impastale con uova, parmigiano e sale.|Imburra una teglia e spolverala di pangrattato.|Metti metà impasto, poi provola, salame e prosciutto, e copri con il resto.|Completa con pangrattato e burro e cuoci a 200 °C per 40 minuti.'],
+['Secondi','Mediterranea','Pesce spada alla ghiotta',4,35,'pesce,siciliana',
+ '4 fette pesce spada|400 g pomodorini|50 g olive|20 g capperi|1 cipolla|30 g uvetta|30 g pinoli|4 cucchiai olio extravergine|sale q.b.',
+ 'Prepara un sugo con cipolla, pomodorini, olive, capperi, uvetta e pinoli.|Adagia il pesce spada nel sugo.|Cuoci coperto 10 minuti girandolo a metà.'],
+['Secondi','Mediterranea','Sgombro al forno con pomodorini',4,30,'pesce,forno,economico',
+ '4 sgombri|300 g pomodorini|50 g olive|1 spicchio aglio|4 cucchiai olio extravergine|origano q.b.|sale q.b.',
+ 'Disponi gli sgombri puliti in teglia con pomodorini, olive e aglio.|Condisci con olio, origano e sale.|Cuoci a 200 °C per 20 minuti.'],
+['Secondi','Mediterranea','Orata all\'acqua pazza',4,30,'pesce,senza glutine,campania',
+ '2 orate|300 g pomodorini|2 spicchi aglio|1 peperoncino|1 bicchiere acqua|4 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'In una padella ampia rosola aglio e peperoncino, aggiungi i pomodorini.|Adagia le orate e versa l\'acqua.|Cuoci coperto 15-20 minuti bagnando il pesce con il sugo.|Completa con prezzemolo.'],
+['Secondi','Mediterranea','Frittura di paranza',4,30,'pesce,fritto',
+ '800 g pesciolini misti|150 g farina|1 l olio di semi|1 limone|sale q.b.',
+ 'Pulisci i pesciolini, sciacquali e asciugali bene.|Infarinali e scuoti la farina in eccesso.|Friggili pochi alla volta in olio caldo.|Sala e servi con il limone.'],
+['Antipasti e fritti','Mediterranea','Calamari fritti',4,25,'pesce,fritto',
+ '800 g calamari|150 g farina|1 l olio di semi|1 limone|sale q.b.',
+ 'Taglia i calamari ad anelli e asciugali.|Infarinali e friggili in olio caldo per 2 minuti.|Sala e servi subito con il limone.'],
+['Secondi','Mediterranea','Gamberoni alla griglia',4,15,'pesce,veloce,senza glutine',
+ '12 gamberoni|1 limone|1 spicchio aglio|4 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Incidi i gamberoni sul dorso ed elimina il filo nero.|Condiscili con olio, aglio, prezzemolo e limone.|Cuocili sulla griglia 2 minuti per lato.'],
+['Secondi','Mediterranea','Totani e patate',4,50,'pesce,campania',
+ '800 g totani|600 g patate|200 g pomodorini|2 spicchi aglio|1/2 bicchiere vino bianco|5 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Taglia i totani ad anelli e rosolali con olio e aglio.|Sfuma con il vino, aggiungi pomodorini e patate a spicchi.|Cuoci coperto 35 minuti, aggiungendo acqua se serve.|Completa con prezzemolo.'],
+['Secondi','Mediterranea','Polpo alla luciana',4,70,'pesce,campania',
+ '1 kg polpo|400 g pomodori pelati|50 g olive di Gaeta|20 g capperi|2 spicchi aglio|1 peperoncino|4 cucchiai olio extravergine|prezzemolo q.b.',
+ 'In una pentola di coccio soffriggi aglio e peperoncino.|Aggiungi polpo, pelati, olive e capperi.|Copri e cuoci a fuoco basso un\'ora: il polpo cuoce nella sua acqua.|Completa con prezzemolo e servi con pane abbrustolito.'],
+['Secondi','Mediterranea','Platessa impanata',4,20,'pesce,bambini,veloce',
+ '600 g filetti di platessa|1 uovo|100 g pangrattato|1 limone|3 cucchiai olio extravergine|sale q.b.',
+ 'Passa i filetti nell\'uovo e nel pangrattato.|Cuocili in padella con l\'olio 3 minuti per lato, oppure in forno a 200 °C per 15 minuti.|Servi con limone.'],
+['Contorni','Mediterranea','Patate in umido',4,40,'vegetariano,senza glutine',
+ '1 kg patate|1 cipolla|300 g passata di pomodoro|4 cucchiai olio extravergine|rosmarino q.b.|sale q.b.',
+ 'Rosola la cipolla nell\'olio, aggiungi le patate a pezzi.|Unisci passata, rosmarino e un bicchiere d\'acqua.|Cuoci coperto 30 minuti.'],
+['Contorni','Mediterranea','Cipolline in agrodolce',4,40,'vegetariano,senza glutine',
+ '600 g cipolline borettane|30 g burro|2 cucchiai zucchero|4 cucchiai aceto di vino bianco|sale q.b.',
+ 'Sbuccia le cipolline e rosolale nel burro.|Aggiungi zucchero, aceto e un po\' d\'acqua.|Cuoci coperto 25 minuti finché sono lucide.'],
+['Contorni','Mediterranea','Zucchine trifolate',4,20,'vegetariano,veloce,senza glutine',
+ '800 g zucchine|1 spicchio aglio|3 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Taglia le zucchine a rondelle.|Cuocile in padella con olio e aglio a fuoco vivo 10 minuti.|Sala e completa con prezzemolo.'],
+['Contorni','Mediterranea','Verdure grigliate',4,30,'vegetariano,senza glutine,estate',
+ '2 zucchine|1 melanzana|2 peperoni|1 cipolla rossa|5 cucchiai olio extravergine|1 spicchio aglio|menta q.b.|sale q.b.',
+ 'Taglia le verdure a fette e grigliale sulla piastra caldissima.|Condiscile con olio, aglio, menta e sale.|Lasciale insaporire qualche minuto.'],
+['Contorni','Mediterranea','Insalata mista',4,10,'vegetariano,veloce,senza glutine',
+ '1 cespo lattuga|2 pomodori|1 carota|1 cetriolo|4 cucchiai olio extravergine|1 cucchiaio aceto di vino bianco|sale q.b.',
+ 'Lava e taglia le verdure.|Condisci con olio, aceto e sale al momento di servire.'],
+['Contorni','Mediterranea','Fagioli all\'uccelletto',4,30,'vegetariano,toscana,senza glutine',
+ '600 g fagioli cannellini lessati|300 g pomodori pelati|2 spicchi aglio|salvia q.b.|4 cucchiai olio extravergine|sale q.b.',
+ 'Rosola aglio e salvia nell\'olio.|Aggiungi i pelati e cuoci 10 minuti.|Unisci i fagioli e cuoci altri 15 minuti.'],
+['Contorni','Mediterranea','Friarielli in padella',4,25,'vegetariano,senza glutine,inverno',
+ '1 kg friarielli|2 spicchi aglio|1 peperoncino|5 cucchiai olio extravergine|sale q.b.',
+ 'Pulisci i friarielli tenendo foglie e cime tenere.|Mettili ancora umidi in padella con olio, aglio e peperoncino.|Cuoci coperto 15-20 minuti mescolando; sala.'],
+['Contorni','Mediterranea','Cicoria ripassata',4,25,'vegetariano,senza glutine',
+ '1 kg cicoria|2 spicchi aglio|1 peperoncino|4 cucchiai olio extravergine|sale q.b.',
+ 'Lessa la cicoria 10 minuti e strizzala.|Ripassala in padella con olio, aglio e peperoncino per 5 minuti.'],
+['Contorni','Mediterranea','Patate saltate in padella',4,30,'vegetariano,senza glutine,bambini',
+ '1 kg patate|1 spicchio aglio|1 rametto rosmarino|5 cucchiai olio extravergine|sale q.b.',
+ 'Taglia le patate a cubetti e sbollentale 5 minuti.|Scolale e cuocile in padella con olio, aglio e rosmarino a fuoco vivo, girandole spesso.|Sala quando sono dorate.'],
+['Contorni','Mediterranea','Insalata di pomodori e cipolla',4,10,'vegetariano,veloce,estate,senza glutine',
+ '6 pomodori|1 cipolla rossa|4 cucchiai olio extravergine|origano q.b.|basilico q.b.|sale q.b.',
+ 'Taglia i pomodori a spicchi e la cipolla a fettine sottili.|Condisci con olio, sale, origano e basilico.|Lascia riposare 10 minuti prima di servire.'],
+['Contorni','Mediterranea','Pomodori gratinati',4,35,'vegetariano,forno,estate',
+ '6 pomodori|60 g pangrattato|30 g parmigiano|1 spicchio aglio|4 cucchiai olio extravergine|prezzemolo q.b.|sale q.b.',
+ 'Taglia i pomodori a metà e svuotali un po\'.|Riempili con pangrattato, parmigiano, aglio e prezzemolo.|Condisci con olio e cuoci a 180 °C per 25 minuti.'],
+['Contorni','Mediterranea','Carciofi fritti',4,30,'vegetariano,fritto,primavera',
+ '6 carciofi|2 uova|150 g farina|1 l olio di semi|1 limone|sale q.b.',
+ 'Pulisci i carciofi e tagliali a spicchi, tienili in acqua e limone.|Asciugali, passali nella farina e nell\'uovo.|Friggili in olio caldo e sala.'],
+['Antipasti e fritti','Mediterranea','Panzerotti',6,120,'fritto,pugliese',
+ '500 g farina 00|300 ml acqua|10 g lievito di birra fresco|10 g sale|300 g mozzarella|300 ml passata di pomodoro|1 l olio di semi|origano q.b.',
+ 'Impasta farina, acqua, lievito e sale e lascia lievitare 2 ore.|Dividi in palline e stendile a disco.|Farcisci con mozzarella e un cucchiaio di pomodoro, chiudi a mezzaluna sigillando bene.|Friggi in olio caldo.'],
+['Antipasti e fritti','Mediterranea','Montanarine',6,120,'fritto,friggitoria',
+ '500 g farina 00|300 ml acqua|10 g lievito di birra fresco|10 g sale|400 ml passata di pomodoro|60 g parmigiano|1 l olio di semi|basilico q.b.',
+ 'Impasta e lascia lievitare 2 ore.|Forma dei dischetti e friggili finché si gonfiano.|Copri con sugo di pomodoro, parmigiano e basilico.|Passale un minuto in forno caldo.'],
+['Antipasti e fritti','Mediterranea','Frittelle di zucchine',4,30,'vegetariano,fritto',
+ '3 zucchine|2 uova|100 g farina|40 g parmigiano|1 l olio di semi|menta q.b.|sale q.b.',
+ 'Grattugia le zucchine e strizzale.|Mescola con uova, farina, parmigiano, menta e sale.|Friggi a cucchiaiate in olio caldo.'],
+['Antipasti e fritti','Mediterranea','Polpette di melanzane',4,50,'vegetariano,fritto',
+ '3 melanzane|2 uova|80 g parmigiano|100 g pane raffermo|1 spicchio aglio|100 g pangrattato|1 l olio di semi|basilico q.b.|sale q.b.',
+ 'Lessa le melanzane a cubetti e strizzale bene.|Impasta con uova, parmigiano, pane ammollato, aglio, basilico e sale.|Forma le polpette, passale nel pangrattato e friggile.'],
+['Antipasti e fritti','Mediterranea','Supplì',6,80,'fritto,romana',
+ '400 g riso|400 ml passata di pomodoro|200 g carne macinata|1 l brodo|150 g mozzarella|2 uova|150 g pangrattato|1 l olio di semi|50 g parmigiano',
+ 'Prepara un ragù con carne e passata e cuoci il riso nel ragù aggiungendo brodo.|Manteca con parmigiano e lascia raffreddare.|Forma dei cilindri con un pezzo di mozzarella al centro.|Passali in uovo e pangrattato e friggili.'],
+['Pizze e lievitati','Mediterranea','Pizza marinara',4,90,'forno,vegetariano',
+ '1 kg farina 00|600 ml acqua|25 g sale|3 g lievito di birra fresco|600 g pomodori pelati|4 spicchi aglio|origano q.b.|olio extravergine q.b.',
+ 'Prepara l\'impasto come per la margherita e lascia lievitare.|Stendi i panetti e condisci con pomodoro schiacciato, aglio a fettine e origano.|Aggiungi un filo d\'olio e cuoci alla massima temperatura per 8-10 minuti.'],
+['Pizze e lievitati','Mediterranea','Pizza in teglia',6,240,'forno,bambini',
+ '500 g farina 0|380 ml acqua|5 g lievito di birra fresco|12 g sale|400 ml passata di pomodoro|300 g mozzarella|4 cucchiai olio extravergine|origano q.b.',
+ 'Impasta farina, acqua e lievito, aggiungi sale e olio; lascia lievitare 3 ore.|Stendi nella teglia unta con le dita.|Condisci con passata, sale e olio e cuoci a 250 °C per 15 minuti.|Aggiungi la mozzarella e cuoci altri 5 minuti.'],
+['Pizze e lievitati','Mediterranea','Focaccia pugliese',6,240,'forno,pugliese',
+ '400 g semola rimacinata|100 g farina 0|1 patata|350 ml acqua|8 g lievito di birra fresco|10 g sale|300 g pomodorini|80 ml olio extravergine|origano q.b.',
+ 'Lessa e schiaccia la patata, impastala con farine, acqua, lievito e sale.|Lascia lievitare 2 ore e stendi nella teglia ben unta.|Schiaccia sopra i pomodorini, condisci con olio e origano.|Dopo un\'altra ora cuoci a 230 °C per 25 minuti.'],
+['Pizze e lievitati','Mediterranea','Pane fatto in casa',8,300,'forno,base',
+ '500 g farina 0|350 ml acqua|5 g lievito di birra fresco|10 g sale',
+ 'Impasta farina, acqua e lievito, poi aggiungi il sale.|Lascia lievitare 3 ore, facendo qualche piega ogni ora.|Forma la pagnotta e lasciala lievitare un\'altra ora.|Cuoci a 230 °C per 40 minuti, con un pentolino d\'acqua nel forno.'],
+['Dolci','Mediterranea','Chiacchiere',10,60,'carnevale,fritto',
+ '500 g farina 00|80 g zucchero|3 uova|50 g burro|50 ml vino bianco|1 limone|1 l olio di semi|zucchero a velo q.b.',
+ 'Impasta farina, zucchero, uova, burro, vino e scorza di limone; riposo 30 minuti.|Stendi la pasta sottilissima e ritaglia dei rettangoli.|Friggili pochi secondi per lato.|Spolvera di zucchero a velo.'],
+['Dolci','Mediterranea','Castagnaccio',8,50,'autunno,senza glutine,toscana',
+ '300 g farina di castagne|450 ml acqua|30 g pinoli|30 g uvetta|30 g noci|1 rametto rosmarino|3 cucchiai olio extravergine',
+ 'Mescola farina di castagne e acqua fino a una pastella liscia.|Versala in una teglia unta, alta un dito.|Cospargi di pinoli, uvetta, noci e rosmarino e un filo d\'olio.|Cuoci a 190 °C per 35 minuti.'],
+['Dolci','Mediterranea','Cantucci',10,50,'forno,toscana',
+ '250 g farina 00|180 g zucchero|2 uova|150 g mandorle|1/2 bustina lievito per dolci|1 arancia',
+ 'Impasta farina, zucchero, uova, lievito e scorza d\'arancia, poi aggiungi le mandorle intere.|Forma dei filoni e cuocili a 180 °C per 20 minuti.|Tagliali in diagonale ancora caldi.|Rimettili in forno 10 minuti per farli biscottare.'],
+['Dolci','Mediterranea','Biscotti al burro',10,40,'forno,bambini,colazione',
+ '250 g farina 00|125 g burro|100 g zucchero|1 uovo|1 bustina vanillina',
+ 'Lavora burro e zucchero, aggiungi uovo e vanillina, poi la farina.|Riposo in frigo 30 minuti.|Stendi e ritaglia i biscotti con le formine.|Cuoci a 180 °C per 12 minuti.'],
+['Dolci','Mediterranea','Torta di ricotta',8,70,'forno',
+ '500 g ricotta|150 g zucchero|3 uova|50 g farina 00|1 limone|1 bustina vanillina|zucchero a velo q.b.',
+ 'Lavora la ricotta con lo zucchero.|Aggiungi uova, farina, scorza di limone e vanillina.|Versa in uno stampo foderato.|Cuoci a 170 °C per 50 minuti e lascia raffreddare.'],
+['Dolci','Mediterranea','Crostata alla crema',8,70,'forno,domenica',
+ '300 g farina 00|120 g zucchero|150 g burro|1 uovo|500 ml crema pasticcera|zucchero a velo q.b.',
+ 'Prepara la frolla con farina, zucchero, burro e uovo; riposo in frigo.|Fodera lo stampo e riempi con la crema fredda.|Fai le strisce con la frolla rimasta.|Cuoci a 180 °C per 35 minuti.'],
+['Dolci','Mediterranea','Budino al cioccolato',6,20,'senza forno,bambini',
+ '500 ml latte|100 g zucchero|40 g cacao amaro|40 g amido di mais|50 g cioccolato fondente',
+ 'Mescola zucchero, cacao e amido, aggiungi il latte a filo.|Cuoci mescolando finché si addensa.|Unisci il cioccolato a pezzi.|Versa negli stampini e lascia in frigo 3 ore.'],
+['Dolci','Mediterranea','Frittelle di mele',6,30,'fritto,bambini',
+ '3 mele|150 g farina 00|2 uova|150 ml latte|30 g zucchero|1 l olio di semi|cannella q.b.|zucchero q.b.',
+ 'Prepara una pastella con farina, uova, latte e zucchero.|Sbuccia le mele, togli il torsolo e tagliale ad anelli.|Passa gli anelli nella pastella e friggili.|Passali nello zucchero con la cannella.'],
+['Dolci','Mediterranea','Torta paradiso',8,60,'forno,colazione',
+ '150 g farina 00|150 g fecola di patate|200 g burro|200 g zucchero|4 uova|1 bustina lievito per dolci|1 limone|zucchero a velo q.b.',
+ 'Monta burro morbido e zucchero, aggiungi le uova una alla volta.|Unisci farina, fecola, lievito e scorza di limone.|Cuoci a 170 °C per 45 minuti.|Spolvera di zucchero a velo.'],
+['Dolci','Mediterranea','Ciambelline al vino',10,40,'forno,economico',
+ '500 g farina 00|150 g zucchero|125 ml olio di semi|125 ml vino bianco|1/2 bustina lievito per dolci|zucchero q.b.',
+ 'Impasta farina, zucchero, olio, vino e lievito.|Forma dei cordoncini e chiudili a ciambellina.|Passale nello zucchero.|Cuoci a 180 °C per 20 minuti.'],
+['Dolci','Mediterranea','Torta della nonna',8,80,'forno,domenica',
+ '300 g farina 00|120 g zucchero|150 g burro|1 uovo|500 ml crema pasticcera|30 g pinoli|zucchero a velo q.b.',
+ 'Prepara la frolla e dividila in due dischi.|Fodera lo stampo con un disco, riempi con la crema e copri con l\'altro.|Cospargi di pinoli.|Cuoci a 170 °C per 45 minuti e spolvera di zucchero a velo.'],
+['Dolci','Mediterranea','Roccocò',12,60,'natale,forno',
+ '500 g farina 00|400 g zucchero|300 g mandorle|10 g pisto napoletano|1 arancia|1 mandarino|250 ml acqua|1 uovo',
+ 'Tosta le mandorle.|Impasta farina, zucchero, pisto, scorze grattugiate e acqua, poi aggiungi le mandorle.|Forma delle ciambelline schiacciate e spennellale con l\'uovo.|Cuoci a 180 °C per 20 minuti: devono restare dure.']
 ];
 const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const LIB = LIB_RAW.map(([cat, orig, name, servings, time, tags, ings, steps]) => ({
@@ -1545,26 +1867,59 @@ const SR = (() => { const C = window.Capacitor; try { if (!C || !C.isNativePlatf
 const WEB_SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 const canDictate = () => !!(SR || WEB_SR);
 let listening = false;
-async function dictate() {
-  const inp = $('#ri'), btn = $('#mic'); if (!inp) return;
-  const done = txt => { if (txt) { inp.value = txt; $('#ri-prev').textContent = previewWhen(txt); inp.focus(); } };
+/* ascolta una frase e la restituisce come testo (null se non ha capito) */
+async function listenOnce(btnId, prompt) {
   if (SR) {
     try {
-      if (!(await SR.available()).available) return toast('Il riconoscimento vocale non è disponibile su questo telefono');
-      const p = await SR.requestPermissions(); if (p.speechRecognition !== 'granted') return toast('Per dettare serve il permesso del microfono');
-      const r = await SR.start({language: 'it-IT', maxResults: 1, prompt: 'Dimmi il promemoria', partialResults: false, popup: true});
-      done(r && r.matches && r.matches[0]);
-    } catch (e) { toast('Non ho capito, riprova'); }
-    return;
+      if (!(await SR.available()).available) { toast('Il riconoscimento vocale non è disponibile su questo telefono'); return null; }
+      const p = await SR.requestPermissions(); if (p.speechRecognition !== 'granted') { toast('Per dettare serve il permesso del microfono'); return null; }
+      const r = await SR.start({language: 'it-IT', maxResults: 1, prompt, partialResults: false, popup: true});
+      return (r && r.matches && r.matches[0]) || null;
+    } catch (e) { toast('Non ho capito, riprova'); return null; }
   }
-  if (!WEB_SR) return;
-  if (listening) return;
-  const rec = new WEB_SR(); rec.lang = 'it-IT'; rec.interimResults = true; rec.maxAlternatives = 1;
-  listening = true; if (btn) btn.classList.add('on');
-  rec.onresult = e => done([...e.results].map(x => x[0].transcript).join(''));
-  rec.onerror = e => toast(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'Qui il microfono non è disponibile: usa il microfono della tastiera' : e.error === 'no-speech' ? 'Non ho sentito niente, riprova' : 'Non ho capito, riprova');
-  rec.onend = () => { listening = false; const b = $('#mic'); if (b) b.classList.remove('on'); };
-  try { rec.start(); } catch (e) { listening = false; if (btn) btn.classList.remove('on'); }
+  if (!WEB_SR || listening) return null;
+  return new Promise(resolve => {
+    const rec = new WEB_SR(); rec.lang = 'it-IT'; rec.interimResults = false; rec.maxAlternatives = 1;
+    let txt = null; listening = true; const b0 = $('#' + btnId); if (b0) b0.classList.add('on');
+    rec.onresult = e => { txt = [...e.results].map(x => x[0].transcript).join(''); };
+    rec.onerror = e => toast(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'Qui il microfono non è disponibile: usa il microfono della tastiera' : e.error === 'no-speech' ? 'Non ho sentito niente, riprova' : 'Non ho capito, riprova');
+    rec.onend = () => { listening = false; const b = $('#' + btnId); if (b) b.classList.remove('on'); resolve(txt); };
+    try { rec.start(); } catch (e) { listening = false; if (b0) b0.classList.remove('on'); resolve(null); }
+  });
+}
+async function dictate() {
+  const txt = await listenOnce('mic', 'Dimmi il promemoria'), inp = $('#ri');
+  if (txt && inp) { inp.value = txt; $('#ri-prev').textContent = previewWhen(txt); inp.focus(); }
+}
+/* "mi serve il latte, due chili di patate e il pane" -> latte; 2 kg patate; pane */
+const NUM_W = {un: 1, uno: 1, una: 1, due: 2, tre: 3, quattro: 4, cinque: 5, sei: 6, sette: 7, otto: 8, nove: 9, dieci: 10, undici: 11, dodici: 12, quindici: 15, venti: 20, trenta: 30, mezzo: 0.5, mezza: 0.5, paio: 2};
+const UNIT_W = [[/^(chili|chilo|kg|chilogrammi?)$/, 'kg'], [/^(grammi|grammo|gr|g)$/, 'g'], [/^(etti|etto|hg)$/, 'hg'], [/^(litri|litro|l)$/, 'l'], [/^(millilitri|ml)$/, 'ml'], [/^(bottiglie|bottiglia)$/, 'bottiglie'], [/^(confezioni|confezione|pacchi|pacco|pacchetti|pacchetto|conf\.?)$/, 'conf.'], [/^(scatole|scatola|scatolette|scatoletta)$/, 'scatole'], [/^(barattoli|barattolo|vasetti|vasetto)$/, 'barattoli'], [/^(mazzi|mazzo|mazzetti|mazzetto)$/, 'mazzi'], [/^(vaschette|vaschetta)$/, 'vaschette'], [/^(pezzi|pezzo|pz)$/, 'pz'], [/^(fette|fetta)$/, 'fette'], [/^(lattine|lattina)$/, 'lattine'], [/^(rotoli|rotolo)$/, 'rotoli'], [/^(bustine|bustina|buste|busta)$/, 'buste']];
+function parseSpoken(text) {
+  let s = ' ' + String(text).toLowerCase().replace(/[’`]/g, "'") + ' ';
+  s = s.replace(/\b(mi|ci) serv(e|ono)\b|\b(devo|dobbiamo|devi) (comprare|prendere)\b|\b(compra|comprare|prendi|prendere|aggiungi|aggiungere|metti|mettere|ricordati|ricordami)\b( di| anche)?|\b(alla|nella) lista( della spesa)?\b|\bper favore\b|\bgrazie\b|\bmanca(no)?\b|\bè finit[oa]\b|\bsono finit[ie]\b/g, ' ');
+  s = s.replace(/\s+e\s+mezz[oa]\b/g, ' emezzo');
+  const out = [];
+  for (let part of s.split(/,|;|\.|\s+e\s+|\s+ed\s+|\s+poi\s+|\s+anche\s+|\s+più\s+/)) {
+    let w = part.trim().replace(/^(un po' d[i']|qualche|dell'|dello|della|delle|degli|dei|del|l'|un'|il|lo|la|i|gli|le)\s*/, '').trim().split(/\s+/).filter(Boolean);
+    if (!w.length) continue;
+    let qty = null, unit = '';
+    const n = w[0].replace(',', '.');
+    if (/^\d+(\.\d+)?$/.test(n)) { qty = +n; w.shift(); } else if (NUM_W[w[0]] != null) { qty = NUM_W[w[0]]; w.shift(); }
+    if (qty != null && w[0] === 'emezzo') { qty += 0.5; w.shift(); }
+    if (w.length) { const u = UNIT_W.find(([re]) => re.test(w[0])); if (u) { unit = u[1]; w.shift(); if (qty == null) qty = 1; } }
+    if (qty != null && w[0] === 'emezzo') { qty += 0.5; w.shift(); }
+    if (w[0] === 'di' || w[0] === "d'") w.shift();
+    let name = w.join(' ').replace(/^(d'|l'|dell'|un')/, '').replace(/^(di|del|della|dei|delle)\s+/, '').trim();
+    if (name.length < 2) continue;
+    out.push({name, qty, unit});
+  }
+  return out;
+}
+async function shopByVoice() {
+  const txt = await listenOnce('mic-shop', 'Dimmi cosa serve'); if (!txt) return;
+  const items = parseSpoken(txt);
+  if (!items.length) return toast(`Non ho capito: "${txt}"`);
+  withUndo(`Aggiunti: ${items.map(i => [fmtQty(i.qty), i.unit, i.name].filter(Boolean).join(' ')).join(', ')}`, () => items.forEach(i => addShop(i)));
 }
 
 /* ---------- sezioni scelte dalla famiglia ---------- */
@@ -1857,7 +2212,7 @@ const V = {
   },
 
   spesa() {
-    let html = `<form class="quick" data-form="quick" autocomplete="off"><label class="vh" for="qi">Cosa manca?</label><input id="qi" name="t" placeholder="Cosa manca? es. 2 kg patate" enterkeyhint="done"><button class="btn primary" aria-label="Aggiungi">${ic('plus')}</button></form>`;
+    let html = `<form class="quick" data-form="quick" autocomplete="off"><label class="vh" for="qi">Cosa manca?</label><input id="qi" name="t" placeholder="Cosa manca? es. 2 kg patate" enterkeyhint="done">${canDictate() ? `<button type="button" class="btn mic" id="mic-shop" data-a="shopVoice" aria-label="Detta la spesa">${ic('mic')}</button>` : ''}<button class="btn primary" aria-label="Aggiungi">${ic('plus')}</button></form>${canDictate() ? `<p class="hint" style="text-align:left;margin:-2px 2px 8px">Tocca il microfono e di' cosa serve: "latte, due chili di patate e il pane".</p>` : ''}`;
     if (!S.shopping.length) return html + empty('🛒', 'La lista è vuota', 'Scrivi qui sopra cosa manca, oppure aggiungi gli ingredienti da una ricetta o dal menù della settimana. I prodotti vengono divisi per reparto da soli.');
     for (const [k, l, e] of AISLES) {
       const items = S.shopping.filter(i => (aisleOf(i.aisle)[0]) === k);
@@ -2058,11 +2413,13 @@ function slotList(q, v) {
   if (!recs.length) return `<p class="hint">Nessuna ricetta trovata.</p>`;
   return `<div class="list">${recs.map(r => `<div class="row"><button class="row-main" data-a="pickr" data-id="${r.id}"><span class="rt"><b>${isFav(r.id) ? '★ ' : ''}${esc(r.name)}</b><small>${[r.cat, r.time ? r.time + ' min' : ''].filter(Boolean).join(' · ')}</small></span>${v && v.r === r.id ? `<span class="st-good">${ic('check')}</span>` : ''}</button></div>`).join('')}</div>`;
 }
+const SHOP_UNITS = [['', 'pezzi (nessuna unità)'], ['pz', 'pz'], ['g', 'grammi (g)'], ['hg', 'etti (hg)'], ['kg', 'chili (kg)'], ['ml', 'millilitri (ml)'], ['l', 'litri (l)'], ['conf.', 'confezioni'], ['bottiglie', 'bottiglie'], ['barattoli', 'barattoli'], ['scatole', 'scatole'], ['buste', 'buste'], ['vaschette', 'vaschette'], ['mazzi', 'mazzi'], ['fette', 'fette'], ['lattine', 'lattine'], ['rotoli', 'rotoli']];
 function sheetItem(id) {
   const i = S.shopping.find(x => x.id === id); if (!i) return;
   openSheet('Modifica prodotto', `<form data-form="item" data-id="${i.id}">
     <label class="field"><span>Prodotto</span><input id="it-name" name="name" required value="${esc(i.name)}"></label>
-    <div class="two"><label class="field"><span>Quantità</span><input id="it-qty" name="qty" value="${esc(fmtQty(i.qty))}" inputmode="decimal" placeholder="—"></label><label class="field"><span>Unità</span><input id="it-unit" name="unit" value="${esc(i.unit)}" placeholder="kg, pz…"></label></div>
+    <div class="two"><label class="field"><span>Quantità</span><input id="it-qty" name="qty" value="${esc(fmtQty(i.qty))}" inputmode="decimal" placeholder="—"></label><label class="field"><span>Unità</span><select id="it-unit" name="unit">${[...SHOP_UNITS, ...(i.unit && !SHOP_UNITS.some(u => u[0] === i.unit) ? [[i.unit, i.unit]] : [])].map(([v, l]) => `<option value="${esc(v)}" ${(i.unit || '') === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label></div>
+    <div class="qty-step"><button type="button" class="btn sm" data-a="itemQty" data-d="-1" aria-label="Uno in meno">−1</button><button type="button" class="btn sm" data-a="itemQty" data-d="1" aria-label="Uno in più">+1</button></div>
     <label class="field"><span>Reparto</span><select id="it-aisle" name="aisle">${AISLES.map(([k, l, e]) => `<option value="${k}" ${aisleOf(i.aisle)[0] === k ? 'selected' : ''}>${e} ${l}</option>`).join('')}</select></label>
     <div class="actions two-c"><button type="button" class="btn danger" data-a="delItem" data-id="${i.id}">${ic('trash','sm')} Elimina</button><button class="btn primary">Salva</button></div></form>`);
 }
@@ -2359,6 +2716,8 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  shopVoice: () => shopByVoice(),
+  itemQty: d => { const q = $('#it-qty'); if (!q) return; const v = (parseQty(q.value) || 0) + Number(d.d); q.value = v > 0 ? fmtQty(v) : ''; },
   keySetup: () => { sheetSettings(); const d = $('.sheet details.adv'); if (d) { d.open = true; setTimeout(() => { d.scrollIntoView({block: 'center'}); const k = $('#set-key'); if (k) k.focus(); }, 60); } },
   aiGo: () => { ui.rview = 'frigo'; render(); const f = $('#fi'); if (f) f.focus(); },
   keyDel: () => { pref.set('apikey', ''); useKeyAI(); render(); sheetSettings(); toast('Chiave rimossa'); },
@@ -2485,7 +2844,7 @@ const F = {
   slotText: v => { const t = (v.t || '').trim(); setSlot(ui.slot.day, ui.slot.meal, t ? {t} : null); closeSheet(); },
   item: (v, f) => {
     const i = S.shopping.find(x => x.id === f.dataset.id); if (!i) return;
-    i.name = v.name.trim() || i.name; i.qty = parseQty(v.qty); i.unit = i.qty == null ? '' : (v.unit || '').trim(); i.aisle = v.aisle;
+    i.name = v.name.trim() || i.name; i.qty = parseQty(v.qty); i.unit = String(v.unit || '').trim(); if (i.unit && i.qty == null) i.qty = 1; i.aisle = v.aisle;
     save(); render(); closeSheet();
   },
   pay: (v, f) => {
