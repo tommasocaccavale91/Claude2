@@ -1422,10 +1422,12 @@ async function askNotifs() {
 /* a ogni modifica cancella i promemoria programmati e li ricrea dai dati attuali */
 async function scheduleNotifs() {
   if (!LN) return;
+  const log = x => pref.set('notifLog', JSON.stringify({when: new Date().toISOString(), ...x}));
   try {
-    const pend = await LN.getPending();
-    if (pend.notifications && pend.notifications.length) await LN.cancel({notifications: pend.notifications.map(n => ({id: n.id}))});
-    if ((await notifStatus()) !== 'granted') return;
+    if ((await notifStatus()) !== 'granted') return log({ok: false, err: 'Permesso per le notifiche non concesso'});
+    /* sveglie esatte solo se Android le ha già permesse: altrimenti il modulo aprirebbe la schermata
+       "Sveglie e promemoria" a ogni salvataggio, e se la si chiude la programmazione può restare a metà */
+    let exact = false; try { exact = (await LN.checkExactNotificationSetting()).exact_alarm === 'granted'; } catch (e) { exact = false; }
     const H = S.settings.notifHour, t = today(), now = Date.now(), list = [];
     const at = iso => { const d = parseD(iso); d.setHours(H, 0, 0, 0); return d; };
     if (S.settings.notif && on('bollette')) {
@@ -1433,15 +1435,19 @@ async function scheduleNotifs() {
       for (const b of open.filter(b => b.due >= t && diffDays(t, b.due) <= 120)) {
         const amt = b.amount ? ': ' + euro(b.amount) : '', verb = b.auto ? 'Addebito' : 'Scade';
         const pre = addDays(b.due, -S.settings.remindDays);
-        if (S.settings.remindDays > 0 && at(pre).getTime() > now) list.push({id: hashId(b.id + 'p'), title: `${catOf(b.cat)[2]} ${b.name}${amt}`, body: `${verb} tra ${S.settings.remindDays} ${S.settings.remindDays === 1 ? 'giorno' : 'giorni'}, ${fmtD(b.due)}.`, schedule: {at: at(pre), allowWhileIdle: true}, extra: {tab: 'bollette', bill: b.id}});
-        if (at(b.due).getTime() > now) list.push({id: hashId(b.id + 'd'), title: `${catOf(b.cat)[2]} ${b.name}${amt}`, body: b.auto ? 'Oggi c\'è l\'addebito in banca.' : 'Scade oggi. Quando l\'hai pagata, segnalalo nell\'app.', schedule: {at: at(b.due), allowWhileIdle: true}, extra: {tab: 'bollette', bill: b.id}});
+        if (S.settings.remindDays > 0 && at(pre).getTime() > now) list.push({id: hashId(b.id + 'p'), title: `${catOf(b.cat)[2]} ${b.name}${amt}`, body: `${verb} tra ${S.settings.remindDays} ${S.settings.remindDays === 1 ? 'giorno' : 'giorni'}, ${fmtD(b.due)}.`, schedule: {at: at(pre)}, extra: {tab: 'bollette', bill: b.id}});
+        if (at(b.due).getTime() > now) list.push({id: hashId(b.id + 'd'), title: `${catOf(b.cat)[2]} ${b.name}${amt}`, body: b.auto ? 'Oggi c\'è l\'addebito in banca.' : 'Scade oggi. Quando l\'hai pagata, segnalalo nell\'app.', schedule: {at: at(b.due)}, extra: {tab: 'bollette', bill: b.id}});
       }
       const late = open.filter(b => b.due < t && !b.auto);
-      if (late.length) list.push({id: 3, title: late.length === 1 ? `${late[0].name}: bolletta scaduta` : `${late.length} bollette scadute`, body: `Da pagare: ${euro(sum(late.map(b => b.amount)))}. ${late.length === 1 ? 'Se l\'hai già pagata, segnalalo' : 'Se le hai già pagate, segnalalo'} nell'app.`, schedule: {at: at(addDays(t, 1)), allowWhileIdle: true}, extra: {tab: 'bollette'}});
+      if (late.length) list.push({id: 3, title: late.length === 1 ? `${late[0].name}: bolletta scaduta` : `${late.length} bollette scadute`, body: `Da pagare: ${euro(sum(late.map(b => b.amount)))}. ${late.length === 1 ? 'Se l\'hai già pagata, segnalalo' : 'Se le hai già pagate, segnalalo'} nell'app.`, schedule: {at: at(addDays(t, 1))}, extra: {tab: 'bollette'}});
     }
     for (const r of on('promemoria') ? S.rems.filter(r => !r.done && r.at) : []) {
-      const at = atDate(r.rep ? nextAt(r) : r.at); if (at.getTime() <= now) continue;
-      list.push({id: hashId(r.id + 'r'), title: '🔔 Promemoria', body: r.text, schedule: r.rep ? {at, repeats: true, every: r.rep === 'd' ? 'day' : r.rep === 'w' ? 'week' : 'month', allowWhileIdle: true} : {at, allowWhileIdle: true}, extra: {tab: 'home', rem: r.id}});
+      if (!r.rep) { const at = atDate(r.at); if (at.getTime() > now) list.push({id: hashId(r.id + 'r'), title: '🔔 Promemoria', body: r.text, schedule: {at}, extra: {tab: 'home', rem: r.id}}); continue; }
+      let cur = {...r, at: nextAt(r)};
+      for (let k = 0, n = r.rep === 'd' ? 14 : r.rep === 'w' ? 8 : 6; k < n; k++) {
+        list.push({id: hashId(r.id + 'r' + k), title: '🔔 Promemoria', body: r.text, schedule: {at: atDate(cur.at)}, extra: {tab: 'home', rem: r.id}});
+        cur = {...cur, at: nextAt(cur, new Date(atDate(cur.at).getTime() + 60e3))};
+      }
     }
     if (on('ricette') && S.settings.dinner) {
       const [dh, dm] = S.settings.dinnerTime.split(':').map(Number);
@@ -1455,7 +1461,7 @@ async function scheduleNotifs() {
         else if (cena && cena.t) { if (!prep) continue; title = `🍽️ Stasera: ${cena.t}`; body = ''; }
         else { if (sunday && !prep) continue; const idea = ideaFor(day, usedIdeas); if (!idea) continue; usedIdeas.add(idea.id); rid = idea.id; title = '🍽️ Cosa mangiamo stasera?'; body = `Un'idea: ${idea.name}${S.fridge.length ? ', con quello che hai in casa' : ''}.`; }
         if (prep) body = `${body ? body + ' ' : ''}Per domani: ${prep}.`;
-        list.push({id: 5000 + i, title, body, schedule: {at, allowWhileIdle: true}, extra: {act: 'dinner', day, r: rid}});
+        list.push({id: 5000 + i, title, body, schedule: {at}, extra: {act: 'dinner', day, r: rid}});
       }
     }
     if (on('ricette') && S.settings.sunday) {
@@ -1464,12 +1470,24 @@ async function scheduleNotifs() {
         const day = addDays(t, k), at = parseD(day); if (at.getDay() !== 0) continue; at.setHours(sh, sm, 0, 0); if (at.getTime() <= now) continue; found++;
         const week = addDays(day, 1), planned = Array.from({length: 7}, (_, i) => (S.menu[addDays(week, i)] || {}).cena).filter(Boolean).length;
         if (planned >= 5) continue;
-        list.push({id: 6000 + found, title: '🗓️ Pianifica la settimana', body: 'Ti propongo le cene dei prossimi 7 giorni: le cambi con un tocco e la spesa si prepara da sola.', schedule: {at, allowWhileIdle: true}, extra: {act: 'plan', week}});
+        list.push({id: 6000 + found, title: '🗓️ Pianifica la settimana', body: 'Ti propongo le cene dei prossimi 7 giorni: le cambi con un tocco e la spesa si prepara da sola.', schedule: {at}, extra: {act: 'plan', week}});
       }
     }
-    if (S.settings.monthRem && on('conti')) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}, allowWhileIdle: true}, extra: {tab: 'conti', act: 'csv'}});
-    if (list.length) await LN.schedule({notifications: list.slice(0, 60)});
-  } catch (e) { /* le notifiche sono un aiuto: se il telefono le rifiuta l'app funziona lo stesso */ }
+    if (S.settings.monthRem && on('conti')) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}}, extra: {tab: 'conti', act: 'csv'}});
+    /* i più vicini per primi; Android ne gestisce bene qualche decina alla volta */
+    const ts = n => n.schedule.at ? n.schedule.at.getTime() : Infinity;
+    const final = list.sort((x, y) => ts(x) - ts(y)).slice(0, 60).map(n => ({...n, isExactNotification: exact}));
+    const keep = new Set(final.map(n => n.id));
+    const pend = await LN.getPending();
+    const old = (pend.notifications || []).filter(n => !keep.has(n.id) && n.id !== 9);
+    if (old.length) await LN.cancel({notifications: old.map(n => ({id: n.id}))});
+    let res = null;
+    if (final.length) res = await LN.schedule({notifications: final});
+    log({ok: true, n: final.length, exact, warn: res && res.warning ? (res.warning.message || 'avvisi non esatti') : ''});
+  } catch (e) {
+    /* le notifiche sono un aiuto: l'app funziona lo stesso, ma l'errore resta visibile in Impostazioni › Verifica avvisi */
+    log({ok: false, err: String((e && (e.message || e.code)) || e)});
+  }
 }
 if (LN) {
   try {
@@ -2557,6 +2575,7 @@ function sheetSettings() {
     <label class="field"><span>Preavviso bollette</span><select id="set-remind" name="remindDays">${[1, 3, 5, 7, 10, 14].map(n => `<option value="${n}" ${S.settings.remindDays == n ? 'selected' : ''}>${n} ${n === 1 ? 'giorno' : 'giorni'}</option>`).join('')}</select><small>Prima della scadenza</small></label></div>
     <p class="h3" style="margin-top:6px">Promemoria</p>
     ${LN ? (notifPerm === 'denied' ? `<p class="st-bad" style="margin:0 0 12px;font-size:14px">Le notifiche sono bloccate: attivale nelle impostazioni del telefono, alla voce App › Casa in Ordine › Notifiche.</p>` : '') : `<p class="empty-s" style="margin:0 0 12px;font-size:14px">Gli avvisi sul telefono arrivano con l'app Android. Qui le scadenze e il promemoria delle spese compaiono nella schermata Oggi.</p>`}
+    ${LN ? `<button type="button" class="btn ghost wide" style="margin-bottom:12px" data-a="notifDiag">${ic('bell','sm')} Verifica avvisi e invia una prova</button>` : ''}
     ${LN ? `<label class="switch"><input type="checkbox" id="set-notif" name="notif" ${S.settings.notif ? 'checked' : ''}><span><b>Scadenze delle bollette</b><small>Un avviso qualche giorno prima (vedi preavviso) e il giorno stesso</small></span></label>` : ''}
     <label class="switch"><input type="checkbox" id="set-month" name="monthRem" ${S.settings.monthRem ? 'checked' : ''}><span><b>Spese del mese scorso</b><small>Ogni mese, il giorno scelto, ti ricordo di registrarle</small></span></label>
     <div class="two"><label class="field"><span>Giorno del mese</span><select id="set-mday" name="monthDay">${Array.from({length: 28}, (_, i) => i + 1).map(n => `<option value="${n}" ${S.settings.monthDay == n ? 'selected' : ''}>il ${n}</option>`).join('')}</select><small>Le banche di solito chiudono il mese entro il 2-3</small></label>
@@ -2691,6 +2710,33 @@ if (SHARE) {
       if (texts || blobs.length) importRecipe(texts, blobs);
     });
   } catch (e) {}
+}
+
+/* ---------- verifica avvisi (solo app Android) ---------- */
+async function sheetNotifDiag() {
+  openSheet('Verifica avvisi', '<p class="hint">Controllo…</p>');
+  let perm = 'sconosciuto', exact = 'sconosciuto', pend = [];
+  try { perm = (await LN.checkPermissions()).display; } catch (e) {}
+  try { exact = (await LN.checkExactNotificationSetting()).exact_alarm; } catch (e) {}
+  try { pend = ((await LN.getPending()).notifications || []).filter(n => n.schedule && n.schedule.at).sort((a, b) => new Date(a.schedule.at) - new Date(b.schedule.at)); } catch (e) {}
+  let last = {}; try { last = JSON.parse(pref.get('notifLog', '{}')); } catch (e) {}
+  const ok = v => v === 'granted';
+  const when = d => { const x = new Date(d); return isNaN(x) ? '' : `${fmtD(isoOf(x))} alle ${pad(x.getHours())}:${pad(x.getMinutes())}`; };
+  if (!sheetOpen) return;
+  openSheet('Verifica avvisi', `<dl class="kv">
+      <div><dt>Permesso notifiche</dt><dd class="${ok(perm) ? 'st-good' : 'st-bad'}">${ok(perm) ? 'Concesso' : 'Non concesso'}</dd></div>
+      <div><dt>Avvisi all'ora esatta<small style="display:block;font-size:12.5px">"Sveglie e promemoria" di Android</small></dt><dd class="${ok(exact) ? 'st-good' : 'st-warn'}">${ok(exact) ? 'Attivi' : 'Non attivi'}</dd></div>
+      <div><dt>Avvisi programmati</dt><dd>${pend.length}</dd></div>
+      <div><dt>Ultima programmazione</dt><dd class="${last.ok === false ? 'st-bad' : ''}">${last.when ? when(last.when) : '—'}${last.ok === false ? `<small style="display:block">${esc(last.err || 'errore')}</small>` : ''}</dd></div>
+    </dl>
+    ${pend.length ? `<p class="h3">Prossimi avvisi</p><div class="list" style="margin-bottom:14px">${pend.slice(0, 4).map(n => `<div class="row"><span class="rt"><b>${esc(n.title)}</b><small>${when(n.schedule.at)}</small></span></div>`).join('')}</div>` : ''}
+    <div class="actions">
+      ${!ok(perm) ? `<button class="btn primary" data-a="askNotif">Concedi il permesso</button>` : ''}
+      ${!ok(exact) ? `<button class="btn" data-a="exactOn">Attiva gli avvisi all'ora esatta</button>` : ''}
+      <button class="btn ${ok(perm) ? 'primary' : ''}" data-a="notifTest">Invia un avviso di prova tra 1 minuto</button>
+      <button class="btn ghost" data-a="notifResched">Riprogramma tutti gli avvisi</button>
+    </div>
+    <p class="hint" style="text-align:left;margin-top:14px">Per la prova, dopo aver toccato il pulsante <b>chiudi l'app</b> (anche dalle app recenti). Se l'avviso non arriva, il telefono la sta bloccando: su Xiaomi, Redmi e POCO attiva <b>Avvio automatico</b> e in <b>Risparmio batteria</b> scegli "Nessuna restrizione"; su Samsung togli l'app dalle <b>app in sospensione</b>; su Huawei e Oppo consenti l'<b>avvio in background</b>. Poi riprova.</p>`);
 }
 
 /* ---------- assistente: ricetta su misura ---------- */
@@ -2869,6 +2915,14 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  notifDiag: () => sheetNotifDiag(),
+  exactOn: async () => { try { await LN.changeExactNotificationSetting(); } catch (e) {} await scheduleNotifs(); sheetNotifDiag(); },
+  notifResched: async () => { await scheduleNotifs(); toast('Avvisi riprogrammati'); sheetNotifDiag(); },
+  notifTest: async () => {
+    let exact = false; try { exact = (await LN.checkExactNotificationSetting()).exact_alarm === 'granted'; } catch (e) {}
+    try { await LN.schedule({notifications: [{id: 9, title: '✅ Avviso di prova', body: 'Le notifiche di Casa in Ordine funzionano.', schedule: {at: new Date(Date.now() + 60e3)}, isExactNotification: exact}]}); toast('Prova programmata: ora chiudi l\'app e aspetta un minuto'); }
+    catch (e) { toast('Il telefono ha rifiutato l\'avviso: ' + String((e && (e.message || e.code)) || e)); }
+  },
   planNext: () => { ui.week = addDays(mondayOf(today()), 7); render(); ui.plan = planWeek(ui.week); sheetWeekPlan(); },
   togglePast: () => { ui.showPast = !ui.showPast; render(); },
   startHide: () => { S.startDone = true; save(); render(); },
