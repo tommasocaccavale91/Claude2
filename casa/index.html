@@ -238,6 +238,8 @@ button{cursor:pointer;background:none;border:0;padding:0}
 .idea span{display:block;font-size:12.5px;color:var(--olive);font-weight:700}
 .idea b{display:block;font-weight:600;margin-top:2px}
 .plan-btn{margin-bottom:12px}
+.plan-day{margin:12px 0 2px;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.plan-day:first-child{margin-top:6px}
 .past-tgl{display:block;margin:-4px 2px 10px}
 .idea small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
 .start .step{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:46px;border-top:1px solid var(--line)}
@@ -1470,7 +1472,7 @@ async function scheduleNotifs() {
         const day = addDays(t, k), at = parseD(day); if (at.getDay() !== 0) continue; at.setHours(sh, sm, 0, 0); if (at.getTime() <= now) continue; found++;
         const week = addDays(day, 1), planned = Array.from({length: 7}, (_, i) => (S.menu[addDays(week, i)] || {}).cena).filter(Boolean).length;
         if (planned >= 5) continue;
-        list.push({id: 6000 + found, title: '🗓️ Pianifica la settimana', body: 'Ti propongo le cene dei prossimi 7 giorni: le cambi con un tocco e la spesa si prepara da sola.', schedule: {at}, extra: {act: 'plan', week}});
+        list.push({id: 6000 + found, title: '🗓️ Pianifica la settimana', body: `Ti propongo ${S.settings.planMeals === 'both' ? 'pranzi e cene' : 'le cene'} dei prossimi 7 giorni: li cambi con un tocco e la spesa si prepara da sola.`, schedule: {at}, extra: {act: 'plan', week}});
       }
     }
     if (S.settings.monthRem && on('conti')) list.push({id: 2, title: 'Spese del mese scorso', body: 'È il momento di registrarle: importa l\'estratto conto della banca o aggiungile a mano.', schedule: {on: {day: S.settings.monthDay, hour: H, minute: 0}}, extra: {tab: 'conti', act: 'csv'}});
@@ -2009,7 +2011,8 @@ function rankDinners(seed, opts = {}) {
       if (d.includes('bambini') && (r.tags || []).includes('bambini')) sc += 1.5;
       if (d.includes('veloce') && r.time && r.time <= 30) sc += 1.5;
       if (opts.weekday && r.time > 60) sc -= 2;
-      if (r.time > 150) sc -= 3;
+      if (r.time > 150 && !opts.sunday) sc -= 3;
+      if (opts.sunday && (r.tags || []).includes('domenica')) sc += 5;
       /* niente pastiera a novembre: i piatti delle feste e di stagione solo nel loro periodo */
       const mo = new Date().getMonth() + 1;
       for (const tg of r.tags || []) { const sm = SEASON_TAGS[tg]; if (sm && !sm.includes(mo)) sc -= FEAST_TAGS.includes(tg) ? 20 : 2; }
@@ -2036,36 +2039,54 @@ function prepFor(day) {
   return out.join('; ');
 }
 /* la settimana: una cena al giorno, alternando primi, secondi, zuppe e la pizza del sabato */
+/* solo cene: alternanza primi, secondi, zuppe e la pizza del sabato.
+   pranzi e cene: a pranzo un primo (la domenica quello "della festa"), la sera un secondo, una zuppa o la pizza */
 const WEEK_PATTERN = ['Primi', 'Secondi', 'Zuppe', 'Secondi', 'Primi', 'Pizze e lievitati', 'Primi'];
+const LUNCH_PATTERN = ['Primi', 'Primi', 'Primi', 'Primi', 'Primi', 'Primi', 'Primi'];
+const DINNER_WITH_LUNCH = ['Secondi', 'Zuppe', 'Secondi', 'Secondi', 'Zuppe', 'Pizze e lievitati', 'Secondi'];
+const planMeals = () => S.settings.planMeals === 'both' ? ['pranzo', 'cena'] : ['cena'];
+const planCat = (meal, i) => meal === 'pranzo' ? LUNCH_PATTERN[i] : S.settings.planMeals === 'both' ? DINNER_WITH_LUNCH[i] : WEEK_PATTERN[i];
+function pickFor(week, row, used) {
+  const wk = row.i < 5, seed = 'plan' + week + row.i + row.meal, opts = {exclude: used, weekday: wk || row.meal === 'cena'};
+  /* la domenica a pranzo va bene anche un piatto lungo, "della festa" */
+  if (row.meal === 'pranzo' && row.i === 6) { opts.weekday = false; opts.sunday = true; }
+  return rankDinners(seed, {...opts, cat: planCat(row.meal, row.i)})[0] || rankDinners(seed, opts)[0] || null;
+}
 function planWeek(week) {
   const t = today(), used = new Set(), days = [];
   for (let i = 0; i < 7; i++) {
-    const day = addDays(week, i), cur = (S.menu[day] || {}).cena;
-    if (day < t || cur) { days.push({day, fixed: cur ? slotLabel(cur) : 'passato', id: null}); continue; }
-    const wk = i < 5, pick = rankDinners('plan' + week + i, {cat: WEEK_PATTERN[i], exclude: used, weekday: wk})[0] || rankDinners('plan' + week + i, {exclude: used, weekday: wk})[0];
-    if (pick) used.add(pick.id);
-    days.push({day, id: pick ? pick.id : null, i});
+    const day = addDays(week, i);
+    for (const meal of planMeals()) {
+      const cur = (S.menu[day] || {})[meal];
+      if (day < t || cur) { days.push({day, meal, i, fixed: cur ? slotLabel(cur) : 'passato', id: null}); continue; }
+      const row = {day, meal, i, id: null}, pick = pickFor(week, row, used);
+      if (pick) { used.add(pick.id); row.id = pick.id; }
+      days.push(row);
+    }
   }
   return {week, days, shop: on('spesa')};
 }
-function swapPlan(i) {
-  const pl = ui.plan, row = pl.days[i]; if (!row || row.fixed) return;
+function swapPlan(k) {
+  const pl = ui.plan, row = pl.days[k]; if (!row || row.fixed) return;
   const used = new Set(pl.days.map(x => x.id).filter(Boolean)); used.add(row.id);
   (row.seen = row.seen || []).push(row.id);
   row.seen.forEach(x => used.add(x));
-  const next = rankDinners('plan' + pl.week + i, {cat: WEEK_PATTERN[i], exclude: used, weekday: i < 5})[0] || rankDinners('plan' + pl.week + i, {exclude: used, weekday: i < 5})[0];
+  const next = pickFor(pl.week, row, used);
   if (next) row.id = next.id; else { row.seen = []; }
 }
 function sheetWeekPlan() {
   const pl = ui.plan; if (!pl) return;
-  const n = pl.days.filter(x => x.id).length;
-  openSheet('Le cene della settimana', `<p class="empty-s" style="margin:0 0 12px;font-size:14px">Ti propongo una cena al giorno${S.settings.diet.length ? ' secondo le vostre preferenze' : ''}${S.fridge.length ? ', partendo da quello che hai in casa' : ''}. Cambiale con un tocco.</p>
-    <div class="list" style="margin-bottom:14px">${pl.days.map((x, i) => { const r = x.id && recipeById(x.id), dl = `${GIORNI[parseD(x.day).getDay()]} ${parseD(x.day).getDate()}`;
-      if (x.fixed === 'passato') return '';
-      if (x.fixed) return `<div class="row plan-row"><span class="rt"><small>${dl}</small><b class="muted">${esc(x.fixed)}</b></span></div>`;
-      return `<div class="row plan-row"><span class="rt"><small>${dl}</small><b>${r ? esc(r.name) : 'Libera'}</b>${r ? `<small>${[r.cat, r.time ? r.time + ' min' : ''].filter(Boolean).join(' · ')}</small>` : ''}</span><button class="btn sm" data-a="planSwap" data-i="${i}">Cambia</button><button class="icon-btn" data-a="planFree" data-i="${i}" aria-label="Lascia libera">${ic('x','sm')}</button></div>`; }).join('')}</div>
+  const both = S.settings.planMeals === 'both', n = pl.days.filter(x => x.id && !x.fixed).length;
+  const groups = []; pl.days.forEach((x, k) => { if (x.fixed === 'passato') return; let g = groups.find(y => y.day === x.day); if (!g) groups.push(g = {day: x.day, rows: []}); g.rows.push([x, k]); });
+  const rowHtml = ([x, k]) => { const r = x.id && recipeById(x.id), lab = both ? (x.meal === 'pranzo' ? 'Pranzo' : 'Cena') : '';
+    if (x.fixed) return `<div class="row plan-row"><span class="rt">${lab ? `<small>${lab}</small>` : ''}<b class="muted">${esc(x.fixed)}</b></span></div>`;
+    return `<div class="row plan-row"><span class="rt">${lab ? `<small>${lab}</small>` : ''}<b>${r ? esc(r.name) : 'Libero'}</b>${r ? `<small>${[r.cat, r.time ? r.time + ' min' : ''].filter(Boolean).join(' · ')}</small>` : ''}</span><button class="btn sm" data-a="planSwap" data-i="${k}">Cambia</button><button class="icon-btn" data-a="planFree" data-i="${k}" aria-label="Lascia libero">${ic('x','sm')}</button></div>`; };
+  openSheet(both ? 'I pasti della settimana' : 'Le cene della settimana', `
+    <div class="seg two" role="group" aria-label="Cosa pianificare" style="margin-bottom:12px"><button data-a="planMode" data-v="cena" aria-pressed="${!both}">Solo cene</button><button data-a="planMode" data-v="both" aria-pressed="${both}">Pranzi e cene</button></div>
+    <p class="empty-s" style="margin:0 0 12px;font-size:14px">${both ? 'A pranzo un primo, la sera un secondo, una zuppa o la pizza' : 'Una cena al giorno, alternando primi, secondi, zuppe e la pizza del sabato'}${S.settings.diet.length ? ', secondo le vostre preferenze' : ''}${S.fridge.length ? ', partendo da quello che hai in casa' : ''}. Cambia quello che non ti va con un tocco.</p>
+    <div class="list" style="margin-bottom:14px">${groups.map(g => `<p class="plan-day">${GIORNI[parseD(g.day).getDay()]} ${parseD(g.day).getDate()}</p>${g.rows.map(rowHtml).join('')}`).join('')}</div>
     ${on('spesa') ? `<label class="switch"><input type="checkbox" id="plan-shop" ${pl.shop ? 'checked' : ''}><span><b>Prepara la lista della spesa</b><small>Ingredienti per ${S.settings.people} ${S.settings.people == 1 ? 'persona' : 'persone'}</small></span></label>` : ''}
-    <div class="actions"><button class="btn primary" data-a="planOk" ${n ? '' : 'disabled'}>Metti ${n} ${n === 1 ? 'cena' : 'cene'} nel menù</button></div>`);
+    <div class="actions"><button class="btn primary" data-a="planOk" ${n ? '' : 'disabled'}>Metti ${n} ${n === 1 ? 'pasto' : 'pasti'} nel menù</button></div>`);
 }
 
 /* ---------- tour del primo avvio ---------- */
@@ -2248,9 +2269,9 @@ const V = {
     const a = parseD(w), b = parseD(end);
     const range = a.getMonth() === b.getMonth() ? `${a.getDate()} – ${b.getDate()} ${MESI[b.getMonth()]}` : `${a.getDate()} ${MB[a.getMonth()]} – ${b.getDate()} ${MB[b.getMonth()]}`;
     let html = `<div class="weeknav"><button class="icon-btn" data-a="wk" data-d="-7" aria-label="Settimana prima">${ic('left')}</button><b>${range}</b><button class="icon-btn" data-a="wk" data-d="7" aria-label="Settimana dopo">${ic('right')}</button></div>`;
-    const free = Array.from({length: 7}, (_, i) => addDays(w, i)).filter(day => day >= t && !(S.menu[day] || {}).cena).length;
+    const free = Array.from({length: 7}, (_, i) => addDays(w, i)).filter(day => day >= t && planMeals().some(ml => !(S.menu[day] || {})[ml])).length;
     const left = w === mondayOf(t) ? 7 - Array.from({length: 7}, (_, i) => addDays(w, i)).filter(x => x < t).length : 7;
-    if (free && left > 2) html += `<button class="btn ghost wide plan-btn" data-a="planWeek">${ic('spark','sm')} Proponi le cene della settimana</button>`;
+    if (free && left > 2) html += `<button class="btn ghost wide plan-btn" data-a="planWeek">${ic('spark','sm')} Proponi ${S.settings.planMeals === 'both' ? 'i pasti' : 'le cene'} della settimana</button>`;
     if (left <= 2) html += `<button class="btn ghost wide plan-btn" data-a="planNext">${ic('spark','sm')} Pianifica la prossima settimana</button>`;
     let nR = 0;
     const past = w === mondayOf(t) ? Array.from({length: 7}, (_, i) => addDays(w, i)).filter(x => x < t).length : 0;
@@ -2954,12 +2975,13 @@ const A = {
   planWeek: () => { ui.plan = planWeek(ui.week); sheetWeekPlan(); },
   planSwap: d => { swapPlan(+d.i); sheetWeekPlan(); },
   planFree: d => { const r = ui.plan.days[+d.i]; if (r) r.id = null; sheetWeekPlan(); },
+  planMode: d => { S.settings.planMeals = d.v === 'both' ? 'both' : 'cena'; save(); const shop = !!($('#plan-shop') && $('#plan-shop').checked); ui.plan = {...planWeek(ui.plan.week), shop}; sheetWeekPlan(); render(); },
   planOk: () => {
     const pl = ui.plan; if (!pl) return; const shop = !!($('#plan-shop') && $('#plan-shop').checked);
     let n = 0, ing = 0;
-    for (const x of pl.days) if (x.id && !x.fixed) { const m = S.menu[x.day] = S.menu[x.day] || {}; m.cena = {r: x.id}; n++; if (shop) ing += addRecipeToShop(recipeById(x.id), S.settings.people); }
+    for (const x of pl.days) if (x.id && !x.fixed) { const m = S.menu[x.day] = S.menu[x.day] || {}; m[x.meal || 'cena'] = {r: x.id}; n++; if (shop) ing += addRecipeToShop(recipeById(x.id), S.settings.people); }
     ui.plan = null; save(); closeSheet(); render();
-    toast(`${n} ${n === 1 ? 'cena' : 'cene'} nel menù${shop ? ` · ${ing} ingredienti nella spesa` : ''}`);
+    toast(`${n} ${n === 1 ? 'pasto' : 'pasti'} nel menù${shop ? ` · ${ing} ingredienti nella spesa` : ''}`);
   },
   dictate: () => dictate(),
   remAll: () => sheetRems(),
