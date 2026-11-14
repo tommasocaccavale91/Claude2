@@ -1,0 +1,5 @@
+Caratteri usati dall'app (sottoinsieme latino, da Google Fonts), tutti con licenza SIL Open Font License 1.1:
+- Fraunces (titoli) — Undercase Type
+- DM Sans (testo) e DM Mono (importi) — Colophon Foundry
+- Caveat (note scritte a mano) — Impallari Type
+Testo della licenza: https://openfontlicense.org
