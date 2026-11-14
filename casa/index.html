@@ -4,40 +4,49 @@
 <meta charset="utf-8">
 <title>Casa in Ordine</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#B5543A">
+<meta name="theme-color" content="#1F4FA6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="Ricette, menù della settimana, lista della spesa e bollette della famiglia.">
 <style>
-/* Una colonna larga quanto un telefono: intestazione, contenuto che scorre, barra delle schede in basso.
-   Tono: cucina di casa — carta color crema, terracotta, verde oliva. */
+/* Una colonna larga quanto un telefono: intestazione, contenuto che scorre, barra delle sezioni in basso.
+   Tono: maiolica della costiera — blu cobalto, giallo limone, bianco smaltato. Una sola famiglia di caratteri, pesi decisi. */
 :root{
-  --bg:#F6F1E7; --surface:#FFFDF8; --surface2:#EFE8DA; --ink:#2B2620; --muted:#6F665A; --line:rgba(43,38,32,.12);
-  --accent:#B5543A; --accent-ink:#FFFFFF; --accent-soft:rgba(181,84,58,.12);
-  --olive:#5E6B3A; --olive-soft:rgba(94,107,58,.14);
-  --warn:#9A6212; --warn-soft:rgba(183,121,31,.15); --bad:#B23A2E; --bad-soft:rgba(178,58,46,.12); --good:#3F7A4A; --good-soft:rgba(63,122,74,.13);
-  --shadow:0 1px 0 rgba(43,38,32,.04),0 8px 22px -14px rgba(43,38,32,.35);
-  --r:14px; --nav:64px;
+  --bg:#F1F3F8; --surface:#FFFFFF; --surface2:#E9EDF5; --ink:#131A2C; --muted:#5B6479; --line:rgba(19,26,44,.09);
+  --accent:#1F4FA6; --accent-ink:#FFFFFF; --accent-soft:rgba(31,79,166,.10);
+  --sun:#F2B705; --sun-soft:rgba(242,183,5,.18);
+  --olive:#2C7A4F; --olive-soft:rgba(44,122,79,.11);
+  --warn:#9A5F00; --warn-soft:rgba(242,170,40,.16); --bad:#C0352D; --bad-soft:rgba(192,53,45,.10); --good:#2C7A4F; --good-soft:rgba(44,122,79,.11);
+  --hero:#1F4FA6; --hero-ink:#FFFFFF;
+  --c-in:#2a78d6; --c-out:#eb6834; --c-grid:rgba(19,26,44,.08);
+  --shadow:0 1px 2px rgba(19,26,44,.05),0 6px 20px -10px rgba(19,26,44,.18);
+  --r:18px; --nav:68px;
   --f:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --f-title:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --f-title:var(--f);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#1B1815; --surface:#25211D; --surface2:#302A24; --ink:#F1EADF; --muted:#A99F92; --line:rgba(241,234,223,.12);
-    --accent:#DE7E61; --accent-ink:#1B1815; --accent-soft:rgba(222,126,97,.16);
-    --olive:#A9B77A; --olive-soft:rgba(169,183,122,.15);
-    --warn:#E5AE55; --warn-soft:rgba(229,174,85,.15); --bad:#EC7B6D; --bad-soft:rgba(236,123,109,.15); --good:#86BE91; --good-soft:rgba(134,190,145,.15);
-    --shadow:0 1px 0 rgba(0,0,0,.2),0 10px 24px -16px rgba(0,0,0,.8);
+    --bg:#0D1220; --surface:#161D2E; --surface2:#212A3E; --ink:#EDF0F7; --muted:#9AA3B9; --line:rgba(237,240,247,.09);
+    --accent:#86A9F0; --accent-ink:#0D1220; --accent-soft:rgba(134,169,240,.15);
+    --sun:#F5C842; --sun-soft:rgba(245,200,66,.16);
+    --olive:#7CC79A; --olive-soft:rgba(124,199,154,.14);
+    --warn:#F0B44C; --warn-soft:rgba(240,180,76,.15); --bad:#F07A70; --bad-soft:rgba(240,122,112,.14); --good:#7CC79A; --good-soft:rgba(124,199,154,.14);
+    --hero:#1A3A7E; --hero-ink:#FFFFFF;
+    --c-in:#3987e5; --c-out:#d95926; --c-grid:rgba(237,240,247,.08);
+    --shadow:0 1px 0 rgba(0,0,0,.25),0 10px 26px -14px rgba(0,0,0,.7);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#1B1815; --surface:#25211D; --surface2:#302A24; --ink:#F1EADF; --muted:#A99F92; --line:rgba(241,234,223,.12);
-  --accent:#DE7E61; --accent-ink:#1B1815; --accent-soft:rgba(222,126,97,.16);
-  --olive:#A9B77A; --olive-soft:rgba(169,183,122,.15);
-  --warn:#E5AE55; --warn-soft:rgba(229,174,85,.15); --bad:#EC7B6D; --bad-soft:rgba(236,123,109,.15); --good:#86BE91; --good-soft:rgba(134,190,145,.15);
-  --shadow:0 1px 0 rgba(0,0,0,.2),0 10px 24px -16px rgba(0,0,0,.8);
+  --bg:#0D1220; --surface:#161D2E; --surface2:#212A3E; --ink:#EDF0F7; --muted:#9AA3B9; --line:rgba(237,240,247,.09);
+  --accent:#86A9F0; --accent-ink:#0D1220; --accent-soft:rgba(134,169,240,.15);
+  --sun:#F5C842; --sun-soft:rgba(245,200,66,.16);
+  --olive:#7CC79A; --olive-soft:rgba(124,199,154,.14);
+  --warn:#F0B44C; --warn-soft:rgba(240,180,76,.15); --bad:#F07A70; --bad-soft:rgba(240,122,112,.14); --good:#7CC79A; --good-soft:rgba(124,199,154,.14);
+  --hero:#1A3A7E; --hero-ink:#FFFFFF;
+  --c-in:#3987e5; --c-out:#d95926; --c-grid:rgba(237,240,247,.08);
+  --shadow:0 1px 0 rgba(0,0,0,.25),0 10px 26px -14px rgba(0,0,0,.7);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -342,6 +351,84 @@ button.stat:active{transform:scale(.98)}
 @keyframes pulse{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.thinking .dot{animation:none}}
 @media (max-width:380px){.stats.three .v{font-size:15px}.nav button{font-size:10.5px}}
+/* ===== veste grafica ===== */
+.top h1{font-weight:800;letter-spacing:-.025em;font-size:27px}
+.top .icon-btn,.top .btn:not(.primary){background:var(--surface);box-shadow:var(--shadow)}
+.btn{border-radius:14px}
+.btn.primary{box-shadow:0 6px 14px -8px var(--accent)}
+.card{border-radius:var(--r);padding:16px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.card-h{margin-bottom:10px}
+.card h2{font-size:16px;font-weight:750;letter-spacing:-.005em;text-transform:none;color:var(--ink);display:flex;align-items:center;gap:8px}
+.sec-t{font-size:12.5px}
+.stat{border:1px solid var(--line);border-radius:16px}
+.stat .v{font-weight:800;letter-spacing:-.02em}
+.sh-h h2,.tour-body h1,.tour-body h2,.rcard h3{font-family:var(--f);font-weight:750;letter-spacing:-.02em}
+.tour-body h1{font-weight:800}
+.rcard{border:1px solid var(--line);display:grid;grid-template-columns:48px 1fr;column-gap:12px;align-items:start}
+.rcard>*:not(.rc-emo):not(.fav){grid-column:2}
+.rcard h3{font-size:17.5px}
+.rc-emo{grid-row:1 / span 4;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--surface2)}
+.rc-emo.k1{background:var(--sun-soft)}.rc-emo.k2{background:var(--bad-soft)}.rc-emo.k3{background:var(--olive-soft)}.rc-emo.k4{background:var(--accent-soft)}.rc-emo.k5{background:var(--warn-soft)}
+.tag{border-radius:8px}
+.seg{border-radius:14px}
+.seg button{border-radius:11px}
+.nav{background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.nav button[aria-current="page"]::before{display:none}
+.nav-ic{width:54px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.nav button[aria-current="page"] .nav-ic{background:var(--accent-soft)}
+.nav button[aria-current="page"]{color:var(--accent)}
+.nav .badge{top:6px;left:calc(50% + 8px);background:var(--sun);color:#131A2C;font-weight:800}
+.idea{background:var(--sun-soft)}
+.idea span{color:var(--warn)}
+.ai-card{background:var(--accent-soft);border-color:transparent}
+.ai-card h2{color:var(--accent)}
+/* testata della schermata Oggi, a piastrelle di maiolica */
+.hero{position:relative;overflow:hidden;margin:0 0 16px;border-radius:24px;color:var(--hero-ink);background-color:var(--hero);
+  background-image:radial-gradient(circle at 50% 50%,rgba(242,183,5,.55) 0 3px,transparent 3.5px),radial-gradient(circle at 0 0,rgba(255,255,255,.13) 0 13px,transparent 13.5px),radial-gradient(circle at 100% 0,rgba(255,255,255,.13) 0 13px,transparent 13.5px),radial-gradient(circle at 0 100%,rgba(255,255,255,.13) 0 13px,transparent 13.5px),radial-gradient(circle at 100% 100%,rgba(255,255,255,.13) 0 13px,transparent 13.5px),linear-gradient(45deg,transparent 46%,rgba(255,255,255,.07) 46% 54%,transparent 54%),linear-gradient(-45deg,transparent 46%,rgba(255,255,255,.07) 46% 54%,transparent 54%);
+  background-size:40px 40px;background-position:center}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,18,32,0) 0%,rgba(13,18,32,.35) 100%);pointer-events:none}
+.hero-in{position:relative;z-index:1;padding:18px 18px 16px}
+.hero-d{margin:0;font-size:13.5px;font-weight:600;opacity:.85;text-transform:capitalize}
+.hero h2{margin:2px 0 12px;font-size:28px;font-weight:800;letter-spacing:-.025em}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px}
+.hero-chips button{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:17px;background:rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:650;backdrop-filter:blur(4px)}
+.hero-chips button b{font-weight:800}
+/* conti */
+.money-hero .mh-l{font-size:13.5px;color:var(--muted);font-weight:600}
+.money-hero .mh-v{font-size:36px;font-weight:850;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:2px 0 10px;line-height:1.1}
+.mh-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mh-row div{background:var(--surface2);border-radius:14px;padding:10px 12px}
+.mh-row span{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-weight:600}
+.mh-row b{display:block;font-size:18px;font-variant-numeric:tabular-nums;margin-top:2px}
+.dot{width:10px;height:10px;border-radius:3px;flex:none;display:inline-block}
+.dot.in{background:var(--c-in)}.dot.out{background:var(--c-out)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);font-weight:600;margin:-2px 0 6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot.prev{background:none;border:2px dashed var(--muted);border-radius:50%;width:10px;height:10px}
+.chart{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--muted);font-size:10px;font-family:var(--f)}
+.chart text.cur{fill:var(--ink);font-weight:700}
+.chart .grid{stroke:var(--c-grid);stroke-width:1}
+.chart .base{stroke:var(--line);stroke-width:1}
+.chart .c-in{fill:var(--c-in)}.chart .c-out{fill:var(--c-out)}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .sel{fill:var(--accent-soft)}
+.chart .ln-cur{fill:none;stroke:var(--c-out);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.chart .ln-prev{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:4 4;opacity:.7}
+.chart .ln-dot{fill:var(--c-out);stroke:var(--surface);stroke-width:2}
+.chart .cross{stroke:var(--muted);stroke-width:1;stroke-dasharray:2 3}
+.cap{font-size:13.5px;color:var(--muted);margin:8px 2px 0;min-height:1.3em}
+.cap b{color:var(--ink)}
+.catbar{display:grid;grid-template-columns:36px 1fr auto;gap:2px 10px;align-items:center;width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--line)}
+.catbar:first-child{border-top:0}
+.catbar .e{grid-row:1 / span 2;width:36px;height:36px;border-radius:11px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.catbar .n{font-size:14.5px;font-weight:600}
+.catbar .a{font-weight:750;font-variant-numeric:tabular-nums;font-size:14.5px;text-align:right}
+.catbar .a small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.catbar .t{grid-column:2;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden}
+.catbar .t i{display:block;height:100%;border-radius:3px;background:var(--c-out)}
+.catbar[aria-pressed="true"]{background:var(--accent-soft);border-radius:12px;margin:0 -8px;padding:8px;width:calc(100% + 16px)}
+.filter-note{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin:4px 2px 8px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -2176,7 +2263,7 @@ function render() {
   $('#nav').style.gridTemplateColumns = `repeat(${tabs.length}, 1fr)`;
   $('#nav').innerHTML = tabs.map(([k, l, i]) => {
     const n = k === 'spesa' ? toBuy : k === 'bollette' ? late : 0;
-    return `<button data-a="go" data-t="${k}" ${k === tab ? 'aria-current="page"' : ''}>${ic(i)}<span>${l}</span>${n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : ''}</button>`;
+    return `<button data-a="go" data-t="${k}" ${k === tab ? 'aria-current="page"' : ''}><span class="nav-ic">${ic(i)}</span><span>${l}</span>${n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : ''}</button>`;
   }).join('');
 }
 function setTab(t) { if (t !== tab) { tab = t; pref.set('tab', t); window.scrollTo(0, 0); } render(); }
@@ -2236,7 +2323,10 @@ const V = {
     const startCard = !S.startDone && steps.length && doneN < Math.min(3, steps.length) ? `<section class="card start"><div class="card-h"><h2>Per iniziare</h2><button class="link" data-a="startHide">Nascondi</button></div>
       ${steps.map(([l, ok, act]) => `<button class="step ${ok ? 'ok' : ''}" ${act}><span class="box">${ic('check','sm')}</span><span>${l}</span>${ok ? '' : ic('right','sm')}</button>`).join('')}</section>` : '';
     const stats = (S.moves.length || S.bills.length) ? [on('conti') && usesConti ? `<button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>` : '', on('bollette') && S.bills.length ? `<button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>` : ''].filter(Boolean) : [];
-    return `<p class="hello">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}</p>${legacy}
+    const hr = new Date().getHours(), greet = hr < 12 ? 'Buongiorno' : hr < 18 ? 'Buon pomeriggio' : 'Buonasera';
+    const remToday = S.rems.filter(r => !r.done && r.at && r.at.slice(0, 10) <= t).length;
+    const chips = [on('spesa') && toBuy.length ? `<button data-a="go" data-t="spesa">🛒 <b>${toBuy.length}</b> da comprare</button>` : '', on('bollette') && due.length ? `<button data-a="go" data-t="bollette">🧾 <b>${due.length}</b> ${due.length === 1 ? 'scadenza' : 'scadenze'}</button>` : '', on('promemoria') && remToday ? `<button data-a="remFocus">🔔 <b>${remToday}</b> per oggi</button>` : ''].filter(Boolean);
+    return `<section class="hero"><div class="hero-in"><p class="hero-d">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</p><h2>${greet}</h2>${chips.length ? `<div class="hero-chips">${chips.join('')}</div>` : `<div class="hero-chips"><button data-a="${on('ricette') ? 'fridgeGo' : 'settings'}">${on('ricette') ? '🍳 Cosa cucino oggi?' : '⚙️ Personalizza'}</button></div>`}</div></section>${legacy}
     ${on('ricette') ? `<section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù della settimana</button></div>
       <div class="meals">${MEALS.map(([k, l]) => { const lab = slotLabel(m[k]); const isR = m[k] && m[k].r && recipeById(m[k].r); return `<button class="meal" data-a="${isR ? 'recipe' : 'slot'}" data-id="${isR ? m[k].r : ''}" data-day="${t}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : 'Da decidere'}</b></button>`; }).join('')}</div>
       ${idea ? `<button class="idea" data-a="recipe" data-id="${idea.id}"><span>💡 Idea per stasera</span><b>${esc(idea.name)}</b><small>${[idea.time ? idea.time + ' minuti' : '', idea.cat].filter(Boolean).join(' · ')}</small></button>` : ''}
@@ -2338,21 +2428,33 @@ const V = {
 
   conti() {
     const ym = ui.month, [yy, mm] = ym.split('-').map(Number);
-    const mv = S.moves.filter(m => m.date.slice(0, 7) === ym).sort((a, b) => b.date.localeCompare(a.date));
-    const inn = sum(mv.filter(m => m.kind === 'in').map(m => m.amount)), out = sum(mv.filter(m => m.kind === 'out').map(m => m.amount)), bal = inn - out;
+    const mvAll = S.moves.filter(m => m.date.slice(0, 7) === ym);
+    const inn = sum(mvAll.filter(m => m.kind === 'in').map(m => m.amount)), out = sum(mvAll.filter(m => m.kind === 'out').map(m => m.amount)), bal = inn - out;
     let html = `<div class="weeknav"><button class="icon-btn" data-a="month" data-d="-1" aria-label="Mese prima">${ic('left')}</button><b style="text-transform:capitalize">${MESI[mm - 1]} ${yy}</b><button class="icon-btn" data-a="month" data-d="1" aria-label="Mese dopo">${ic('right')}</button></div>
-      <div class="stats three"><div class="stat"><div class="l">Entrate</div><div class="v st-good">${euro(inn)}</div></div><div class="stat"><div class="l">Uscite</div><div class="v">${euro(out)}</div></div><div class="stat"><div class="l">Saldo</div><div class="v ${bal < 0 ? 'st-bad' : ''}">${bal < 0 ? '−' : ''}${euro(Math.abs(bal))}</div></div></div>
+      <section class="card money-hero"><div class="mh-l">Saldo di ${MESI[mm - 1]}</div><div class="mh-v ${bal < 0 ? 'st-bad' : ''}">${bal < 0 ? '−' : bal > 0 ? '+' : ''}${euro(Math.abs(bal))}</div>
+        <div class="mh-row"><div><span><i class="dot in"></i>Entrate</span><b>${euro(inn)}</b></div><div><span><i class="dot out"></i>Uscite</span><b>${euro(out)}</b></div></div></section>
       <form class="quick" data-form="qmove" autocomplete="off"><label class="vh" for="qm">Spesa veloce</label><input id="qm" name="t" placeholder="Veloce: 30 farmacia · +1500 stipendio" enterkeyhint="done"><button class="btn primary" aria-label="Aggiungi">${ic('plus')}</button></form>
       ${quickChips()}
       <div class="actions" style="margin:6px 0 14px"><button class="btn" data-a="importCsv">${ic('upload','sm')} Importa l'estratto conto (CSV o Excel)</button></div>`;
     const unsorted = S.moves.filter(m => m.src === 'csv' && (m.cat === 'uscite' || m.cat === 'entrate'));
     if (AI && isPremium() && unsorted.length) html += `<section class="card ai-card"><p style="margin:0 0 10px">${unsorted.length} ${unsorted.length === 1 ? 'movimento importato è' : 'movimenti importati sono'} senza categoria.</p><button class="btn primary wide" data-a="aiSort">${ic('spark','sm')} Classificali con l'assistente</button><p class="hint" id="aisort-st"></p></section>`;
-    if (!mv.length) return html + empty('💶', `Nessun movimento a ${MESI[mm - 1]}`, 'Le bollette pagate finiscono qui da sole. Per avere tutte le spese, importa il file CSV dei movimenti scaricato dall\'app o dal sito della tua banca, oppure aggiungi le voci a mano.');
-    const byC = MCATS.filter(c => c[3] === 'out').map(c => [`${c[2]} ${c[1]}`, sum(mv.filter(m => m.kind === 'out' && mcatOf(m.cat)[0] === c[0]).map(m => m.amount))]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
-    if (byC.length) html += `<section class="card"><div class="card-h"><h2>Dove vanno i soldi</h2></div>${bars(byC)}</section>`;
+    if (!S.moves.length) return html + empty('💶', 'Ancora nessun movimento', 'Le bollette pagate finiscono qui da sole. Per avere tutte le spese, importa il file CSV o Excel dei movimenti scaricato dalla banca, oppure aggiungi le voci a mano: qui sopra, "30 farmacia".');
+    /* ultimi 6 mesi: entrate e uscite affiancate; toccando un mese lo apri */
+    const months = Array.from({length: 6}, (_, k) => addMonths(ym + '-01', k - 5).slice(0, 7));
+    const ser = months.map(m => { const x = S.moves.filter(v => v.date.slice(0, 7) === m); return {m, inn: sum(x.filter(v => v.kind === 'in').map(v => v.amount)), out: sum(x.filter(v => v.kind === 'out').map(v => v.amount))}; });
+    html += `<section class="card"><div class="card-h"><h2>Ultimi 6 mesi</h2></div><div class="legend"><span><i class="dot in"></i>Entrate</span><span><i class="dot out"></i>Uscite</span></div>${colChart(ser, ym)}<p class="cap">Tocca un mese per aprirlo.</p></section>`;
+    if (out) html += `<section class="card"><div class="card-h"><h2>Spesa nel mese, giorno per giorno</h2></div>${spendLine(ym)}</section>`;
+    /* dove vanno i soldi: tocca una categoria per vedere solo quei movimenti */
+    const byC = MCATS.filter(c => c[3] === 'out').map(c => [c, sum(mvAll.filter(m => m.kind === 'out' && mcatOf(m.cat)[0] === c[0]).map(m => m.amount))]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+    if (byC.length) { const mx = byC[0][1];
+      html += `<section class="card"><div class="card-h"><h2>Dove vanno i soldi</h2></div>${byC.map(([c, v]) => `<button class="catbar" data-a="mcat" data-k="${c[0]}" aria-pressed="${ui.mcat === c[0]}"><span class="e">${c[2]}</span><span class="n">${c[1]}</span><span class="a">${euro(v)}<small>${Math.round(v / out * 100)}%</small></span><span class="t"><i style="width:${(v / mx * 100).toFixed(1)}%"></i></span></button>`).join('')}</section>`; }
+    if (!mvAll.length) return html + `<p class="hint">Nessun movimento a ${MESI[mm - 1]}.</p>`;
+    const mv = mvAll.filter(m => !ui.mcat || mcatOf(m.cat)[0] === ui.mcat).sort((a, b) => b.date.localeCompare(a.date));
+    if (ui.mcat) html += `<p class="filter-note"><span>Solo ${mcatOf(ui.mcat)[2]} ${mcatOf(ui.mcat)[1]}</span><button class="link" data-a="mcat" data-k="${ui.mcat}">Mostra tutti</button></p>`;
     const days = {}; mv.forEach(m => (days[m.date] = days[m.date] || []).push(m));
     for (const [d, list] of Object.entries(days)) html += `<h3 class="sec-t sec-row"><span>${fmtD(d)}</span></h3><div class="list">${list.map(moveRow).join('')}</div>`;
     return html;
+
   }
 };
 /* le descrizioni che usi più spesso, per ripeterle con un tocco */
@@ -2361,17 +2463,66 @@ function quickChips() {
   const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 6).map(x => x[0]);
   return top.length ? `<div class="chipline" style="margin:0 0 6px">${top.map(d => `<button class="tag sugg" data-a="qchip" data-v="${esc(d)}">${esc(d)}</button>`).join('')}</div>` : '';
 }
+const shortEuro = v => v >= 1000 ? (Math.round(v / 100) / 10).toString().replace('.', ',') + 'k €' : Math.round(v) + ' €';
+/* colonna con gli angoli in alto arrotondati, appoggiata alla linea di base */
+const colPath = (x, y, w, base) => { const h = base - y, r = Math.min(4, h, w / 2); return `M${x},${base}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${base}Z`; };
+function colChart(ser, sel) {
+  const W = 320, H = 150, top = 14, base = 118, max = Math.max(1, ...ser.flatMap(s => [s.inn, s.out]));
+  const gw = W / ser.length, bw = Math.min(16, gw / 3.2), y = v => base - (v / max) * (base - top);
+  let g = `<line class="grid" x1="0" x2="${W}" y1="${top}" y2="${top}"/><line class="grid" x1="0" x2="${W}" y1="${(top + base) / 2}" y2="${(top + base) / 2}"/><text x="${W}" y="${top - 4}" text-anchor="end">${shortEuro(max)}</text>`;
+  ser.forEach((s, i) => {
+    const cx = gw * i + gw / 2, cur = s.m === sel, [yy, mm] = s.m.split('-').map(Number);
+    if (cur) g += `<rect class="sel" x="${gw * i + 3}" y="${top - 2}" width="${gw - 6}" height="${base - top + 22}" rx="10"/>`;
+    if (s.inn) g += `<path class="c-in" d="${colPath(cx - bw - 1, Math.min(y(s.inn), base - 2), bw, base)}"><title>Entrate ${MESI[mm - 1]}: ${euro(s.inn)}</title></path>`;
+    if (s.out) g += `<path class="c-out" d="${colPath(cx + 1, Math.min(y(s.out), base - 2), bw, base)}"><title>Uscite ${MESI[mm - 1]}: ${euro(s.out)}</title></path>`;
+    g += `<text x="${cx}" y="${base + 14}" text-anchor="middle" class="${cur ? 'cur' : ''}">${MB[mm - 1]}</text>`;
+    g += `<rect class="hit" data-a="monthGo" data-m="${s.m}" x="${gw * i}" y="0" width="${gw}" height="${H}"><title>${MESI[mm - 1]} ${yy}: entrate ${euro(s.inn)}, uscite ${euro(s.out)}</title></rect>`;
+  });
+  g += `<line class="base" x1="0" x2="${W}" y1="${base}" y2="${base}"/>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Entrate e uscite degli ultimi 6 mesi">${g}</svg>`;
+}
+/* spesa cumulata del mese, confrontata con il mese prima allo stesso giorno */
+function cumul(ym) {
+  const n = new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0).getDate(), a = Array(n).fill(0);
+  S.moves.filter(m => m.kind === 'out' && m.date.slice(0, 7) === ym).forEach(m => { a[+m.date.slice(8, 10) - 1] += m.amount; });
+  for (let i = 1; i < n; i++) a[i] += a[i - 1];
+  return a;
+}
+function spendLine(ym) {
+  const prevYm = addMonths(ym + '-01', -1).slice(0, 7), cur = cumul(ym), prev = cumul(prevYm), n = cur.length;
+  const isNow = ym === today().slice(0, 7), lastDay = isNow ? new Date().getDate() : n;
+  const W = 320, H = 140, L = 4, R = 6, top = 12, base = 112, max = Math.max(1, cur[lastDay - 1], prev[prev.length - 1]);
+  const x = d => L + (d / (n - 1)) * (W - L - R), y = v => base - (v / max) * (base - top);
+  const line = (arr, upto) => arr.slice(0, upto).map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+  const pn = Math.min(prev.length, n);
+  let g = `<line class="grid" x1="0" x2="${W}" y1="${top}" y2="${top}"/><text x="${W}" y="${top - 3}" text-anchor="end">${shortEuro(max)}</text><line class="base" x1="0" x2="${W}" y1="${base}" y2="${base}"/>`;
+  g += `<path class="ln-prev" d="${line(prev, pn)}"/><path class="ln-cur" d="${line(cur, lastDay)}"/>`;
+  g += `<circle class="ln-dot" cx="${x(lastDay - 1)}" cy="${y(cur[lastDay - 1])}" r="4.5"/>`;
+  g += [1, 10, 20, n].map(d => `<text x="${x(d - 1)}" y="${base + 14}" text-anchor="${d === 1 ? 'start' : d === n ? 'end' : 'middle'}">${d}</text>`).join('');
+  g += `<line class="cross" id="lc-x" x1="-10" x2="-10" y1="${top}" y2="${base}"/>`;
+  const diff = cur[lastDay - 1] - (prev[Math.min(lastDay, prev.length) - 1] || 0), pm = MESI[+prevYm.slice(5, 7) - 1];
+  const capTxt = prev[prev.length - 1] ? `${isNow ? 'Finora' : 'In tutto'} <b>${euro(cur[lastDay - 1])}</b>: ${Math.abs(diff) < 1 ? `come a ${pm}` : `<b>${euro(Math.abs(diff))} ${diff > 0 ? 'in più' : 'in meno'}</b> di ${pm} ${isNow ? 'allo stesso giorno' : ''}`}.` : `${isNow ? 'Finora' : 'In tutto'} <b>${euro(cur[lastDay - 1])}</b>.`;
+  return `<div class="legend"><span><i class="dot out"></i>${MESI[+ym.slice(5, 7) - 1]}</span><span><i class="dot prev"></i>${pm}</span></div>
+    <svg class="chart lc" viewBox="0 0 ${W} ${H}" data-ym="${ym}" data-n="${n}" data-last="${lastDay}" role="img" aria-label="Spesa cumulata giorno per giorno">${g}</svg><p class="cap" id="lc-cap" data-def="${esc(capTxt)}">${capTxt}</p>`;
+}
 function bars(rows) {
   const max = Math.max(...rows.map(r => r[1]), 1);
   return `<div class="bars">${rows.map(([n, v]) => `<div class="bar-row"><span class="n">${n}</span><span class="a">${euro(v)}</span><span class="bar"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span></div>`).join('')}</div>`;
 }
 function monthBars(byM, yr, label) {
-  const max = Math.max(...byM, 1), curM = yr === new Date().getFullYear() ? new Date().getMonth() : -1;
-  return `<section class="card"><div class="card-h"><h2>Mese per mese</h2></div><div class="months" role="img" aria-label="${label} nel ${yr}">${byM.map((v, i) => `<div class="${i === curM ? 'cur' : ''}" title="${MESI[i]}: ${euro(v)}"><i class="${v ? '' : 'zero'}" style="height:${v ? Math.max(4, v / max * 92) : 2}px"></i><span>${MB[i][0].toUpperCase()}</span></div>`).join('')}</div></section>`;
+  const W = 320, H = 132, top = 12, base = 104, max = Math.max(1, ...byM), gw = W / 12, bw = Math.min(14, gw - 8), curM = yr === new Date().getFullYear() ? new Date().getMonth() : -1;
+  let g = `<line class="grid" x1="0" x2="${W}" y1="${top}" y2="${top}"/><text x="${W}" y="${top - 3}" text-anchor="end">${shortEuro(max)}</text>`;
+  byM.forEach((v, i) => { const cx = gw * i + gw / 2;
+    if (v) g += `<path class="c-out" d="${colPath(cx - bw / 2, Math.min(base - (v / max) * (base - top), base - 2), bw, base)}"><title>${MESI[i]}: ${euro(v)}</title></path>`;
+    g += `<text x="${cx}" y="${base + 14}" text-anchor="middle" class="${i === curM ? 'cur' : ''}">${MB[i][0].toUpperCase()}</text>`; });
+  g += `<line class="base" x1="0" x2="${W}" y1="${base}" y2="${base}"/>`;
+  return `<section class="card"><div class="card-h"><h2>Mese per mese</h2></div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label} nel ${yr}">${g}</svg></section>`;
 }
 
+const CAT_EMO = {'Primi': ['🍝', 'k1'], 'Secondi': ['🍗', 'k2'], 'Contorni': ['🥗', 'k3'], 'Zuppe': ['🍲', 'k5'], 'Pizze e lievitati': ['🍕', 'k2'], 'Dolci': ['🍰', 'k4'], 'Antipasti e fritti': ['🧆', 'k5']};
 function recipeCard(r, extra = '') {
-  return `<button class="rcard" data-a="recipe" data-id="${r.id}"><h3>${esc(r.name)}</h3><div class="meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} min</span>` : ''}<span>${ic('users','sm')} ${r.servings}</span>${r.cat ? `<span>${esc(r.cat)}</span>` : ''}</div><div class="tags">${origBadge(r)}${(r.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>${extra}${isFav(r.id) ? `<span class="fav">${ic('star','sm fav-on')}</span>` : ''}</button>`;
+  const ce = CAT_EMO[r.cat] || ['🍽️', ''];
+  return `<button class="rcard" data-a="recipe" data-id="${r.id}"><span class="rc-emo ${ce[1]}" aria-hidden="true">${ce[0]}</span><h3>${esc(r.name)}</h3><div class="meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} min</span>` : ''}<span>${ic('users','sm')} ${r.servings}</span>${r.cat ? `<span>${esc(r.cat)}</span>` : ''}</div><div class="tags">${origBadge(r)}${(r.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>${extra}${isFav(r.id) ? `<span class="fav">${ic('star','sm fav-on')}</span>` : ''}</button>`;
 }
 function recipeList() {
   const q = norm(ui.q.trim()), tg = ui.tag;
@@ -2919,7 +3070,7 @@ const A = {
   }); },
   bview: d => { ui.bview = d.v; render(); },
   year: d => { ui.year += Number(d.d); render(); },
-  month: d => { ui.month = addMonths(ui.month + '-01', Number(d.d)).slice(0, 7); render(); },
+  month: d => { ui.month = addMonths(ui.month + '-01', Number(d.d)).slice(0, 7); ui.mcat = null; render(); },
   newMove: d => sheetMove(null, d.k),
   move: d => sheetMove(d.id),
   delMove: d => { closeSheet(); withUndo('Movimento eliminato', () => { const m = S.moves.find(x => x.id === d.id); S.moves = S.moves.filter(x => x.id !== d.id); if (m && m.billId) unpayBill(m.billId); }); },
@@ -2936,6 +3087,8 @@ const A = {
     ui.csv = null;
   },
   aiSort: () => aiSort(),
+  monthGo: d => { ui.month = d.m; ui.mcat = null; render(); },
+  mcat: d => { ui.mcat = ui.mcat === d.k ? null : d.k; render(); },
   notifDiag: () => sheetNotifDiag(),
   exactOn: async () => { try { await LN.changeExactNotificationSetting(); } catch (e) {} await scheduleNotifs(); sheetNotifDiag(); },
   notifResched: async () => { await scheduleNotifs(); toast('Avvisi riprogrammati'); sheetNotifDiag(); },
@@ -3167,6 +3320,17 @@ document.addEventListener('change', async e => {
     ui.csv = {...prepareImport(parseBankRows(ui.csv.rows, map)), colsOpen: true}; sheetCsv();
   }
 });
+/* grafico a linea: toccando o passando sopra, il valore di quel giorno */
+const lcAt = e => {
+  const svg = e.target.closest && e.target.closest('svg.lc'); if (!svg) return;
+  const r = svg.getBoundingClientRect(), n = +svg.dataset.n, last = +svg.dataset.last, ym = svg.dataset.ym;
+  const d = Math.max(1, Math.min(last, Math.round(((e.clientX - r.left) / r.width * 320 - 4) / 310 * (n - 1)) + 1));
+  const cur = cumul(ym), prev = cumul(addMonths(ym + '-01', -1).slice(0, 7)), xx = 4 + ((d - 1) / (n - 1)) * 310;
+  const ln = svg.querySelector('#lc-x'); if (ln) { ln.setAttribute('x1', xx); ln.setAttribute('x2', xx); }
+  const cap = $('#lc-cap'); if (cap) cap.innerHTML = `<b>${d} ${MESI[+ym.slice(5, 7) - 1]}</b>: ${euro(cur[d - 1])} spesi${prev[d - 1] != null ? ` · ${MESI[+addMonths(ym + '-01', -1).slice(5, 7) - 1]} allo stesso giorno ${euro(prev[d - 1])}` : ''}`;
+};
+document.addEventListener('pointermove', lcAt, {passive: true});
+document.addEventListener('pointerdown', lcAt, {passive: true});
 window.addEventListener('scroll', () => $('#top').classList.toggle('scrolled', window.scrollY > 4), {passive: true});
 /* se l'app resta aperta oltre la mezzanotte, aggiorna scadenze e "oggi" */
 let lastDay = today();
