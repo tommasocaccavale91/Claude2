@@ -2523,9 +2523,34 @@ function monthBars(byM, yr, label) {
   return `<section class="card"><div class="card-h"><h2>Mese per mese</h2></div><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${label} nel ${yr}">${g}</svg></section>`;
 }
 
-const CAT_EMO = {'Primi': ['🍝', 'k1'], 'Secondi': ['🍗', 'k2'], 'Contorni': ['🥗', 'k3'], 'Zuppe': ['🍲', 'k5'], 'Pizze e lievitati': ['🍕', 'k2'], 'Dolci': ['🍰', 'k4'], 'Antipasti e fritti': ['🧆', 'k5']};
+/* icona del piatto dal nome: prima la forma del piatto, poi l'ingrediente principale; se non è chiaro, un'icona neutra */
+const DISH_RULES = [
+  [/polpette di melanzane/, '🍆', 'k5'], [/insalata caprese|bruschetta/, '🍅', 'k2'], [/fiori di zucca/, '🌼', 'k1'], [/zeppole di alghe/, '🌿', 'k3'], [/mozzarella/, '🧀', 'k1'],
+  [/\bpizz[ae]\b|calzone|panzerott|montanarin/, '🍕', 'k2'], [/focacci|\bpane\b|casatiello/, '🍞', 'k5'], [/torta salata/, '🥧', 'k5'],
+  [/frittat|\buova\b/, '🍳', 'k1'], [/risott|\bris[oi]\b|arancin|suppl[iì]|couscous/, '🍚', 'k1'], [/polenta/, '🌽', 'k1'], [/crespell/, '🥞', 'k1'],
+  [/^(pasta|spaghetti|linguine|penne|rigatoni|paccheri|fusilli|trofie|lasagn|tagliatelle|bucatini|orecchiette|scialatielli|farfalle|cannelloni|ravioli|gnocchi|pizzoccheri|cacio e pepe)/, '🍝', 'k1']
+];
+const DOLCI_RULES = [[/limone/, '🍋'], [/cioccolat|torta caprese/, '🍫'], [/mele\b/, '🍎'], [/biscott|cantucci|ciambelline|roccoc/, '🍪'], [/crostata|pastiera|torta della nonna|torta di ricotta/, '🥧'], [/crema|panna cotta|budino/, '🍮'], [/castagn/, '🌰'], [/struffoli|graffe|zeppole|chiacchiere|frittelle/, '🍩']];
+const FOOD_RULES = [
+  [/polpo/, '🐙', 'k4'], [/calamar|seppi|totan/, '🦑', 'k4'], [/gamber/, '🦐', 'k2'], [/cozze|vongole|frutti di mare|scoglio/, '🦪', 'k4'],
+  [/orata|branzino|merluzzo|baccal|alici|sarde|sgombro|pesce|paranza|platessa|salmone|\btonno\b/, '🐟', 'k4'],
+  [/pollo|tacchino/, '🍗', 'k2'], [/hamburger/, '🍔', 'k2'], [/agnello|coniglio/, '🍖', 'k2'],
+  [/manzo|vitello|maiale|arista|arrosto|brasato|bollito|spezzatino|polpett|braciol|scaloppin|saltimbocca|cotolett|ossobuco|fegato|trippa|tagliata|spiedini|salsicc|cotechino|carne/, '🥩', 'k2'],
+  [/melanzan|caponata/, '🍆', 'k4'], [/zucchin/, '🥒', 'k3'], [/peperon/, '🫑', 'k3'], [/patat|pur[eè]|gatt[oò]|crocch/, '🥔', 'k5'], [/funghi/, '🍄', 'k5'],
+  [/fagiolini/, '🥬', 'k3'], [/broccol|friariell|cime di rapa|cavolfiore/, '🥦', 'k3'], [/carot/, '🥕', 'k5'], [/pomodor/, '🍅', 'k2'], [/zucca/, '🎃', 'k5'], [/cipoll/, '🧅', 'k5'],
+  [/fagioli\b|ceci|lenticchie|fave|cicerchie|piselli/, '🥣', 'k5'],
+  [/insalat/, '🥗', 'k3'], [/spinaci|bietol|scarola|cicoria|verz|cavolo|radicchio|finocchi|verdur|ciambotta|asparagi|carciof|fagiolini|rucola/, '🥬', 'k3']
+];
+const CAT_EMO = {'Primi': ['🍝', 'k1'], 'Contorni': ['🥗', 'k3'], 'Zuppe': ['🍲', 'k5'], 'Pizze e lievitati': ['🍕', 'k2'], 'Dolci': ['🍰', 'k4']};
+function dishEmo(r) {
+  const n = (r.name || '').toLowerCase();
+  if (r.cat === 'Zuppe') return ['🍲', 'k5'];
+  if (r.cat === 'Dolci') { const d = DOLCI_RULES.find(([re]) => re.test(n)); return [d ? d[1] : '🍰', 'k4']; }
+  const hit = DISH_RULES.find(([re]) => re.test(n)) || (r.cat === 'Primi' ? null : FOOD_RULES.find(([re]) => re.test(n)));
+  return hit ? [hit[1], hit[2]] : CAT_EMO[r.cat] || ['🍽️', ''];
+}
 function recipeCard(r, extra = '') {
-  const ce = CAT_EMO[r.cat] || ['🍽️', ''];
+  const ce = dishEmo(r);
   return `<button class="rcard" data-a="recipe" data-id="${r.id}"><span class="rc-emo ${ce[1]}" aria-hidden="true">${ce[0]}</span><h3>${esc(r.name)}</h3><div class="meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} min</span>` : ''}<span>${ic('users','sm')} ${r.servings}</span>${r.cat ? `<span>${esc(r.cat)}</span>` : ''}</div><div class="tags">${origBadge(r)}${(r.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>${extra}${isFav(r.id) ? `<span class="fav">${ic('star','sm fav-on')}</span>` : ''}</button>`;
 }
 function recipeList() {
