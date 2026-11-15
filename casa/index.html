@@ -12,10 +12,9 @@
 <style>
 /* Una colonna larga quanto un telefono: intestazione, contenuto che scorre, barra delle sezioni in basso.
    Tono: familiare ma serio, come un buon libro di casa. Avorio caldo, verde bosco, niente decorazioni.
-   Caratteri: Fraunces per i titoli, DM Sans per testo e importi (cifre incolonnate).
-   Entrambi con licenza SIL Open Font License, inclusi nella cartella fonts/. */
-@font-face{font-family:"Fraunces";src:url(fonts/fraunces.woff2) format("woff2");font-weight:500 800;font-display:swap}
-@font-face{font-family:"DM Sans";src:url(fonts/dmsans.woff2) format("woff2");font-weight:400 700;font-display:swap}
+   Carattere: Manrope per tutto, titoli in grassetto pieno, cifre incolonnate negli importi.
+   Licenza SIL Open Font License, incluso nella cartella fonts/. */
+@font-face{font-family:"Manrope";src:url(fonts/manrope.woff2) format("woff2");font-weight:400 800;font-display:swap}
 :root{
   --bg:#F4F1EB; --surface:#FFFFFF; --surface2:#EEEAE2; --ink:#1C2321; --muted:#5D6460; --line:rgba(28,35,33,.10);
   --accent:#2E5E4E; --accent-ink:#FFFFFF; --accent-soft:rgba(46,94,78,.09);
@@ -27,8 +26,8 @@
   --c-in:#2a78d6; --c-out:#eb6834; --c-grid:rgba(28,35,33,.08);
   --shadow:0 1px 2px rgba(28,35,33,.05),0 4px 14px -8px rgba(28,35,33,.14);
   --r:14px; --nav:68px;
-  --f:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-  --f-title:"Fraunces",Georgia,"Times New Roman",serif;
+  --f:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-title:var(--f);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
@@ -360,19 +359,19 @@ button.stat:active{transform:scale(.98)}
 @media (prefers-reduced-motion:reduce){.thinking .dot{animation:none}}
 @media (max-width:380px){.stats.three .v{font-size:15px}.nav button{font-size:10.5px}}
 /* ===== veste grafica: familiare ma seria ===== */
-.top h1{font-family:var(--f-title);font-weight:600;letter-spacing:-.01em;font-size:29px}
+.top h1{font-family:var(--f-title);font-weight:800;letter-spacing:-.025em;font-size:28px}
 .top .icon-btn,.top .btn:not(.primary){background:var(--surface);box-shadow:var(--shadow)}
 .btn{border-radius:11px;font-weight:600}
 .card{border-radius:var(--r);padding:16px;box-shadow:var(--shadow);border:1px solid var(--line)}
 .card-h{margin-bottom:10px}
-.card h2{font-family:var(--f-title);font-size:18.5px;font-weight:600;letter-spacing:-.005em;text-transform:none;color:var(--ink);display:flex;align-items:center;gap:8px}
+.card h2{font-family:var(--f-title);font-size:17px;font-weight:800;letter-spacing:-.015em;text-transform:none;color:var(--ink);display:flex;align-items:center;gap:8px}
 .sec-t,.h3{font-size:12px;letter-spacing:.08em}
 .stat{border:1px solid var(--line);border-radius:12px}
 .stat .v,.amt,.catbar .a,.mh-v,.mh-row b{font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.01em}
-.sh-h h2,.tour-body h1,.tour-body h2,.rcard h3{font-family:var(--f-title);font-weight:600;letter-spacing:-.005em}
+.sh-h h2,.tour-body h1,.tour-body h2,.rcard h3{font-family:var(--f-title);font-weight:800;letter-spacing:-.02em}
 .rcard{border:1px solid var(--line);display:grid;grid-template-columns:46px 1fr;column-gap:12px;align-items:start}
 .rcard>*:not(.rc-emo):not(.fav){grid-column:2}
-.rcard h3{font-size:18px}
+.rcard h3{font-size:16.5px}
 .rc-emo{grid-row:1 / span 4;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--surface2)}
 .rc-emo.k1,.rc-emo.k5{background:var(--sun-soft)}.rc-emo.k2{background:var(--tomato-soft)}.rc-emo.k3{background:var(--olive-soft)}.rc-emo.k4{background:var(--accent-soft)}
 .tag{border-radius:6px}
@@ -391,15 +390,36 @@ button.stat:active{transform:scale(.98)}
 /* testata della schermata Oggi: tinta unita, data e saluto */
 .hero{margin:2px 0 16px;border-radius:18px;padding:18px 18px 16px;background:var(--hero);color:var(--hero-ink)}
 .hero-d{margin:0;font-size:13.5px;font-weight:500;opacity:.8;text-transform:capitalize}
-.hero h2{margin:2px 0 0;font-family:var(--f-title);font-size:30px;font-weight:600;letter-spacing:-.01em;line-height:1.15}
+.hero h2{margin:2px 0 0;font-family:var(--f-title);font-size:28px;font-weight:800;letter-spacing:-.025em;line-height:1.15}
 .hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .hero-chips button{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:17px;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:500}
 .hero-chips button b{font-weight:700}
+/* Oggi: un riquadro per sezione, toccandolo si apre la sezione */
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
+.sum>.card{grid-column:1 / -1;margin:0}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 12px 11px;text-align:left;display:flex;flex-direction:column;gap:1px;min-width:0;min-height:108px;color:var(--ink)}
+.tile.wide{grid-column:1 / -1;min-height:0}
+.tile .ti{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.tile .ti .svg{width:16px;height:16px}
+.tile .ti em{margin-left:auto;font-style:normal;display:flex;opacity:.6}
+.tile .tv{font-size:23px;font-weight:800;letter-spacing:-.025em;font-variant-numeric:tabular-nums;line-height:1.15}
+.tile .tv small{font-size:13.5px;font-weight:600;letter-spacing:0;color:var(--muted);margin-left:4px}
+.tile .ts{font-size:12.5px;color:var(--muted);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-top:auto;padding-top:4px}
+.tile.bad .tv{color:var(--bad)}
+.tile.bad{border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.tile.none .tv{font-size:17px;color:var(--muted)}
+.tav-links{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tav-links button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:18px;background:var(--surface2);font-size:13.5px;font-weight:600;color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tav-links button.idea-l{background:var(--sun-soft)}
+.mseg{margin:0 0 14px;background:none;padding:0;border-radius:0;border-bottom:1px solid var(--line);box-shadow:none}
+.mseg button{font-weight:700;border-radius:0;background:none!important;box-shadow:none!important;border-bottom:2.5px solid transparent;margin-bottom:-1px;color:var(--muted);min-height:44px}
+.mseg button[aria-pressed="true"]{border-bottom-color:var(--accent);color:var(--accent)}
+.mseg .n{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--tomato);color:var(--tomato-ink);font-size:11px;margin-left:6px}
 /* conti */
 .receipt{margin-bottom:14px}
 .money-hero{margin:0}
 .money-hero .mh-l{font-size:13.5px;color:var(--muted);font-weight:500}
-.money-hero .mh-v{font-family:var(--f-title);font-size:36px;font-weight:600;margin:2px 0 12px;line-height:1.1}
+.money-hero .mh-v{font-family:var(--f-title);font-size:34px;font-weight:800;letter-spacing:-.025em;margin:2px 0 12px;line-height:1.1}
 .mh-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line);padding-top:12px}
 .mh-row div{display:block}
 .mh-row span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);font-weight:500}
@@ -2243,12 +2263,20 @@ function finishTour(trial) {
 /* ---------- interfaccia ---------- */
 const TABS = [['home','Oggi','home'],['ricette','Ricette','book'],['menu','Menù','cal'],['spesa','Spesa','cart'],['bollette','Bollette','bill'],['conti','Conti','wallet']];
 const TITLES = {home:'Casa in Ordine', ricette:'Ricette', menu:'Menù della settimana', spesa:'Lista della spesa', bollette:'Bollette e scadenze', conti:'Entrate e spese'};
+/* con entrambe attive, Bollette ed Entrate e spese stanno sotto un'unica voce "Conti", con due schede in alto */
+const moneyBoth = () => tabOn('bollette') && tabOn('conti');
+const lateBills = () => S.bills.filter(b => !b.paid && diffDays(today(), b.due) <= S.settings.remindDays).length;
+function moneySeg() {
+  if (!moneyBoth()) return '';
+  const n = lateBills();
+  return `<div class="seg two mseg" role="tablist" aria-label="Conti"><button data-a="go" data-t="conti" role="tab" aria-pressed="${tab === 'conti'}">Entrate e spese</button><button data-a="go" data-t="bollette" role="tab" aria-pressed="${tab === 'bollette'}">Bollette${n ? `<span class="n">${n}</span>` : ''}</button></div>`;
+}
 let tab = TABS.some(t => t[0] === pref.get('tab')) ? pref.get('tab') : 'home';
 const ui = {q: '', tag: 'tutte', rview: 'lib', week: mondayOf(today()), bview: 'todo', year: new Date().getFullYear(), month: today().slice(0, 7), serv: null, rid: null, slot: null, ai: null, csv: null};
 
 function render() {
   if (!tabOn(tab)) tab = 'home';
-  $('#title').textContent = TITLES[tab];
+  $('#title').textContent = moneyBoth() && (tab === 'conti' || tab === 'bollette') ? 'Conti di casa' : TITLES[tab];
   const act = {
     home: `<button class="icon-btn" data-a="settings" aria-label="Impostazioni">${ic('gear')}</button>`,
     ricette: `<button class="btn primary sm" data-a="newRecipe">${ic('plus','sm')} Ricetta</button>`,
@@ -2259,18 +2287,21 @@ function render() {
   }[tab];
   $('#topact').innerHTML = act;
   const focusId = document.activeElement && document.activeElement.id;
-  $('#main').innerHTML = V[tab]();
+  $('#main').innerHTML = (tab === 'conti' || tab === 'bollette' ? moneySeg() : '') + V[tab]();
   if (focusId === 'fi' && $('#fi')) $('#fi').focus();
   const toBuy = S.shopping.filter(i => !i.done).length;
-  const late = S.bills.filter(b => !b.paid && diffDays(today(), b.due) <= S.settings.remindDays).length;
-  const tabs = TABS.filter(t => tabOn(t[0]));
+  const late = lateBills();
+  const both = moneyBoth(), lastMoney = pref.get('moneyTab', 'conti') === 'bollette' ? 'bollette' : 'conti';
+  const tabs = TABS.filter(t => tabOn(t[0]) && !(both && t[0] === 'bollette'));
   $('#nav').style.gridTemplateColumns = `repeat(${tabs.length}, 1fr)`;
   $('#nav').innerHTML = tabs.map(([k, l, i]) => {
-    const n = k === 'spesa' ? toBuy : k === 'bollette' ? late : 0;
-    return `<button data-a="go" data-t="${k}" ${k === tab ? 'aria-current="page"' : ''}><span class="nav-ic">${ic(i)}</span><span>${l}</span>${n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : ''}</button>`;
+    const merged = both && k === 'conti', cur = merged ? (tab === 'conti' || tab === 'bollette') : k === tab;
+    const n = k === 'spesa' ? toBuy : (k === 'bollette' || merged) ? late : 0;
+    if (merged) k = lastMoney;
+    return `<button data-a="go" data-t="${k}" ${cur ? 'aria-current="page"' : ''}><span class="nav-ic">${ic(i)}</span><span>${l}</span>${n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : ''}</button>`;
   }).join('');
 }
-function setTab(t) { if (t !== tab) { tab = t; pref.set('tab', t); window.scrollTo(0, 0); } render(); }
+function setTab(t) { if (t !== tab) { tab = t; pref.set('tab', t); if (t === 'conti' || t === 'bollette') pref.set('moneyTab', t); window.scrollTo(0, 0); } render(); }
 
 const empty = (emo, title, text, btn = '') => `<div class="empty"><div class="big">${emo}</div><b>${title}</b><p>${text}</p>${btn}</div>`;
 
@@ -2328,23 +2359,31 @@ const V = {
       ${steps.map(([l, ok, act]) => `<button class="step ${ok ? 'ok' : ''}" ${act}><span class="box">${ic('check','sm')}</span><span>${l}</span>${ok ? '' : ic('right','sm')}</button>`).join('')}</section>` : '';
     const stats = (S.moves.length || S.bills.length) ? [on('conti') && usesConti ? `<button class="stat" data-a="go" data-t="conti"><div class="l">Speso a ${MESI[d.getMonth()]}</div><div class="v">${euro(outM)}</div><div class="s">${inM ? `Entrate ${euro(inM)}` : 'Apri Conti'}</div></button>` : '', on('bollette') && S.bills.length ? `<button class="stat" data-a="go" data-t="bollette"><div class="l">Bollette da pagare</div><div class="v">${euro(sum(openM.map(b => b.amount)))}</div><div class="s">${openM.length} entro il mese</div></button>` : ''].filter(Boolean) : [];
     const hr = new Date().getHours(), greet = hr < 12 ? 'Buongiorno' : hr < 18 ? 'Buon pomeriggio' : 'Buonasera';
-    const remToday = S.rems.filter(r => !r.done && r.at && r.at.slice(0, 10) <= t).length;
-    const chips = [on('spesa') && toBuy.length ? `<button data-a="go" data-t="spesa">🛒 <b>${toBuy.length}</b> da comprare</button>` : '', on('bollette') && due.length ? `<button data-a="go" data-t="bollette">🧾 <b>${due.length}</b> ${due.length === 1 ? 'scadenza' : 'scadenze'}</button>` : '', on('promemoria') && remToday ? `<button data-a="remFocus">🔔 <b>${remToday}</b> per oggi</button>` : ''].filter(Boolean);
-    return `<section class="hero"><p class="hero-d">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</p><h2>${greet}</h2>${chips.length ? `<div class="hero-chips">${chips.join('')}</div>` : `<div class="hero-chips"><button data-a="${on('ricette') ? 'fridgeGo' : 'settings'}">${on('ricette') ? '🍳 Cosa cucino oggi?' : '⚙️ Personalizza'}</button></div>`}</section>${legacy}
-    ${on('ricette') ? `<section class="card"><div class="card-h"><h2>Oggi a tavola</h2><button class="link" data-a="go" data-t="menu">Menù della settimana</button></div>
+    /* sintesi: un riquadro per sezione, toccandolo si apre la sezione */
+    const openRems = S.rems.filter(r => !r.done).sort(remSort), remToday = openRems.filter(r => r.at && r.at.slice(0, 10) <= t);
+    const lateB = due.filter(b => b.due < t), nextB = due[0];
+    const tile = (cls, act, icon, label, val, sub) => `<button class="tile ${cls}" ${act}><span class="ti">${ic(icon, 'sm')}${label}<em>${ic('right', 'sm')}</em></span><span class="tv">${val}</span><span class="ts">${sub}</span></button>`;
+    const tiles = [
+      on('spesa') && (toBuy.length ? tile('', 'data-a="go" data-t="spesa"', 'cart', 'Spesa', `${toBuy.length}<small>da comprare</small>`, esc(toBuy.slice(0, 4).map(i => i.name).join(', ')))
+        : tile('none', 'data-a="go" data-t="spesa"', 'cart', 'Spesa', 'Lista vuota', 'Tocca per aggiungere')),
+      on('promemoria') && (openRems.length ? tile(remToday.some(r => r.at < t) ? 'bad' : '', 'data-a="remFocus"', 'bell', 'Promemoria', remToday.length ? `${remToday.length}<small>per oggi</small>` : `${openRems.length}<small>in programma</small>`, esc(openRems[0].text) + (openRems[0].at ? ' · ' + whenLabel(openRems[0].at, openRems[0].rep).t : ''))
+        : tile('none', 'data-a="remFocus"', 'bell', 'Promemoria', 'Nessuno', 'Scrivi o detta cosa ricordare')),
+      on('bollette') && (due.length ? tile(lateB.length ? 'bad' : '', 'data-a="go" data-t="bollette"', 'bill', 'Bollette', euro(sum(due.map(b => b.amount))), `${esc(nextB.name)} · ${dueInfo(nextB).t}${due.length > 2 ? ` · e altre ${due.length - 1}` : due.length === 2 ? ' · e un\'altra' : ''}`)
+        : tile('none', 'data-a="go" data-t="bollette"', 'bill', 'Bollette', 'Niente in scadenza', S.bills.length ? `${openM.length ? `${openM.length} da pagare entro il mese` : 'Tutto pagato'}` : 'Aggiungi luce, gas, affitto…')),
+      on('conti') && (mv.length ? tile('', 'data-a="go" data-t="conti"', 'wallet', 'Conti', euro(outM), `spesi a ${MESI[d.getMonth()]}${inM ? ` · saldo ${inM - outM < 0 ? '−' : '+'}${euro(Math.abs(inM - outM))}` : ''}`)
+        : tile('none', 'data-a="go" data-t="conti"', 'wallet', 'Entrate e spese', 'Nessun movimento', 'Importa l\'estratto conto o aggiungi una spesa'))
+    ].filter(Boolean);
+    if (tiles.length % 2) tiles[tiles.length - 1] = tiles[tiles.length - 1].replace('class="tile ', 'class="tile wide ');
+    const tavola = on('ricette') ? `<section class="card"><div class="card-h"><h2>A tavola oggi</h2><button class="link" data-a="go" data-t="menu">Menù</button></div>
       <div class="meals">${MEALS.map(([k, l]) => { const lab = slotLabel(m[k]); const isR = m[k] && m[k].r && recipeById(m[k].r); return `<button class="meal" data-a="${isR ? 'recipe' : 'slot'}" data-id="${isR ? m[k].r : ''}" data-day="${t}" data-meal="${k}"><span>${l}</span><b class="${lab ? '' : 'none'}">${lab ? esc(lab) : 'Da decidere'}</b></button>`; }).join('')}</div>
-      ${idea ? `<button class="idea" data-a="recipe" data-id="${idea.id}"><span>💡 Idea per stasera</span><b>${esc(idea.name)}</b><small>${[idea.time ? idea.time + ' minuti' : '', idea.cat].filter(Boolean).join(' · ')}</small></button>` : ''}
-      <button class="btn ghost wide" style="margin-top:10px" data-a="fridgeGo">${ic('fridge','sm')} Cosa cucino con quello che ho?</button>
-    </section>` : ''}
+      <div class="tav-links">${idea ? `<button class="idea-l" data-a="recipe" data-id="${idea.id}">💡 Idea: ${esc(idea.name)}</button>` : ''}<button data-a="fridgeGo">${ic('fridge', 'sm')} Cosa ho in frigo</button></div>
+    </section>` : '';
+    return `<section class="hero"><p class="hero-d">${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}</p><h2>${greet}</h2></section>${legacy}
+    <div class="sum">${tavola}${tiles.join('')}</div>
     ${startCard}
-    ${on('bollette') && due.length ? `<section class="card"><div class="card-h"><h2>Scadenze</h2><button class="link" data-a="go" data-t="bollette">Tutte</button></div>${due.map(b => billRow(b)).join('')}</section>` : ''}
     ${monthCard}
-    ${on('promemoria') ? remCard() : ''}
-    ${on('spesa') && toBuy.length ? `<section class="card"><div class="card-h"><h2>Spesa</h2><button class="link" data-a="go" data-t="spesa">Apri la lista</button></div>
-      <p class="empty-s" style="color:var(--ink)"><b>${toBuy.length}</b> ${toBuy.length === 1 ? 'cosa' : 'cose'} da comprare</p><div class="chipline">${toBuy.slice(0, 8).map(i => `<span class="tag">${esc(i.name)}</span>`).join('')}${toBuy.length > 8 ? `<span class="tag">+${toBuy.length - 8}</span>` : ''}</div>
-    </section>` : ''}
-    ${stats.length ? `<div class="stats ${stats.length === 1 ? 'one' : ''}">${stats.join('')}</div>` : ''}
-    ${notifCard}`;
+    ${notifCard}
+    ${on('promemoria') ? remCard() : ''}`;
   },
 
   ricette() {

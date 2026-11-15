@@ -1,4 +1,3 @@
-Caratteri usati dall'app (sottoinsieme latino, da Google Fonts), con licenza SIL Open Font License 1.1:
-- Fraunces (titoli) — Undercase Type
-- DM Sans (testo e importi) — Colophon Foundry
+Carattere usato dall'app (sottoinsieme latino, da Google Fonts), con licenza SIL Open Font License 1.1:
+- Manrope — Mikhail Sharanda
 Testo della licenza: https://openfontlicense.org
