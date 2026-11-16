@@ -415,6 +415,63 @@ button.stat:active{transform:scale(.98)}
 .mseg button{font-weight:700;border-radius:0;background:none!important;box-shadow:none!important;border-bottom:2.5px solid transparent;margin-bottom:-1px;color:var(--muted);min-height:44px}
 .mseg button[aria-pressed="true"]{border-bottom-color:var(--accent);color:var(--accent)}
 .mseg .n{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--tomato);color:var(--tomato-ink);font-size:11px;margin-left:6px}
+/* ricetta come infografica */
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.facts>div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 10px 9px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.facts>div>span{color:var(--accent);height:18px;display:flex;align-items:center}
+.facts b{font-size:15px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.facts small{font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:4px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--accent)}.dots i.on{background:var(--accent)}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 12px}
+.tools span{background:var(--surface2);color:var(--ink);border-radius:8px;padding:3px 9px;font-weight:600}
+.flow{display:flex;align-items:center;gap:0;margin:2px 0 16px;overflow-x:auto;padding:4px 2px}
+.flow span{position:relative;flex:none;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:21px;box-shadow:var(--shadow)}
+.flow span small{position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:10.5px;font-weight:800;display:grid;place-items:center}
+.flow i{flex:1;min-width:10px;height:2px;background:var(--line);margin:0 2px}
+.h3 small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:8px;font-size:12px}
+.ingg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 18px}
+.ingt{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 10px;text-align:left;min-width:0;min-height:58px;color:var(--ink)}
+.ingt .ie{flex:none;width:34px;height:34px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;font-size:18px}
+.ingt .ie i{width:7px;height:7px;border-radius:50%;background:var(--muted);opacity:.5}
+.ingt .it{flex:1;min-width:0;font-size:13.5px;line-height:1.25;overflow-wrap:anywhere}
+.ingt .it b{display:block;font-size:14.5px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.ingt .ck{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;color:transparent}
+.ingt[aria-pressed="true"]{opacity:.55}
+.ingt[aria-pressed="true"] .ck{background:var(--good);border-color:var(--good);color:#fff}
+.ingt[aria-pressed="true"] .it{text-decoration:line-through}
+.stepc{list-style:none;padding:0;margin:0 0 18px;position:relative}
+.stepc li{display:grid;grid-template-columns:34px 1fr;gap:10px;position:relative;padding-bottom:12px}
+.stepc li:not(:last-child)::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.sn span{width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;display:grid;place-items:center;font-size:15px}
+.sb{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 13px;position:relative;min-width:0}
+.se{position:absolute;right:10px;top:10px;font-size:22px;opacity:.9}
+.sb p{margin:0;padding-right:30px;line-height:1.5;font-size:15px}
+.sb p b{font-weight:700;color:var(--accent)}
+.schips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tchip{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 11px;border-radius:16px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px}
+.tchip.big{min-height:44px;padding:0 16px;font-size:15px;border-radius:22px}
+.hchip{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:16px;background:var(--tomato-soft);color:var(--ink);font-weight:700;font-size:13px}
+.uchip{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 10px;border-radius:16px;background:var(--surface2);font-size:13px;font-weight:500}
+.ctimer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav) + 14px + env(safe-area-inset-bottom,0px));z-index:70;display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border-radius:24px;padding:6px 6px 6px 14px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+.ctimer .ct-t{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.ctimer .ct-l{font-size:12.5px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+.ctimer .ct-x{width:34px;height:34px;border-radius:17px;background:rgba(255,255,255,.15);color:inherit;display:grid;place-items:center}
+.ctimer.done{background:var(--tomato);color:#fff;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:translateX(-50%) scale(1.05)}}
+.cook{position:fixed;inset:0;z-index:55;background:var(--bg);display:flex;flex-direction:column;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ck-h{display:flex;align-items:center;gap:8px;padding:10px 0 8px}
+.ck-h b{flex:1;font-weight:800;font-size:17px;letter-spacing:-.01em;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ck-bar{height:5px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-bottom:6px}
+.ck-bar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.ck-b{flex:1;overflow-y:auto;padding:18px 2px}
+.ck-k{margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.ck-b h2{margin:0 0 16px;font-size:26px;font-weight:800;letter-spacing:-.02em}
+.ck-e{font-size:56px;line-height:1;margin:8px 0 14px}
+.ck-t{font-size:23px;line-height:1.45;margin:0 0 18px;font-weight:500}
+.ck-t b{color:var(--accent);font-weight:800}
+.ck-nav{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.ck-nav .btn{min-height:54px;font-size:16px}
+@media (prefers-reduced-motion:reduce){.ctimer.done{animation:none}}
 /* video della ricetta */
 .r-video{position:relative;display:block;width:100%;aspect-ratio:16/10;border-radius:16px;background-size:cover;background-position:center 45%;margin:2px 0 14px;overflow:hidden;color:#fff;text-align:left}
 .r-video::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.55))}
@@ -517,6 +574,7 @@ const P = {
   gear:'<path d="M4 6h9M18 6h2M4 12h3M12 12h8M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
   play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',
   pen:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
   star:'<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/>',
@@ -1617,7 +1675,7 @@ async function scheduleNotifs() {
     const final = list.sort((x, y) => ts(x) - ts(y)).slice(0, 60).map(n => ({...n, isExactNotification: exact}));
     const keep = new Set(final.map(n => n.id));
     const pend = await LN.getPending();
-    const old = (pend.notifications || []).filter(n => !keep.has(n.id) && n.id !== 9);
+    const old = (pend.notifications || []).filter(n => !keep.has(n.id) && n.id !== 9 && n.id !== 8);
     if (old.length) await LN.cancel({notifications: old.map(n => ({id: n.id}))});
     let res = null;
     if (final.length) res = await LN.schedule({notifications: final});
@@ -2677,12 +2735,121 @@ function toast(msg, undo) {
 /* azione con "Annulla": salva una copia dei dati prima di cambiarli */
 function withUndo(msg, fn) { const snap = JSON.stringify(S); fn(); save(); render(); toast(msg, () => { S = normalize(JSON.parse(snap)); save(); render(); }); }
 
+/* ===== ricetta come infografica: tutto ricavato da ingredienti e passaggi già scritti ===== */
+const ING_EMO = [
+  [/guancial|pancett|prosciutt|speck|lard|salsicc|salam|cotechin|mortadell|nduja/, '🥓'], [/pollo|tacchin/, '🍗'], [/manzo|vitell|maiale|carne|macinat|agnell|conigli|fegat|trippa|braciol|spezzatin|arista|lonza/, '🥩'],
+  [/gamber|scamp/, '🦐'], [/cozz|vongol|frutti di mare|lupin/, '🦪'], [/polpo|polipo/, '🐙'], [/calamar|seppi|totan/, '🦑'],
+  [/pesce|tonno|alic|acciug|baccal|merluzz|salmon|orata|branzin|sgombr|sarde|spada|platess|paranza/, '🐟'],
+  [/uov|tuorl|album/, '🥚'], [/spaghett|pasta|linguin|penne|rigaton|paccher|fusill|bucatin|tagliatell|lasagn|maccheron|ditalin|orecchiett|trofie|farfall|scialatiell|candele|mezzanell|ziti|vermicell|pizzocch|cannellon|ravioli|tortellin|cous/, '🍝'],
+  [/\briso\b|carnaroli|arborio|vialone/, '🍚'], [/farin|semola|pangrattat|polenta|amido|fecola/, '🌾'], [/lievit|\bpane\b|bruschett|crostin|pancarr|savoiard/, '🍞'],
+  [/peperoncin/, '🌶️'], [/pomodor|passata|pelati|concentrat/, '🍅'], [/patat/, '🥔'], [/melanzan/, '🍆'], [/zucchin/, '🥒'], [/peperon/, '🫑'], [/aglio/, '🧄'], [/cipoll|scalogn|porr/, '🧅'],
+  [/carot/, '🥕'], [/fungh|porcin|champignon/, '🍄'], [/broccol|cavolfior|friariell|cime di rapa/, '🥦'], [/\bmais\b/, '🌽'], [/limon/, '🍋'], [/aranc/, '🍊'], [/\bmel[ae]\b/, '🍎'], [/fragol/, '🍓'],
+  [/castagn|noci|nocciol|mandorl|pistacch|pinol/, '🌰'], [/oliv|olio/, '🫒'], [/zucca/, '🎃'],
+  [/formagg|pecorin|parmigian|grana|mozzarell|provola|ricotta|scamorza|fior di latte|caciocavall|gorgonzola|fontina|feta|mascarpone|burrata|stracchin|emmental|taleggio|asiago/, '🧀'],
+  [/latte|panna|yogurt/, '🥛'], [/burro/, '🧈'], [/\bsale\b|\bpepe\b|noce moscata|cannella|zafferan|paprika|curry/, '🧂'], [/zuccher|miele/, '🍯'], [/cioccolat|cacao/, '🍫'],
+  [/vino|marsala|liquor|\brum\b|vodka|limoncell|birra/, '🍷'], [/acqua|brodo/, '💧'],
+  [/basilic|prezzemol|rosmarin|salvia|origan|timo|menta|allor|erb|maggioran|finocchiett|capper|alghe/, '🌿'],
+  [/insalat|lattug|rucola|spinac|bietol|scarola|cicori|verza|cavol|radicchi|finocch|sedan|asparag|carciof|fagiolin|indivia/, '🥬'],
+  [/fagiol|ceci|lenticch|\bfave\b|pisell|cicerch|legum/, '🥣']
+];
+const ingEmo = n => { const l = String(n).toLowerCase(); const h = ING_EMO.find(([re]) => re.test(l)); return h ? h[1] : ''; };
+const STEP_EMO = [
+  [/\b(taglia|affetta|trita|dividi|sbuccia|pela|spunta|monda|incidi|sfiletta|grattugia)/, '🔪'], [/\b(inforna|in forno|gratin)|\d\s*°/, '🔥'],
+  [/\b(friggi|soffrigg|rosola|salta|scalda|sfuma|in padella|padella)/, '🍳'], [/\b(lessa|bolli|sbollenta|acqua bollente|scola|cuoci la pasta|cuoci gli|lessare)/, '🍲'],
+  [/\b(sbatti|mescola|amalgama|unisci|impasta|frulla|monta|lavora|incorpora|setaccia|emulsiona)/, '🥣'], [/\b(lievit|riposa|marin)/, '⏳'],
+  [/\b(frigo|raffredd|congel)/, '❄️'], [/\b(servi|impiatta|decora|guarnisci|spolvera|completa)/, '🍽️'], [/\b(condisci|sala|insaporisci|aggiusta)/, '🧂'], [/\b(cuoci|stufa|copri|lascia cuocere)/, '🍲']
+];
+const stepEmo = t => { const l = t.toLowerCase(); const h = STEP_EMO.find(([re]) => re.test(l)); return h ? h[1] : '🥄'; };
+const STOP = new Set(['di', 'del', 'della', 'dei', 'delle', 'e', 'al', 'alla', 'a', 'in', 'per', 'q.b.', 'qb', 'fresco', 'fresca', 'freschi', 'fresche', 'extravergine', 'grattugiato', 'grattugiata', 'tritato', 'tritata', 'fine', 'grosso', 'secco', 'secca', 'intero', 'intera', 'grande', 'grandi', 'piccolo', 'piccola', 'medio', 'media', '00', 'tipo', 'da', 'con']);
+function ingStem(name) {
+  const w = String(name).toLowerCase().replace(/[()]/g, ' ').split(/[\s,]+/).find(x => x.length >= 3 && !STOP.has(x) && !/^\d/.test(x));
+  return w ? (w.length > 5 ? w.slice(0, w.length - 2) : w) : '';
+}
+const ACC = '[a-zàèéìòù]*';
+const ingName = i => String(i.name).replace(/\s*\bq\.?\s*b\.?\s*$/i, '');
+const qtyText = (i, f) => [i.qty != null ? fmtQty(scaleQty(i, f)) : '', i.unit].filter(Boolean).join(' ');
+function parseTimes(t) {
+  const out = [], re = /(\d+(?:[.,]\d+)?)(?:\s*[-–]\s*(\d+(?:[.,]\d+)?))?\s*(ore|ora|minuti|minuto|min)\b/gi; let m;
+  while ((m = re.exec(t))) { const v = parseFloat((m[2] || m[1]).replace(',', '.')), h = /^or/i.test(m[3]); out.push({sec: Math.round(v * (h ? 3600 : 60)), label: m[0].replace(/\s+/g, ' ').replace(/minut[io]/i, 'min')}); }
+  return out;
+}
+const parseTemps = t => [...t.matchAll(/(\d{2,3})\s*°\s*C?/g)].map(m => m[1] + ' °C');
+function recipeFacts(r, steps) {
+  const all = steps.join(' ').toLowerCase();
+  const score = steps.length + (r.time > 90 ? 3 : r.time > 45 ? 2 : r.time > 25 ? 1 : 0) + (/impast|lievit|friggi|frigg|sfoglia|stendi/.test(all) ? 1 : 0);
+  const diff = score <= 4 ? ['Facile', 1] : score <= 7 ? ['Media', 2] : ['Impegnativa', 3];
+  const tools = [[/forno|inforna|°\s*c/, 'Forno'], [/padella|rosola|soffrigg|salta|friggi/, 'Padella'], [/pentola|acqua bollente|lessa|scola|brodo|sbollenta/, 'Pentola'], [/teglia|pirofila|stampo|tortiera/, 'Teglia'], [/frulla|mixer|frullatore/, 'Frullatore'], [/ciotola|terrina/, 'Ciotola']].filter(([re]) => re.test(all)).map(x => x[1]);
+  return {diff, tools};
+}
+function stepParts(r, s, f) {
+  const lower = s.toLowerCase(), used = [];
+  let html = esc(s);
+  for (const i of r.ingredients) { const st = ingStem(i.name); if (!st || st.length < 3) continue;
+    const re = new RegExp(`(^|[^a-zàèéìòù])(${st}${ACC})`, 'i');
+    if (re.test(lower)) { used.push(i); html = html.replace(new RegExp(`(^|[^a-zàèéìòù])(${st}${ACC})`, 'gi'), '$1<b>$2</b>'); } }
+  return {html, used, times: parseTimes(s), temps: parseTemps(s)};
+}
 function recipeBody(r, f, people) {
   const steps = String(r.steps || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
-  return `${r.ingredients.length ? `<p class="h3">Ingredienti per ${people} ${people == 1 ? 'persona' : 'persone'}</p><ul class="ing">${r.ingredients.map(i => `<li><b>${esc([i.qty != null ? fmtQty(scaleQty(i, f)) : '', i.unit].filter(Boolean).join(' ')) || '—'}</b><span>${esc(i.name)}</span></li>`).join('')}</ul>` : ''}
-    ${steps.length ? `<p class="h3">Procedimento</p><ol class="steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>` : ''}
-    ${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ''}`;
+  const fx = recipeFacts(r, steps);
+  const facts = `<div class="facts">
+    ${r.time ? `<div><span>${ic('clock', 'sm')}</span><b>${r.time} min</b><small>Tempo</small></div>` : ''}
+    <div><span class="dots">${[1, 2, 3].map(k => `<i class="${k <= fx.diff[1] ? 'on' : ''}"></i>`).join('')}</span><b>${fx.diff[0]}</b><small>Difficoltà</small></div>
+    <div><span>${ic('list', 'sm')}</span><b>${steps.length} passaggi</b><small>${r.ingredients.length} ingredienti</small></div>
+  </div>${fx.tools.length ? `<p class="tools">Ti serve: ${fx.tools.map(t => `<span>${t}</span>`).join('')}</p>` : ''}`;
+  const flow = steps.length > 1 ? `<div class="flow" aria-hidden="true">${steps.map((s, k) => `<span>${stepEmo(s)}<small>${k + 1}</small></span>`).join('<i></i>')}</div>` : '';
+  const ings = r.ingredients.length ? `<p class="h3">Ingredienti per ${people} ${people == 1 ? 'persona' : 'persone'}<small>tocca per spuntare</small></p><div class="ingg">${r.ingredients.map(i => { const e = ingEmo(i.name), q = qtyText(i, f); return `<button class="ingt" aria-pressed="false"><span class="ie">${e || '<i></i>'}</span><span class="it"><b>${esc(q) || 'q.b.'}</b>${esc(ingName(i))}</span><span class="ck">${ic('check', 'sm')}</span></button>`; }).join('')}</div>` : '';
+  const stepsH = steps.length ? `<div class="h3 sec-row" style="display:flex;justify-content:space-between;align-items:center"><span>Procedimento</span>${r.id ? `<button class="btn primary sm" data-a="cookMode" data-id="${r.id}">${ic('play', 'sm')} Cucina passo passo</button>` : ''}</div>
+    <ol class="stepc">${steps.map((s, k) => { const p = stepParts(r, s, f); return `<li><div class="sn"><span>${k + 1}</span></div><div class="sb"><div class="se">${stepEmo(s)}</div><p>${p.html}</p>
+      ${p.used.length || p.times.length || p.temps.length ? `<div class="schips">${p.times.map(t => `<button class="tchip" data-a="timer" data-s="${t.sec}" data-l="${esc(r.name + ' · passo ' + (k + 1))}">${ic('clock', 'sm')} ${esc(t.label)}</button>`).join('')}${p.temps.map(t => `<span class="hchip">🌡️ ${t}</span>`).join('')}${p.used.map(i => `<span class="uchip">${ingEmo(i.name)} ${esc(qtyText(i, f))} ${esc(ingName(i))}</span>`).join('')}</div>` : ''}</div></li>`; }).join('')}</ol>` : '';
+  return facts + flow + ings + stepsH + (r.notes ? `<div class="note">${esc(r.notes)}</div>` : '');
 }
+/* ingredienti da spuntare mentre si cucina (non si salvano) */
+document.addEventListener('click', e => { const b = e.target.closest('.ingt'); if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'); });
+
+/* timer di cucina: una pillola in basso; se lo schermo si spegne, nell'app suona la notifica */
+let ckT = null;
+function startTimer(sec, label) {
+  stopTimer(true);
+  const end = Date.now() + sec * 1000, el = document.createElement('div'); el.className = 'ctimer'; el.setAttribute('role', 'status');
+  el.innerHTML = `<span class="ct-i">${ic('clock', 'sm')}</span><span class="ct-t"></span><span class="ct-l">${esc(label)}</span><button class="ct-x" aria-label="Ferma il timer">${ic('x', 'sm')}</button>`;
+  document.body.appendChild(el); el.querySelector('.ct-x').onclick = () => stopTimer();
+  const tick = () => { const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+    el.querySelector('.ct-t').textContent = left ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : 'Tempo!';
+    if (!left) { clearInterval(ckT.iv); el.classList.add('done'); try { navigator.vibrate && navigator.vibrate([400, 200, 400, 200, 400]); } catch (e) {} beep(); } };
+  ckT = {el, iv: setInterval(tick, 500)}; tick();
+  if (LN) LN.schedule({notifications: [{id: 8, title: '⏱️ Tempo scaduto', body: label, schedule: {at: new Date(end), allowWhileIdle: true}}]}).catch(() => {});
+}
+function stopTimer(silent) { if (!ckT) return; clearInterval(ckT.iv); ckT.el.remove(); ckT = null; if (LN) LN.cancel({notifications: [{id: 8}]}).catch(() => {}); }
+function beep() { try { const C = new (window.AudioContext || window.webkitAudioContext)(); [0, .45, .9].forEach(t => { const o = C.createOscillator(), g = C.createGain(); o.frequency.value = 880; o.connect(g); g.connect(C.destination); g.gain.setValueAtTime(.0001, C.currentTime + t); g.gain.exponentialRampToValueAtTime(.3, C.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, C.currentTime + t + .35); o.start(C.currentTime + t); o.stop(C.currentTime + t + .4); }); } catch (e) {} }
+
+/* cucina passo passo: a tutto schermo, un passaggio alla volta, schermo sempre acceso */
+let cook = null;
+async function cookMode(id) {
+  const r = recipeById(id); if (!r) return;
+  const steps = String(r.steps || '').split(/\n+/).map(s => s.trim()).filter(Boolean), f = (ui.serv || r.servings) / r.servings;
+  const o = document.createElement('div'); o.className = 'cook'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Cucina passo passo');
+  document.body.appendChild(o);
+  cook = {o, i: 0, n: steps.length + 1, lock: null};
+  try { cook.lock = await navigator.wakeLock.request('screen'); } catch (e) {}
+  const draw = () => { const i = cook.i;
+    const head = `<div class="ck-h"><b>${esc(r.name)}</b><button class="icon-btn" data-ck="x" aria-label="Chiudi">${ic('x')}</button></div><div class="ck-bar"><i style="width:${(i / (cook.n - 1)) * 100}%"></i></div>`;
+    let body;
+    if (i === 0) body = `<p class="ck-k">Prima di iniziare</p><h2>Prepara gli ingredienti</h2><div class="ingg">${r.ingredients.map(x => `<button class="ingt" aria-pressed="false"><span class="ie">${ingEmo(x.name) || '<i></i>'}</span><span class="it"><b>${esc(qtyText(x, f)) || 'q.b.'}</b>${esc(ingName(x))}</span><span class="ck">${ic('check', 'sm')}</span></button>`).join('')}</div>`;
+    else { const s = steps[i - 1], p = stepParts(r, s, f);
+      body = `<p class="ck-k">Passo ${i} di ${steps.length}</p><div class="ck-e">${stepEmo(s)}</div><p class="ck-t">${p.html}</p>
+        <div class="schips">${p.times.map(t => `<button class="tchip big" data-a="timer" data-s="${t.sec}" data-l="${esc(r.name + ' · passo ' + i)}">${ic('clock', 'sm')} Avvia timer ${esc(t.label)}</button>`).join('')}${p.temps.map(t => `<span class="hchip">🌡️ ${t}</span>`).join('')}${p.used.map(x => `<span class="uchip">${ingEmo(x.name)} ${esc(qtyText(x, f))} ${esc(ingName(x))}</span>`).join('')}</div>`; }
+    const last = i === cook.n - 1;
+    o.innerHTML = `${head}<div class="ck-b">${body}</div><div class="ck-nav"><button class="btn" data-ck="prev" ${i ? '' : 'disabled'}>${ic('left', 'sm')} Indietro</button><button class="btn primary" data-ck="${last ? 'x' : 'next'}">${last ? 'Fatto, buon appetito!' : `Avanti ${ic('right', 'sm')}`}</button></div>`;
+  };
+  const go = d => { cook.i = Math.max(0, Math.min(cook.n - 1, cook.i + d)); draw(); o.querySelector('.ck-b').scrollTop = 0; };
+  o.addEventListener('click', e => { const b = e.target.closest('[data-ck]'); if (!b) return; const k = b.dataset.ck; if (k === 'x') closeCook(); else go(k === 'next' ? 1 : -1); });
+  let x0 = null; o.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive: true});
+  o.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 70) go(dx < 0 ? 1 : -1); }, {passive: true});
+  cook.key = e => { if (e.key === 'Escape') closeCook(); if (e.key === 'ArrowRight') go(1); if (e.key === 'ArrowLeft') go(-1); }; document.addEventListener('keydown', cook.key);
+  draw();
+}
+function closeCook() { if (!cook) return; try { cook.lock && cook.lock.release(); } catch (e) {} document.removeEventListener('keydown', cook.key); cook.o.remove(); cook = null; }
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
 function sheetRecipe(id) {
   const r = recipeById(id); if (!r) return;
@@ -2691,7 +2858,7 @@ function sheetRecipe(id) {
   const vid = videoOf(r);
   openSheet(esc(r.name), `
     ${vid ? `<button class="r-video" data-a="playVideo" data-id="${r.id}" style="background-image:url('${vid.poster}')"><span class="r-play">${ic('play')}</span><span class="r-vl">Guarda il video passo per passo · ${vid.sec} s</span></button>` : ''}
-    <div class="r-meta">${r.time ? `<span>${ic('clock','sm')} ${r.time} minuti</span>` : ''}${r.cat ? `<span>${esc(r.cat)}</span>` : ''}${origBadge(r, true)}${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <div class="r-meta">${r.cat ? `<span>${dishEmo(r)[0]} ${esc(r.cat)}</span>` : ''}${origBadge(r, true)}${(r.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
     <div class="stepper"><b>Per quante persone?<small>Ricetta originale per ${r.servings}</small></b><div><button data-a="serv" data-d="-1" aria-label="Una persona in meno">−</button><output>${ui.serv}</output><button data-a="serv" data-d="1" aria-label="Una persona in più">+</button></div></div>
     <div class="chipline serv-q">${[1, 2, 3, 4, 6, 8, 10, 12].map(n => `<button class="chip" data-a="servSet" data-n="${n}" aria-pressed="${ui.serv === n}">${n}</button>`).join('')}</div>
     ${recipeBody(r, f, ui.serv)}
@@ -3183,6 +3350,8 @@ const A = {
   },
   aiSort: () => aiSort(),
   playVideo: d => playVideo(d.id),
+  timer: d => startTimer(+d.s, d.l),
+  cookMode: d => cookMode(d.id),
   monthGo: d => { ui.month = d.m; ui.mcat = null; render(); },
   mcat: d => { ui.mcat = ui.mcat === d.k ? null : d.k; render(); },
   notifDiag: () => sheetNotifDiag(),
