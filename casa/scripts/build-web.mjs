@@ -11,4 +11,5 @@ html = html.replace(marker, '<script src="capacitor.js"></script>\n' + marker);
 writeFileSync(`${out}/index.html`, html);
 cpSync('node_modules/@capacitor/core/dist/capacitor.js', `${out}/capacitor.js`);
 cpSync('fonts', `${out}/fonts`, { recursive: true });
+cpSync('media', `${out}/media`, { recursive: true });
 console.log('www/ pronta');
