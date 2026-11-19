@@ -1,0 +1,1003 @@
+<title>Confetteria</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#E4EFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Nunito:wght@500;600;700;800;900&display=swap">
+<style>
+/* Layout: one-screen phone app — top bar, one swappable screen (bottega / partita), bottom sheets for negozio, pass, dati.
+   Look: an Italian confectioner's counter — pistachio ground, cocoa ink, raspberry accent, glass jars of sugared almonds. */
+:root{
+  --bg:#E4EFE3; --bg2:#D2E4D0; --surface:#FBFDF8; --surface2:#EEF5EC;
+  --ink:#2B1D18; --muted:#66564E; --line:rgba(43,29,24,.14);
+  --accent:#B8336A; --accent2:#9C2858; --on-accent:#FFFFFF;
+  --coin:#D9971C; --coin-ink:#4A3206; --good:#2C7A4B;
+  --glass:rgba(255,255,255,.55); --glass-edge:rgba(43,29,24,.26); --lid:#7C4B33; --lid-done:#B8336A;
+  --shadow:0 1px 0 rgba(43,29,24,.06),0 10px 24px -14px rgba(43,29,24,.45);
+  --scrim:rgba(30,20,16,.45);
+  --f-display:'Shrikhand',Georgia,'Times New Roman',serif;
+  --f-body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1E1612; --bg2:#2A1F1A; --surface:#32261F; --surface2:#3B2E26;
+    --ink:#F4EBE0; --muted:#C2B0A2; --line:rgba(244,235,224,.14);
+    --accent:#F0739F; --accent2:#F59AB9; --on-accent:#2B1D18;
+    --coin:#F2B840; --coin-ink:#3A2604; --good:#6FCB8F;
+    --glass:rgba(255,255,255,.07); --glass-edge:rgba(255,255,255,.30); --lid:#A9785C; --lid-done:#F0739F;
+    --shadow:0 1px 0 rgba(0,0,0,.2),0 12px 28px -14px rgba(0,0,0,.8);
+    --scrim:rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1E1612; --bg2:#2A1F1A; --surface:#32261F; --surface2:#3B2E26;
+  --ink:#F4EBE0; --muted:#C2B0A2; --line:rgba(244,235,224,.14);
+  --accent:#F0739F; --accent2:#F59AB9; --on-accent:#2B1D18;
+  --coin:#F2B840; --coin-ink:#3A2604; --good:#6FCB8F;
+  --glass:rgba(255,255,255,.07); --glass-edge:rgba(255,255,255,.30); --lid:#A9785C; --lid-done:#F0739F;
+  --shadow:0 1px 0 rgba(0,0,0,.2),0 12px 28px -14px rgba(0,0,0,.8);
+  --scrim:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4;-webkit-tap-highlight-color:transparent;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:flex;align-items:center;gap:10px;padding-block:10px 6px}
+.brand{background:none;border:0;padding:0;font-family:var(--f-display);font-size:24px;color:var(--accent);line-height:1;margin-right:auto;letter-spacing:.2px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 6px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:800;box-shadow:var(--shadow)}
+.pill svg{width:22px;height:22px;flex:none}
+.pill .plus{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:14px;line-height:1;margin-left:2px}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* ---------- Bottega (home) ---------- */
+.home{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-block:6px 20px;scrollbar-width:none}
+.home::-webkit-scrollbar{display:none}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.eyebrow{margin:0;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--surface) 0%,var(--surface2) 100%);padding:18px 18px 20px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:end}
+.hero h1{margin:4px 0 0;font-family:var(--f-display);font-weight:400;font-size:clamp(32px,10vw,44px);line-height:1;color:var(--ink);white-space:nowrap}
+.hero .sub{margin:4px 0 14px;color:var(--muted);font-weight:600}
+.hero .mini{grid-row:1;grid-column:2;display:flex;gap:4px;align-items:flex-end;padding-bottom:4px}
+.hero .btn{grid-column:1 / -1}
+.tag-hard{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:10px;letter-spacing:.1em}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-weight:800;font-size:16px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:0 4px 0 var(--accent2)}
+.btn.primary:active{transform:translateY(2px);box-shadow:0 2px 0 var(--accent2)}
+.btn.big{min-height:56px;font-size:19px}
+.btn.ghost{background:transparent}
+.btn.coin{background:var(--coin);border-color:var(--coin);color:var(--coin-ink);box-shadow:0 4px 0 color-mix(in srgb,var(--coin) 70%,#000)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn svg{width:20px;height:20px}
+.btn.wide{width:100%}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.btnrow .btn{flex:1 1 140px}
+
+.daily{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center}
+.daily .cal{grid-row:1 / span 3;width:58px;border-radius:12px;overflow:hidden;border:1px solid var(--line);text-align:center;background:var(--surface2)}
+.daily .cal b{display:block;background:var(--accent);color:var(--on-accent);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:3px 0}
+.daily .cal span{display:block;font-size:26px;font-weight:900;padding:4px 0 2px}
+.daily h3{margin:0;font-size:18px;font-weight:900}
+.daily p{margin:0;color:var(--muted);font-weight:600;font-size:14px}
+.daily .btn{grid-column:1 / -1;margin-top:10px}
+.done-chip{display:inline-flex;align-items:center;gap:6px;color:var(--good);font-weight:800}
+
+.passcard{display:flex;flex-direction:column;gap:8px;text-align:left;width:100%}
+.passcard .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.passcard h3{margin:0;font-size:17px;font-weight:900}
+.bar{height:12px;border-radius:999px;background:var(--bg2);overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--coin));border-radius:inherit}
+.small{font-size:13px;color:var(--muted);font-weight:600}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);font-weight:800;font-size:14px;position:relative}
+.tile svg{width:30px;height:30px}
+.dot{position:absolute;top:8px;right:10px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--surface)}
+
+.offer{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;background:var(--accent);color:var(--on-accent);border:0;border-radius:var(--r);padding:12px 14px;text-align:left;width:100%;box-shadow:var(--shadow)}
+.offer b{display:block;font-size:16px}
+.offer span{font-size:13px;opacity:.9;font-weight:700}
+.offer .price{background:var(--on-accent);color:var(--accent);padding:6px 10px;border-radius:10px;font-weight:900}
+.offer svg{width:34px;height:34px}
+.notice{border:1px dashed var(--accent);background:var(--surface);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.notice p{margin:0;font-weight:700}
+
+/* ---------- Partita ---------- */
+.game{flex:1;min-height:0;display:flex;flex-direction:column}
+.gbar{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;padding-block:4px 6px}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.iconbtn svg{width:22px;height:22px}
+.gbar h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1.05}
+.moves{text-align:right;line-height:1}
+.moves .num{display:block;font-size:28px;font-weight:900}
+.moves small{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.board{flex:1;min-height:0;display:grid;align-content:center;justify-content:center;row-gap:calc(var(--slot) * .5);column-gap:0;padding-block:28px 8px;--slot:60px}
+.jar{position:relative;width:var(--slot);height:var(--jarh);background:none;border:0;padding:0;display:flex;justify-content:center;transition:transform .18s ease}
+.jar .glass{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:var(--jarw);height:calc(var(--jarh) - 8px);border:2px solid var(--glass-edge);border-top-width:0;border-radius:6px 6px calc(var(--jarw) * .32) calc(var(--jarw) * .32);background:linear-gradient(90deg,transparent 0 12%,rgba(255,255,255,.35) 14% 20%,transparent 24%),var(--glass)}
+.jar .lid{position:absolute;left:50%;top:0;transform:translateX(-50%);width:calc(var(--jarw) + 8px);height:10px;border-radius:5px;background:var(--lid);transition:background .3s,transform .3s}
+.jar .stack{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;align-items:center;gap:2px}
+.jar.sel{transform:translateY(-12px)}
+.jar.sel .glass{border-color:var(--accent)}
+.jar.done .lid{background:var(--lid-done);transform:translateX(-50%) scaleX(1.06)}
+.jar.done .glass{border-color:color-mix(in srgb,var(--lid-done) 60%,var(--glass-edge))}
+.jar.hint-from .glass,.jar.hint-to .glass{border-color:var(--coin);box-shadow:0 0 0 4px color-mix(in srgb,var(--coin) 35%,transparent)}
+.jar.hint-to::after{content:"";position:absolute;top:-22px;left:50%;width:0;height:0;border:8px solid transparent;border-top-color:var(--coin);transform:translateX(-50%);animation:bob .8s ease-in-out infinite}
+.jar.shake{animation:shake .32s}
+.jar.pop .stack{animation:pop .45s ease}
+.pc{display:grid;place-items:center;width:var(--pw);height:var(--ph);border-radius:50%;background:radial-gradient(ellipse at 34% 28%,rgba(255,255,255,.8) 0 14%,rgba(255,255,255,0) 42%),var(--c);border:1px solid rgba(0,0,0,.2);box-shadow:inset 0 -3px 0 rgba(0,0,0,.13);font-size:calc(var(--ph) * .46);line-height:1;color:rgba(0,0,0,.34);font-weight:900;transition:transform .16s ease}
+.pc.dk{color:rgba(255,255,255,.6)}
+.pc.lift{transform:translateY(-14px)}
+.tip{min-height:42px;margin:0;padding:6px 4px 0;text-align:center;color:var(--muted);font-weight:700;font-size:14px;text-wrap:balance}
+.tip.warn{color:var(--accent)}
+.boosters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-block:6px 12px}
+.bst{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 8px;border-radius:14px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);font-weight:800;font-size:12px}
+.bst svg{width:26px;height:26px}
+.bst[disabled]{opacity:.45}
+.badge{position:absolute;top:-7px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:12px;font-weight:900;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg)}
+.badge.get{background:var(--coin);color:var(--coin-ink);font-size:13px}
+
+/* ---------- Sheets, ad, toast ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
+.sheet{width:100%;max-width:520px;max-height:88%;overflow-y:auto;background:var(--surface);border-radius:22px 22px 0 0;padding:10px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));box-shadow:0 -10px 40px -10px rgba(0,0,0,.4);animation:up .24s cubic-bezier(.2,.8,.2,1)}
+.sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.sheet h2{margin:0 0 4px;font-family:var(--f-display);font-weight:400;font-size:28px;line-height:1.1;text-wrap:balance}
+.sheet h3{margin:16px 0 8px;font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sheet p{margin:0 0 10px}
+.sheet .x{float:right;margin:-2px -6px 0 0}
+.stack-v{display:flex;flex-direction:column;gap:10px}
+.prod{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2);text-align:left;width:100%}
+.prod svg{width:40px;height:40px}
+.prod b{display:block;font-size:16px}
+.prod span{font-size:13px;color:var(--muted);font-weight:700}
+.prod .p{min-width:78px;text-align:center;padding:8px 10px;border-radius:10px;background:var(--accent);color:var(--on-accent);font-weight:900}
+.prod .p.c{background:var(--coin);color:var(--coin-ink)}
+.prod .ribbon{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--coin);color:var(--coin-ink);font-size:11px;font-weight:900;vertical-align:2px}
+.prod.feature{border:2px solid var(--accent)}
+.prod[disabled]{opacity:.5}
+.legal{font-size:12px;color:var(--muted);margin-top:14px}
+.win{text-align:center}
+.stars{display:flex;justify-content:center;gap:6px;margin:6px 0 4px}
+.stars svg{width:46px;height:46px}
+.stars .off{opacity:.2}
+.reward{display:inline-flex;align-items:center;gap:8px;font-size:22px;font-weight:900;margin:6px 0 14px}
+.reward svg{width:28px;height:28px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0 14px}
+.week div{border-radius:10px;border:1px solid var(--line);background:var(--surface2);padding:8px 0 6px;text-align:center;font-size:11px;font-weight:800;color:var(--muted)}
+.week div b{display:block;font-size:14px;color:var(--ink)}
+.week .got{background:var(--bg2);opacity:.6}
+.week .now{border:2px solid var(--accent);background:var(--surface);color:var(--accent)}
+.tier{display:grid;grid-template-columns:40px 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.tier .n{font-weight:900;font-size:18px;text-align:center}
+.tier.reached .n{color:var(--accent)}
+.rw{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);font-size:13px;font-weight:800;min-height:46px}
+.rw.prem{background:color-mix(in srgb,var(--coin) 16%,var(--surface2))}
+.rw button{border:0;border-radius:9px;padding:6px 10px;background:var(--accent);color:var(--on-accent);font-weight:900;font-size:12px}
+.rw .ok{color:var(--good)}
+.rw .lock{opacity:.55}
+.thead{display:grid;grid-template-columns:40px 1fr 1fr;gap:8px;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.kpi{padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--line)}
+.kpi span{display:block;font-size:12px;color:var(--muted);font-weight:700}
+.kpi b{font-size:20px;font-weight:900}
+.log{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.log table{width:100%;border-collapse:collapse;font-size:12px}
+.log td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+.log td:last-child{white-space:normal;color:var(--muted);min-width:140px}
+.switch{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-weight:800}
+.copybox{width:100%;min-height:90px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;padding:10px}
+
+.ad{position:fixed;inset:0;z-index:40;background:#111;color:#f5f5f5;display:flex;align-items:center;justify-content:center;padding:24px max(24px,env(safe-area-inset-right,0px)) 24px max(24px,env(safe-area-inset-left,0px))}
+.ad-card{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.ad-card .eyebrow{color:#bbb}
+.ad-art{aspect-ratio:9/12;max-width:100%;border-radius:18px;background:repeating-linear-gradient(45deg,#262626 0 14px,#1c1c1c 14px 28px);display:grid;place-items:center;font-weight:800;color:#9a9a9a;font-size:15px;padding:20px}
+.ad-bar{height:6px;background:#333;border-radius:3px;overflow:hidden}
+.ad-bar i{display:block;height:100%;width:0;background:#f5f5f5}
+.ad .btn{background:#f5f5f5;color:#111;border-color:#f5f5f5}
+.ad p{margin:0;color:#bbb;font-size:13px}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:800;font-size:14px;box-shadow:var(--shadow);animation:fade .2s ease;max-width:calc(100% - 32px);text-align:center}
+
+@keyframes shake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes pop{40%{transform:translateX(-50%) scale(1.08)}100%{transform:translateX(-50%) scale(1)}}
+@keyframes bob{50%{transform:translate(-50%,4px)}}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (max-width:360px){.hero .mini{display:none}.tiles{gap:6px}}
+</style>
+
+<div id="app">
+  <header class="top">
+    <button class="brand" id="brand" aria-label="Torna alla bottega">Confetteria</button>
+    <button class="pill" id="streakPill" aria-label="Serie della sfida del giorno"></button>
+    <button class="pill" id="coinPill" aria-label="Monete, apri il negozio"></button>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="layer"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================  Config  ===================== */
+const CAP = 4;
+const COLORS = [
+  { n:'rosa',       v:'#F49AC1', s:'♥' },
+  { n:'celeste',    v:'#8CC8F0', s:'●' },
+  { n:'bianco',     v:'#FBF8F1', s:'✿' },
+  { n:'giallo',     v:'#F6D55C', s:'★' },
+  { n:'menta',      v:'#93DDBA', s:'◆' },
+  { n:'lilla',      v:'#B9A0EA', s:'▲' },
+  { n:'arancio',    v:'#F5A15B', s:'■' },
+  { n:'rosso',      v:'#E0504B', s:'✚', d:1 },
+  { n:'blu',        v:'#4170D6', s:'☾', d:1 },
+  { n:'cioccolato', v:'#7C4B33', s:'♣', d:1 },
+  { n:'verde',      v:'#3E9B57', s:'✦', d:1 }
+];
+// ID prodotto da creare uguali in Play Console / App Store Connect.
+const SKU = {
+  starter: { id:'starter_pack', price:1.99, give:{ coins:1500, hints:5, jars:3 } },
+  noads:   { id:'remove_ads',   price:4.99 },
+  pass:    { id:'season_pass',  price:4.99 },
+  c300:    { id:'coins_300',    price:0.99,  give:{ coins:300 } },
+  c1800:   { id:'coins_1800',   price:4.99,  give:{ coins:1800 }, tag:'+20%' },
+  c4000:   { id:'coins_4000',   price:9.99,  give:{ coins:4000 }, tag:'Il più scelto' },
+  c9000:   { id:'coins_9000',   price:19.99, give:{ coins:9000 }, tag:'+50%' }
+};
+const COST = { hint:40, jar:100 };            // prezzo in monete di un suggerimento / barattolo
+const ECPM = { rewarded:18, inter:9 };       // $ per 1000 impression, stima Tier-1 per il calcolo ricavi di prova
+const STORE_CUT = 0.15;                      // commissione store per sviluppatori sotto 1M $/anno
+const INTER = { fromLevel:11, gapMs:180000, everyLevels:3 };
+const FREE_COIN_ADS = 5;                     // video "+monete" al giorno
+const SEASON_EPOCH = Date.UTC(2026, 10, 16); // lunedì 16 novembre 2026
+const SEASON_DAYS = 28, TIERS = 20, XP_TIER = 100;
+const SAVE_KEY = 'confetteria.v1';
+
+/* =====================  Stato  ===================== */
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+const dayIndex = s => { const [y,m,d] = s.split('-').map(Number); return Math.round(Date.UTC(y, m-1, d) / 864e5); };
+const fresh = () => ({
+  v:1, level:1, coins:150, hints:3, jars:1, noAds:false, sound:true,
+  daily:{ last:null, streak:0, best:0, saved:null },
+  login:{ last:null, streak:0, claimed:null },
+  starter:{ unlockAt:null, bought:false },
+  pass:{ season:0, xp:0, premium:false, free:[], prem:[] },
+  ads:{ lastInter:0, since:0, coinDay:null, coinCount:0 },
+  stats:{ sessions:0, days:[], levels:0, dailies:0, moves:0, playMs:0, rewarded:0, inter:0, iapCount:0, iapGross:0, firstSeen:Date.now() },
+  events:[], current:null
+});
+let S;
+try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') || {}); } catch (e) { S = fresh(); }
+let saveTimer = 0;
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 120); }
+function saveNow() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
+window.addEventListener('pagehide', saveNow);
+
+function track(name, props) {
+  S.events.push({ t:Date.now(), n:name, p:props || {} });
+  if (S.events.length > 300) S.events.splice(0, S.events.length - 300);
+  try { window.NATIVE && window.NATIVE.track && window.NATIVE.track(name, props || {}); } catch (e) {}
+  save();
+}
+
+/* =====================  Generatore e risolutore  ===================== */
+function rng(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const isFull = t => t.length === CAP && t.every(c => c === t[0]);
+const solved = ts => ts.every(t => t.length === 0 || isFull(t));
+function topRun(t) { let k = t.length - 1, n = 0; while (k >= 0 && t[k] === t[t.length - 1]) { n++; k--; } return n; }
+function canMove(ts, i, j) {
+  if (i === j) return false;
+  const a = ts[i], b = ts[j];
+  if (!a.length || b.length >= CAP) return false;
+  return !b.length || b[b.length - 1] === a[a.length - 1];
+}
+// mosse utili (scarta quelle inutili: barattolo finito, barattolo monocolore verso un vuoto, più vuoti equivalenti)
+function usefulMoves(ts) {
+  const out = []; let emptyUsed = false; const firstEmpty = ts.findIndex(t => !t.length);
+  for (let i = 0; i < ts.length; i++) {
+    const a = ts[i]; if (!a.length || isFull(a)) continue;
+    const run = topRun(a), mono = run === a.length;
+    for (let j = 0; j < ts.length; j++) {
+      if (!canMove(ts, i, j)) continue;
+      const b = ts[j];
+      if (!b.length) { if (mono || j !== firstEmpty) continue; }
+      const cnt = Math.min(run, CAP - b.length);
+      let score = 0;
+      if (b.length) score += 2;
+      if (b.length + cnt === CAP && (!b.length || b.every(c => c === a[a.length-1]))) score += 3;
+      if (cnt === run && run < a.length) score += 1;   // libera un colore sotto
+      out.push([i, j, cnt, score]);
+    }
+  }
+  return out.sort((x, y) => y[3] - x[3]);
+}
+const keyOf = ts => ts.map(t => t.map(c => String.fromCharCode(97 + c)).join('')).sort().join('|');
+function solve(start, limit) {
+  const ts = start.map(t => t.slice()), seen = new Set(), path = []; let nodes = 0;
+  function dfs() {
+    if (solved(ts)) return true;
+    if (++nodes > limit) return false;
+    const k = keyOf(ts); if (seen.has(k)) return false; seen.add(k);
+    for (const [i, j, cnt] of usefulMoves(ts)) {
+      const moved = ts[i].splice(ts[i].length - cnt, cnt); ts[j].push(...moved); path.push([i, j]);
+      if (dfs()) return true;
+      path.pop(); ts[j].splice(ts[j].length - cnt, cnt); ts[i].push(...moved);
+      if (nodes > limit) return false;
+    }
+    return false;
+  }
+  return dfs() ? path.slice() : null;
+}
+function levelSpec(n) {
+  const base = n <= 2 ? 3 : n <= 5 ? 4 : n <= 9 ? 5 : n <= 14 ? 6 : n <= 20 ? 7 : n <= 30 ? 8 : n <= 45 ? 9 : 10;
+  const hard = n >= 5 && n % 5 === 0;
+  return { n: Math.min(hard ? base + 1 : base, COLORS.length), e:2, hard };
+}
+function makeLevel(nc, ne, seed) {
+  let best = null;
+  for (let a = 0; a < 40; a++) {
+    const r = rng(seed * 7919 + a * 104729 + 17), pool = [];
+    for (let c = 0; c < nc; c++) for (let k = 0; k < CAP; k++) pool.push(c);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    // colori casuali dalla tavolozza, così i livelli non sono sempre rosa-celeste-bianco
+    const pal = COLORS.map((_, i) => i); for (let i = pal.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pal[i], pal[j]] = [pal[j], pal[i]]; }
+    const ts = [];
+    for (let i = 0; i < nc; i++) ts.push(pool.slice(i * CAP, (i + 1) * CAP).map(c => pal[c]));
+    for (let i = 0; i < ne; i++) ts.push([]);
+    if (ts.some(t => isFull(t)) || ts.some(t => t.length && topRun(t) >= 3)) continue;
+    const sol = solve(ts, 120000);
+    if (!sol) continue;
+    if (sol.length >= nc * 1.5) return { tubes:ts, par:sol.length };
+    if (!best || sol.length > best.par) best = { tubes:ts, par:sol.length };
+  }
+  return best;
+}
+window.__confetteria = { makeLevel, levelSpec, solve };   // per i test automatici
+
+/* =====================  Icone  ===================== */
+const I = {
+  coin:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--coin)"/><circle cx="12" cy="12" r="7" fill="none" stroke="var(--coin-ink)" stroke-opacity=".35" stroke-width="1.6"/><path d="M12 7.5v9M9.5 9.5h4a1.5 1.5 0 010 3h-3a1.5 1.5 0 000 3h4" fill="none" stroke="var(--coin-ink)" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.6 3.2 4.6 5.4 4.6 10a4.6 4.6 0 01-9.2 0c0-2.2 1.2-3.6 2.2-4.6.3 1.4 1 2.3 1.9 2.6-.6-3 .1-5.6.5-8z" fill="var(--accent)"/><path d="M12 13c1.4 1.3 2.2 2.4 2.2 3.6a2.2 2.2 0 01-4.4 0c0-1.2.8-2.3 2.2-3.6z" fill="var(--coin)"/></svg>',
+  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4 12l5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 12H14a5.5 5.5 0 010 11h-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  restart:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 11-2.4-5.7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 00-3.6 10.8c.7.6 1.1 1.3 1.1 2.2v.5h5V16c0-.9.4-1.6 1.1-2.2A6 6 0 0012 3z" fill="var(--coin)" stroke="currentColor" stroke-width="1.6"/><path d="M9.8 19h4.4M10.5 21.5h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  jar:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="3" rx="1.5" fill="var(--lid)"/><path d="M7 6.5h10v12a3 3 0 01-3 3h-4a3 3 0 01-3-3z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10v7M8.5 13.5h7" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  shop:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3" fill="var(--accent)" fill-opacity=".25" stroke="currentColor" stroke-width="1.8"/><path d="M5 12.5V20h14v-7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="10" y="15" width="4" height="5" fill="var(--accent)"/></svg>',
+  gift:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11.5" rx="2" fill="var(--accent)" fill-opacity=".25" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="6.5" width="19" height="4" rx="1.5" fill="var(--surface)" stroke="currentColor" stroke-width="1.8"/><path d="M12 6.5v14" stroke="var(--accent)" stroke-width="2.4"/><path d="M12 6.5C10 3 6.5 3.5 7.5 5.5c.6 1.1 2.6 1 4.5 1zm0 0c2-3.5 5.5-3 4.5-1-.6 1.1-2.6 1-4.5 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="7" y="12" width="3" height="6" rx="1" fill="var(--accent)"/><rect x="12" y="8" width="3" height="10" rx="1" fill="var(--coin)"/><rect x="17" y="5" width="3" height="13" rx="1" fill="var(--accent)" fill-opacity=".6"/></svg>',
+  star:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="var(--coin)" stroke="var(--coin-ink)" stroke-opacity=".4" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+  play:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
+  noads:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><text x="12" y="15.5" font-size="8" font-weight="900" text-anchor="middle" fill="currentColor" font-family="sans-serif">AD</text><path d="M4 20L20 4" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  ticket:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 014.5 6h15A1.5 1.5 0 0121 7.5V10a2 2 0 000 4v2.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 16.5V14a2 2 0 000-4z" fill="var(--coin)" fill-opacity=".35" stroke="currentColor" stroke-width="1.8"/><path d="M15 6v12" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="currentColor"/><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  x:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
+};
+
+/* =====================  Utilità  ===================== */
+const $ = s => document.querySelector(s);
+const $main = $('#main'), $layer = $('#layer');
+const fmt = n => Math.round(n).toLocaleString('it-IT');
+const eur = n => n.toLocaleString('it-IT', { style:'currency', currency:'EUR' });
+const usd = n => '$' + n.toFixed(2).replace('.', ',');
+const MONTHS = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+const MONTHS_L = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function giveText(g) {
+  const p = [];
+  if (g.coins) p.push(fmt(g.coins) + ' monete');
+  if (g.hints) p.push(g.hints + (g.hints === 1 ? ' suggerimento' : ' suggerimenti'));
+  if (g.jars) p.push(g.jars + (g.jars === 1 ? ' barattolo' : ' barattoli'));
+  return p.join(' + ');
+}
+function grant(g) { S.coins += g.coins || 0; S.hints += g.hints || 0; S.jars += g.jars || 0; save(); renderTop(); }
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role','status'); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
+}
+let AC = null;
+function snd(kind) {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const notes = { pop:[[540,.06]], drop:[[380,.07]], done:[[660,.09],[880,.12]], win:[[523,.1],[659,.1],[784,.1],[1046,.22]], bad:[[180,.09]] }[kind] || [];
+    let t = AC.currentTime;
+    for (const [f, d] of notes) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = kind === 'bad' ? 'square' : 'triangle'; o.frequency.setValueAtTime(f, t);
+      if (kind === 'pop' || kind === 'drop') o.frequency.exponentialRampToValueAtTime(f * .6, t + d);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.18, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02); t += d * .85;
+    }
+  } catch (e) {}
+}
+function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+
+/* =====================  Giornate, serie, stagione  ===================== */
+function bootDay() {
+  const d = today();
+  S.stats.sessions++;
+  if (!S.stats.days.includes(d)) S.stats.days.push(d);
+  if (S.stats.days.length > 400) S.stats.days.shift();
+  // regalo giornaliero: serie di accessi consecutivi
+  if (S.login.last !== d) {
+    S.login.streak = S.login.last && dayIndex(d) - dayIndex(S.login.last) === 1 ? S.login.streak + 1 : 1;
+    S.login.last = d;
+  }
+  const idx = seasonIndex();
+  if (S.pass.season !== idx) { S.pass = { season:idx, xp:0, premium:false, free:[], prem:[] }; }
+  track('session_start', { session:S.stats.sessions, day:S.stats.days.length, level:S.level });
+}
+function seasonIndex() { return Math.floor((Date.now() - SEASON_EPOCH) / (SEASON_DAYS * 864e5)) + 1; }
+function seasonDaysLeft() { const end = SEASON_EPOCH + seasonIndex() * SEASON_DAYS * 864e5; return Math.max(0, Math.ceil((end - Date.now()) / 864e5)); }
+const SEASON_NAMES = ['Pistacchio','Nocciola','Amarena','Limone','Cannella','Mandorla'];
+const seasonName = () => SEASON_NAMES[(seasonIndex() - 1 + SEASON_NAMES.length * 10) % SEASON_NAMES.length];
+const giftFor = streak => { const day = ((streak - 1) % 7) + 1; return day === 7 ? { coins:200, jars:1 } : { coins:20 + day * 10 }; };
+const giftPending = () => S.login.claimed !== today();
+function dailyStatus() {
+  const d = today(), last = S.daily.last;
+  const done = last === d;
+  const gap = last ? dayIndex(d) - dayIndex(last) : null;
+  const alive = done || gap === 1;                                      // serie ancora valida se giochi oggi
+  const savable = !done && gap === 2 && S.daily.streak >= 2 && S.daily.saved !== d;
+  return { done, alive, savable, streak: alive ? S.daily.streak : 0 };
+}
+const dailySeed = () => Number(today().replace(/-/g, ''));
+function starterActive() { return S.starter.unlockAt && !S.starter.bought && Date.now() < S.starter.unlockAt + 48 * 3600e3; }
+function starterLeft() {
+  const ms = S.starter.unlockAt + 48 * 3600e3 - Date.now(), h = Math.floor(ms / 3600e3), m = Math.floor(ms % 3600e3 / 60e3);
+  return h + ' h ' + String(m).padStart(2,'0') + ' min';
+}
+function passTier() { return Math.min(TIERS, Math.floor(S.pass.xp / XP_TIER)); }
+function passReward(track, tier) {
+  if (track === 'free') return tier % 5 === 0 ? { hints:2 } : { coins:20 + tier * 5 };
+  if (tier === TIERS) return { coins:1500, jars:3 };
+  return tier % 4 === 0 ? { jars:1, hints:1 } : { coins:60 + tier * 10 };
+}
+function addXp(n) { const before = passTier(); S.pass.xp = Math.min(TIERS * XP_TIER, S.pass.xp + n); return passTier() > before; }
+
+/* =====================  Barra in alto  ===================== */
+function renderTop() {
+  const st = dailyStatus();
+  $('#coinPill').innerHTML = I.coin + '<span class="num">' + fmt(S.coins) + '</span><span class="plus" aria-hidden="true">+</span>';
+  $('#streakPill').innerHTML = I.flame + '<span class="num">' + st.streak + '</span>';
+  $('#streakPill').setAttribute('aria-label', 'Serie della sfida del giorno: ' + st.streak + ' giorni');
+}
+$('#coinPill').addEventListener('click', () => openShop('topbar'));
+$('#streakPill').addEventListener('click', () => { if (screen !== 'home') goHome(); else toast(dailyStatus().done ? 'Sfida di oggi fatta. Torna domani per allungare la serie.' : 'Gioca la sfida del giorno per allungare la serie.'); });
+$('#brand').addEventListener('click', () => goHome());
+
+/* =====================  Bottega (home)  ===================== */
+let screen = 'home';
+function miniJar(colors) {
+  return '<span class="jar" style="--slot:34px;--jarw:28px;--jarh:70px;--pw:22px;--ph:14px;pointer-events:none"><span class="lid"></span><span class="glass"></span><span class="stack">' +
+    colors.map(c => pieceHtml({ c, id:-1 })).join('') + '</span></span>';
+}
+function goHome() {
+  screen = 'home';
+  const spec = levelSpec(S.level), st = dailyStatus(), now = new Date();
+  const resume = S.current && S.current.mode === 'level' && S.current.level === S.level;
+  const tier = passTier(), inTier = S.pass.xp - tier * XP_TIER;
+  const claimable = passClaimable();
+  let html = '<section class="home">';
+  if (starterActive()) {
+    html += '<button class="offer" id="starter">' + I.gift + '<div><b>Pacchetto di benvenuto</b><span>' + giveText(SKU.starter.give) + ' · scade tra ' + starterLeft() + '</span></div><span class="price">' + eur(SKU.starter.price) + '</span></button>';
+  }
+  if (st.savable) {
+    html += '<div class="notice"><p>Ieri hai saltato la sfida. Salva la serie di ' + S.daily.streak + ' giorni guardando un annuncio, poi gioca quella di oggi.</p><div class="btnrow"><button class="btn coin" id="saveStreak">' + I.play + 'Salva la serie</button></div></div>';
+  }
+  html += '<div class="card hero">' +
+    '<div><p class="eyebrow">' + (resume ? 'Partita in corso' : 'Prossimo livello') + (spec.hard ? '<span class="tag-hard">Difficile</span>' : '') + '</p>' +
+    '<h1>Livello <span class="num">' + S.level + '</span></h1>' +
+    '<p class="sub">' + spec.n + ' colori · ' + (spec.n + spec.e) + ' barattoli</p></div>' +
+    '<div class="mini" aria-hidden="true">' + miniJar([0,0,1,0]) + miniJar([1,1,3]) + miniJar([3,3,1,3]) + '</div>' +
+    '<button class="btn primary big" id="play">' + (resume ? 'Riprendi' : 'Gioca') + '</button></div>';
+  html += '<div class="card daily"><div class="cal" aria-hidden="true"><b>' + MONTHS[now.getMonth()] + '</b><span class="num">' + now.getDate() + '</span></div>' +
+    '<p class="eyebrow">Sfida del giorno</p><h3>' + (st.done ? 'Fatta, ci vediamo domani' : 'Stesso livello per tutti, oggi') + '</h3>' +
+    (st.done
+      ? '<p><span class="done-chip">' + I.flame.replace('<svg', '<svg width="18" height="18"') + 'Serie di ' + st.streak + ' giorni</span> · nuova sfida tra ' + untilMidnight() + '</p>'
+      : '<p>8 colori · +' + dailyCoins(st.streak + 1) + ' monete · ' + (st.streak ? 'serie attuale ' + st.streak + ' giorni' : 'inizia una serie') + '</p><button class="btn primary" id="playDaily">Gioca la sfida</button>') +
+    '</div>';
+  html += '<button class="card passcard" id="openPass"><div class="row"><h3>Stagione ' + seasonName() + '</h3><span class="small">finisce tra ' + seasonDaysLeft() + ' giorni</span></div>' +
+    '<div class="bar" aria-hidden="true"><i style="width:' + (tier >= TIERS ? 100 : inTier) + '%"></i></div>' +
+    '<div class="row"><span class="small">Livello pass <b class="num">' + tier + '</b> di ' + TIERS + '</span><span class="small">' + (claimable ? claimable + ' premi da ritirare' : (tier >= TIERS ? 'Pass completato' : (XP_TIER - inTier) + ' XP al prossimo')) + '</span></div></button>';
+  html += '<div class="tiles">' +
+    '<button class="tile" id="tShop">' + I.shop + 'Negozio</button>' +
+    '<button class="tile" id="tGift">' + I.gift + 'Regalo' + (giftPending() ? '<span class="dot" aria-label="da ritirare"></span>' : '') + '</button>' +
+    '<button class="tile" id="tStats">' + I.chart + 'Dati</button></div>';
+  html += '</section>';
+  $main.innerHTML = html;
+  renderTop();
+  $('#play').onclick = () => startGame('level');
+  const pd = $('#playDaily'); if (pd) pd.onclick = () => startGame('daily');
+  $('#openPass').onclick = openPass;
+  $('#tShop').onclick = () => openShop('home');
+  $('#tGift').onclick = openGift;
+  $('#tStats').onclick = openStats;
+  const so = $('#starter'); if (so) so.onclick = () => { track('offer_view', { offer:'starter' }); openShop('starter_banner'); };
+  const ss = $('#saveStreak'); if (ss) ss.onclick = async () => {
+    if (await showRewarded('streak_save')) {
+      const y = new Date(Date.now() - 864e5);
+      S.daily.last = y.getFullYear() + '-' + String(y.getMonth()+1).padStart(2,'0') + '-' + String(y.getDate()).padStart(2,'0');
+      S.daily.saved = today(); track('streak_saved', { streak:S.daily.streak }); save(); toast('Serie salvata: ' + S.daily.streak + ' giorni'); goHome();
+    }
+  };
+}
+const dailyCoins = streak => 50 + 5 * Math.min(Math.max(streak, 1) - 1, 10);
+function untilMidnight() { const n = new Date(), m = new Date(n); m.setHours(24,0,0,0); const ms = m - n; return Math.floor(ms / 3600e3) + ' h ' + Math.floor(ms % 3600e3 / 60e3) + ' min'; }
+function passClaimable() {
+  const t = passTier(); let n = 0;
+  for (let i = 1; i <= t; i++) { if (!S.pass.free.includes(i)) n++; if (S.pass.premium && !S.pass.prem.includes(i)) n++; }
+  return n;
+}
+
+/* =====================  Partita  ===================== */
+let G = null;
+const colorsOf = ts => ts.map(t => t.map(p => p.c));
+function startGame(mode) {
+  const d = today();
+  if (S.current && S.current.mode === mode && (mode === 'level' ? S.current.level === S.level : S.current.day === d)) {
+    G = S.current; G.sel = -1; G.hint = null; renderGame(); return;
+  }
+  const spec = mode === 'daily' ? { n:8, e:2, hard:false } : levelSpec(S.level);
+  const seed = mode === 'daily' ? dailySeed() : S.level + 100000;
+  const lv = makeLevel(spec.n, spec.e, seed);
+  let id = 0;
+  const tubes = lv.tubes.map(t => t.map(c => ({ c, id:id++ })));
+  G = { mode, level:S.level, day:d, spec, tubes, init:JSON.stringify(tubes), par:lv.par, moves:0, hist:[], sel:-1, extra:0, hint:null, t0:Date.now(), restarts:0, hintsUsed:0, won:false };
+  S.current = G; save();
+  track('level_start', { mode, level:S.level, colors:spec.n, par:lv.par });
+  renderGame();
+}
+function renderGame() {
+  screen = 'game';
+  const title = G.mode === 'daily' ? 'Sfida del giorno' : 'Livello <span class="num">' + G.level + '</span>';
+  const eyebrow = G.mode === 'daily' ? (new Date().getDate() + ' ' + MONTHS_L[new Date().getMonth()]) : (G.spec.hard ? 'Livello difficile' : G.spec.n + ' colori');
+  $main.innerHTML = '<section class="game">' +
+    '<div class="gbar"><button class="iconbtn" id="back" aria-label="Torna alla bottega">' + I.back + '</button>' +
+    '<div><p class="eyebrow">' + eyebrow + '</p><h2>' + title + '</h2></div>' +
+    '<div class="moves" aria-live="polite"><span class="num" id="mv">' + G.moves + '</span><small>mosse</small></div></div>' +
+    '<div class="board" id="board" role="group" aria-label="Barattoli"></div>' +
+    '<p class="tip" id="tip" aria-live="polite"></p>' +
+    '<nav class="boosters" aria-label="Aiuti">' +
+      '<button class="bst" id="bUndo">' + I.undo + 'Annulla</button>' +
+      '<button class="bst" id="bRestart">' + I.restart + 'Ricomincia</button>' +
+      '<button class="bst" id="bHint">' + I.bulb + 'Suggerisci<span class="badge" id="hintBadge"></span></button>' +
+      '<button class="bst" id="bJar">' + I.jar + 'Barattolo<span class="badge" id="jarBadge"></span></button>' +
+    '</nav></section>';
+  renderTop();
+  $('#back').onclick = () => { S.current = G; save(); goHome(); };
+  $('#bUndo').onclick = undo;
+  $('#bRestart').onclick = restart;
+  $('#bHint').onclick = useHint;
+  $('#bJar').onclick = useJar;
+  $('#board').addEventListener('click', e => { const j = e.target.closest('.jar'); if (j) tap(+j.dataset.i); });
+  drawBoard();
+}
+function updateBar() {
+  $('#mv').textContent = G.moves;
+  $('#bUndo').disabled = !G.hist.length;
+  const hb = $('#hintBadge'), jb = $('#jarBadge');
+  hb.textContent = S.hints > 0 ? S.hints : '+'; hb.className = 'badge' + (S.hints > 0 ? '' : ' get');
+  jb.textContent = G.extra ? '✓' : (S.jars > 0 ? S.jars : '+'); jb.className = 'badge' + (G.extra || S.jars > 0 ? '' : ' get');
+  $('#bJar').disabled = G.extra >= 1;
+}
+function pieceHtml(p, lift) {
+  const c = COLORS[p.c];
+  return '<span class="pc' + (c.d ? ' dk' : '') + (lift ? ' lift' : '') + '" data-id="' + p.id + '" style="--c:' + c.v + '">' + c.s + '</span>';
+}
+function layout() {
+  const b = $('#board'); if (!b) return;
+  const n = G.tubes.length, perRow = n <= 5 ? n : Math.ceil(n / 2), rows = Math.ceil(n / perRow);
+  const W = b.clientWidth, H = b.clientHeight - 36;
+  let slot = Math.min(76, Math.floor(W / perRow));
+  slot = Math.min(slot, Math.floor((H / rows - 20) / 1.75));
+  slot = Math.max(slot, 38);
+  const jarw = Math.round(slot * .8), pw = Math.round(jarw * .78), ph = Math.round(pw * .64);
+  const jarh = CAP * (ph + 2) + 22;
+  b.style.cssText = '--slot:' + slot + 'px;--jarw:' + jarw + 'px;--jarh:' + jarh + 'px;--pw:' + pw + 'px;--ph:' + ph + 'px;grid-template-columns:repeat(' + perRow + ',' + slot + 'px);row-gap:' + Math.round(slot * .45) + 'px';
+}
+function jarLabel(t, i) {
+  if (!t.length) return 'Barattolo ' + (i + 1) + ', vuoto';
+  return 'Barattolo ' + (i + 1) + ': ' + t.map(p => COLORS[p.c].n).join(', ') + ' (dal fondo)' + (t.length === CAP && t.every(p => p.c === t[0].c) ? ', completo' : '');
+}
+function drawBoard(anim) {
+  const b = $('#board'); if (!b) return;
+  layout();
+  let run = 0;
+  if (G.sel >= 0) { const cs = G.tubes[G.sel].map(p => p.c); run = topRun(cs); }
+  b.innerHTML = G.tubes.map((t, i) => {
+    const cs = t.map(p => p.c), done = isFull(cs);
+    const cls = 'jar' + (i === G.sel ? ' sel' : '') + (done ? ' done' : '') + (G.hint && G.hint[0] === i ? ' hint-from' : '') + (G.hint && G.hint[1] === i ? ' hint-to' : '');
+    return '<button class="' + cls + '" data-i="' + i + '" aria-label="' + jarLabel(t, i) + '" aria-pressed="' + (i === G.sel) + '"><span class="lid"></span><span class="glass"></span><span class="stack">' +
+      t.map((p, k) => pieceHtml(p, i === G.sel && k >= t.length - run)).join('') + '</span></button>';
+  }).join('');
+  if (anim && !reduced()) {
+    for (const [id, r1] of anim) {
+      const el = b.querySelector('[data-id="' + id + '"]'); if (!el) continue;
+      const r2 = el.getBoundingClientRect(), dx = r1.left - r2.left, dy = r1.top - r2.top;
+      const lift = Math.min(r1.top, r2.top) - r2.top - 30;
+      el.animate([
+        { transform:'translate(' + dx + 'px,' + dy + 'px)' },
+        { transform:'translate(' + dx * .5 + 'px,' + (lift) + 'px)', offset:.45 },
+        { transform:'translate(0,0)' }
+      ], { duration:340, easing:'cubic-bezier(.3,.7,.35,1)' });
+    }
+  }
+  updateBar(); updateTip();
+}
+function updateTip(msg, warn) {
+  const t = $('#tip'); if (!t) return;
+  if (!msg) {
+    if (G.mode === 'level' && G.level <= 2 && G.moves < 3) msg = 'Tocca un barattolo, poi un altro. I confetti passano se in cima c’è lo stesso colore o se il barattolo è vuoto.';
+    else if (G.mode === 'level' && G.level <= 2) msg = 'Riempi ogni barattolo con 4 confetti dello stesso colore.';
+    else if (!G.won && !usefulMoves(colorsOf(G.tubes)).length) { msg = 'Nessuna mossa possibile. Annulla, aggiungi un barattolo o ricomincia.'; warn = true; }
+    else msg = '';
+  }
+  t.textContent = msg; t.className = 'tip' + (warn ? ' warn' : '');
+}
+function tap(i) {
+  if (G.won) return;
+  const cs = colorsOf(G.tubes);
+  if (G.hint) G.hint = null;
+  if (G.sel < 0) {
+    if (!cs[i].length || isFull(cs[i])) { shakeJar(i); return; }
+    G.sel = i; snd('pop'); drawBoard(); return;
+  }
+  if (G.sel === i) { G.sel = -1; drawBoard(); return; }
+  if (canMove(cs, G.sel, i)) { doMove(G.sel, i); return; }
+  if (cs[i].length && !isFull(cs[i])) { G.sel = i; snd('pop'); drawBoard(); return; }
+  shakeJar(i); snd('bad');
+}
+function shakeJar(i) {
+  const el = document.querySelector('.jar[data-i="' + i + '"]'); if (!el) return;
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); buzz(15);
+}
+function doMove(i, j) {
+  const from = G.tubes[i], to = G.tubes[j];
+  const run = topRun(from.map(p => p.c)), cnt = Math.min(run, CAP - to.length);
+  const moving = from.slice(from.length - cnt);
+  const rects = new Map();
+  for (const p of moving) { const el = document.querySelector('[data-id="' + p.id + '"]'); if (el) rects.set(p.id, el.getBoundingClientRect()); }
+  G.hist.push(JSON.stringify(G.tubes)); if (G.hist.length > 150) G.hist.shift();
+  from.splice(from.length - cnt, cnt); to.push(...moving);
+  G.moves++; G.sel = -1; G.hint = null; S.stats.moves++;
+  drawBoard(rects);
+  snd('drop'); buzz(8);
+  const cs = colorsOf(G.tubes);
+  if (isFull(cs[j])) {
+    setTimeout(() => { const el = document.querySelector('.jar[data-i="' + j + '"]'); if (el) el.classList.add('pop'); snd('done'); }, 300);
+  }
+  if (solved(cs)) { G.won = true; setTimeout(win, 650); }
+  S.current = G; save();
+}
+function undo() {
+  if (!G.hist.length || G.won) return;
+  G.tubes = JSON.parse(G.hist.pop()); G.moves = Math.max(0, G.moves - 1); G.sel = -1; G.hint = null;
+  track('booster_use', { type:'undo', level:G.level, mode:G.mode });
+  drawBoard(); S.current = G; save();
+}
+function restart() {
+  if (G.won) return;
+  G.tubes = JSON.parse(G.init); if (G.extra) G.tubes.push([]);
+  G.moves = 0; G.hist = []; G.sel = -1; G.hint = null; G.restarts++;
+  track('level_restart', { level:G.level, mode:G.mode, restarts:G.restarts });
+  drawBoard(); S.current = G; save();
+}
+async function useHint() {
+  if (G.won) return;
+  // Segue un solo piano finché il giocatore lo rispetta: ricalcolarlo a ogni richiesta può far girare in tondo.
+  const cs = colorsOf(G.tubes), now = JSON.stringify(cs);
+  let plan = G.plan && G.plan.length && G.planAt === now ? G.plan : solve(cs, 80000);
+  if (!plan || !plan.length) { updateTip('Da qui non si risolve: annulla qualche mossa o aggiungi un barattolo.', true); return; }
+  if (S.hints <= 0) {
+    const ok = await offerBooster('hint');
+    if (!ok) return;
+  }
+  plan = plan.slice(); const mv = plan.shift();
+  const next = cs.map(t => t.slice()), cnt = Math.min(topRun(next[mv[0]]), CAP - next[mv[1]].length);
+  next[mv[1]].push(...next[mv[0]].splice(next[mv[0]].length - cnt, cnt));
+  G.plan = plan; G.planAt = JSON.stringify(next);
+  S.hints--; G.hintsUsed++;
+  G.sel = -1; G.hint = mv;
+  track('booster_use', { type:'hint', level:G.level, mode:G.mode, left:S.hints });
+  drawBoard(); updateTip('Sposta dal barattolo evidenziato a quello con la freccia.'); renderTop(); save();
+}
+async function useJar() {
+  if (G.won || G.extra >= 1) return;
+  if (S.jars <= 0) {
+    const ok = await offerBooster('jar');
+    if (!ok) return;
+  }
+  S.jars--; G.extra++; G.tubes.push([]); G.sel = -1; G.hint = null;
+  track('booster_use', { type:'jar', level:G.level, mode:G.mode, left:S.jars });
+  drawBoard(); S.current = G; save();
+}
+// Aiuti finiti: annuncio o monete. Risolve true se l'utente ha ottenuto 1 aiuto (già accreditato).
+function offerBooster(type) {
+  return new Promise(resolve => {
+    const name = type === 'hint' ? 'Suggerimenti finiti' : 'Barattoli extra finiti';
+    const unit = type === 'hint' ? 'suggerimento' : 'barattolo';
+    const pack = type === 'hint' ? { n:3, cost:COST.hint * 3 } : { n:1, cost:COST.jar };
+    track('booster_offer', { type });
+    const enough = S.coins >= pack.cost;
+    openSheet('<h2>' + name + '</h2><p>Scegli come averne ' + (type === 'hint' ? 'altri' : 'un altro') + '.</p><div class="stack-v">' +
+      '<button class="prod" id="oAd">' + I.play + '<div><b>Guarda un annuncio</b><span>+1 ' + unit + ', gratis</span></div><span class="p c">Gratis</span></button>' +
+      '<button class="prod" id="oCoin"' + (enough ? '' : ' disabled') + '>' + (type === 'hint' ? I.bulb : I.jar) + '<div><b>' + pack.n + ' ' + (pack.n === 1 ? unit : 'suggerimenti') + '</b><span>' + (enough ? 'Paghi con le monete' : 'Ti mancano ' + fmt(pack.cost - S.coins) + ' monete') + '</span></div><span class="p c num">' + fmt(pack.cost) + '</span></button>' +
+      (enough ? '' : '<button class="btn wide" id="oShop">' + I.shop + 'Vai al negozio</button>') +
+      '</div>', () => resolve(false));
+    $('#oAd').onclick = async () => {
+      closeSheet(true);
+      const ok = await showRewarded(type === 'hint' ? 'hint' : 'extra_jar');
+      if (ok) { if (type === 'hint') S.hints += 1; else S.jars += 1; }
+      resolve(ok);
+    };
+    const oc = $('#oCoin'); if (oc && enough) oc.onclick = () => {
+      S.coins -= pack.cost; if (type === 'hint') S.hints += pack.n; else S.jars += pack.n;
+      track('coins_spend', { item:type, amount:pack.cost }); closeSheet(true); renderTop(); resolve(true);
+    };
+    const os = $('#oShop'); if (os) os.onclick = () => { closeSheet(true); resolve(false); openShop('booster_' + type); };
+  });
+}
+function starsFor() { const r = G.moves / G.par; return r <= 1 ? 3 : r <= 1.4 ? 2 : 1; }
+function win() {
+  const stars = starsFor(), secs = Math.round((Date.now() - G.t0) / 1000);
+  let coins, xp, title, levelUp = false, daily = G.mode === 'daily';
+  if (daily) {
+    const st = dailyStatus(), first = !st.done;
+    if (first) {
+      const streak = st.alive ? S.daily.streak + 1 : 1;
+      S.daily.streak = streak; S.daily.best = Math.max(S.daily.best, streak); S.daily.last = today(); S.stats.dailies++;
+      coins = dailyCoins(streak); xp = 60;
+    } else { coins = 0; xp = 0; }
+    title = 'Sfida completata';
+    track('daily_complete', { moves:G.moves, par:G.par, stars, secs, streak:S.daily.streak, first });
+  } else {
+    coins = 10 + stars * 5 + (G.spec.hard ? 20 : 0); xp = 20 + (stars === 3 ? 10 : 0);
+    title = ['Barattoli pieni!','Che ordine!','Perfetto!'][stars - 1];
+    S.level++; S.stats.levels++; levelUp = true;
+    track('level_complete', { level:G.level, moves:G.moves, par:G.par, stars, secs, hints:G.hintsUsed, extra:G.extra, restarts:G.restarts });
+    if (S.level === 6 && !S.starter.unlockAt) S.starter.unlockAt = Date.now();
+  }
+  const tierUp = xp ? addXp(xp) : false;
+  S.coins += coins; S.current = null; S.ads.since++;
+  save(); renderTop(); snd('win'); buzz([20, 40, 20]);
+  const share = daily ? 'Confetteria · sfida del ' + new Date().getDate() + ' ' + MONTHS[new Date().getMonth()] + '\n' + G.moves + ' mosse ' + '★'.repeat(stars) + '☆'.repeat(3 - stars) + '\nSerie: ' + S.daily.streak + ' giorni' : '';
+  let html = '<div class="win"><p class="eyebrow">' + (daily ? 'Sfida del giorno' : 'Livello ' + G.level) + '</p><h2>' + title + '</h2>' +
+    '<div class="stars" aria-label="' + stars + ' stelle su 3">' + [1,2,3].map(k => I.star.replace('<svg', '<svg class="' + (k <= stars ? '' : 'off') + '"')).join('') + '</div>' +
+    '<p class="small">' + G.moves + ' mosse · obiettivo ' + G.par + ' per 3 stelle' + (xp ? ' · +' + xp + ' XP pass' : '') + (tierUp ? ' · nuovo livello pass!' : '') + '</p>' +
+    (coins ? '<div class="reward" id="rw">' + I.coin + '<span class="num">+' + coins + '</span></div>' : '<p>La serie conta una volta al giorno. Ottimo allenamento!</p>') +
+    '<div class="stack-v">' +
+    (coins ? '<button class="btn coin wide" id="dbl">' + I.play + 'Raddoppia con un annuncio</button>' : '') +
+    (daily ? '<button class="btn wide" id="share">Copia il risultato</button>' : '') +
+    '<button class="btn primary big wide" id="next">' + (daily ? 'Torna alla bottega' : 'Livello ' + S.level) + '</button></div></div>';
+  openSheet(html, null, true);
+  const dbl = $('#dbl');
+  if (dbl) dbl.onclick = async () => {
+    dbl.disabled = true;
+    if (await showRewarded('win_double')) { S.coins += coins; save(); renderTop(); $('#rw').innerHTML = I.coin + '<span class="num">+' + coins * 2 + '</span>'; dbl.textContent = 'Monete raddoppiate'; track('reward_double', { coins }); }
+    else dbl.disabled = false;
+  };
+  const sh = $('#share');
+  if (sh) sh.onclick = () => {
+    track('share', { what:'daily' });
+    const fallback = () => { sh.insertAdjacentHTML('afterend', '<textarea class="copybox" readonly>' + share + '</textarea>'); sh.remove(); const ta = document.querySelector('.copybox'); ta.focus(); ta.select(); };
+    try { navigator.clipboard.writeText(share).then(() => { sh.textContent = 'Copiato: incollalo su WhatsApp'; }, fallback); } catch (e) { fallback(); }
+  };
+  $('#next').onclick = async () => {
+    closeSheet(true);
+    await maybeInterstitial();
+    if (daily) goHome(); else startGame('level');
+  };
+}
+
+/* =====================  Pubblicità (simulata nel browser)  ===================== */
+function adOverlay(kind) {
+  return new Promise(resolve => {
+    const secs = kind === 'rewarded' ? 5 : 3;
+    const el = document.createElement('div'); el.className = 'ad'; el.setAttribute('role','dialog'); el.setAttribute('aria-label','Annuncio di prova');
+    el.innerHTML = '<div class="ad-card"><p class="eyebrow">' + (kind === 'rewarded' ? 'Video con premio · prova' : 'Annuncio a schermo intero · prova') + '</p>' +
+      '<div class="ad-art">Qui nell’app va in onda un annuncio AdMob da 15–30 secondi</div>' +
+      '<div class="ad-bar"><i></i></div><button class="btn wide" id="adBtn" disabled>Attendi ' + secs + ' s</button>' +
+      (kind === 'rewarded' ? '<button class="btn ghost wide" id="adQuit" style="color:#bbb;border-color:#333">Chiudi senza premio</button>' : '') + '</div>';
+    document.body.appendChild(el);
+    const bar = el.querySelector('.ad-bar i'), btn = el.querySelector('#adBtn');
+    bar.animate([{ width:'0%' }, { width:'100%' }], { duration:secs * 1000, fill:'forwards' });
+    let left = secs;
+    const iv = setInterval(() => {
+      left--;
+      if (left > 0) { btn.textContent = 'Attendi ' + left + ' s'; return; }
+      clearInterval(iv); btn.disabled = false; btn.textContent = kind === 'rewarded' ? 'Ritira il premio' : 'Chiudi';
+    }, 1000);
+    btn.onclick = () => { el.remove(); resolve(true); };
+    const q = el.querySelector('#adQuit'); if (q) q.onclick = () => { clearInterval(iv); el.remove(); resolve(false); };
+  });
+}
+async function showRewarded(placement) {
+  track('ad_rewarded_request', { placement });
+  const ok = window.NATIVE ? await window.NATIVE.rewarded() : await adOverlay('rewarded');
+  if (ok) { S.stats.rewarded++; track('ad_rewarded_complete', { placement }); }
+  else track('ad_rewarded_skip', { placement });
+  save();
+  return ok;
+}
+async function maybeInterstitial() {
+  if (S.noAds || S.level < INTER.fromLevel || S.ads.since < INTER.everyLevels || Date.now() - S.ads.lastInter < INTER.gapMs) return;
+  S.ads.lastInter = Date.now(); S.ads.since = 0; S.stats.inter++;
+  track('ad_interstitial', { level:S.level });
+  if (window.NATIVE) await window.NATIVE.interstitial(); else await adOverlay('inter');
+}
+
+/* =====================  Acquisti (simulati nel browser)  ===================== */
+function buy(key, source) {
+  const sku = SKU[key];
+  track('iap_click', { sku:sku.id, source });
+  return new Promise(resolve => {
+    const done = ok => {
+      if (ok) {
+        S.stats.iapCount++; S.stats.iapGross += sku.price;
+        track('iap_purchase', { sku:sku.id, price:sku.price, source });
+        if (sku.give) grant(sku.give);
+        if (key === 'starter') S.starter.bought = true;
+        if (key === 'noads') S.noAds = true;
+        if (key === 'pass') S.pass.premium = true;
+        save(); renderTop(); toast('Acquisto completato');
+      } else track('iap_cancel', { sku:sku.id, source });
+      resolve(ok);
+    };
+    if (window.NATIVE) { window.NATIVE.buy(sku.id, !!sku.give && key !== 'starter').then(done); return; }
+    openSheet('<h2>Acquisto di prova</h2><p>Nel browser non paghi nulla. Nell’app per Play Store e App Store qui si apre il pagamento dello store.</p>' +
+      '<div class="stack-v"><button class="btn primary big wide" id="simBuy">Simula acquisto · ' + eur(sku.price) + '</button><button class="btn wide" id="simNo">Annulla</button></div>', () => done(false));
+    $('#simBuy').onclick = () => { closeSheet(true); done(true); };
+    $('#simNo').onclick = () => { closeSheet(true); done(false); };
+  });
+}
+
+/* =====================  Fogli: negozio, pass, regalo, dati  ===================== */
+let sheetClose = null;
+function openSheet(html, onClose, sticky) {
+  closeSheet(true);
+  const sc = document.createElement('div'); sc.className = 'scrim';
+  sc.innerHTML = '<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>' + (sticky ? '' : '<button class="iconbtn x" id="sx" aria-label="Chiudi">' + I.x + '</button>') + html + '</div>';
+  $layer.appendChild(sc);
+  sheetClose = onClose || null;
+  if (!sticky) { sc.addEventListener('click', e => { if (e.target === sc) closeSheet(); }); sc.querySelector('#sx').onclick = () => closeSheet(); }
+  const f = sc.querySelector('button:not(#sx)'); if (f) setTimeout(() => f.focus({ preventScroll:true }), 50);
+}
+function closeSheet(silent) {
+  const cb = sheetClose; sheetClose = null;
+  $layer.innerHTML = '';
+  if (cb && !silent) cb();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $layer.firstChild && $layer.querySelector('#sx')) closeSheet(); });
+
+function prodRow(key, icon, title, sub, feature) {
+  const sku = SKU[key];
+  return '<button class="prod' + (feature ? ' feature' : '') + '" data-buy="' + key + '">' + icon + '<div><b>' + title + (sku.tag ? '<span class="ribbon">' + sku.tag + '</span>' : '') + '</b><span>' + sub + '</span></div><span class="p num">' + eur(sku.price) + '</span></button>';
+}
+function openShop(source) {
+  track('shop_view', { source });
+  const d = today(); if (S.ads.coinDay !== d) { S.ads.coinDay = d; S.ads.coinCount = 0; }
+  const adsLeft = FREE_COIN_ADS - S.ads.coinCount;
+  let html = '<h2>Negozio</h2><p class="small">Hai ' + fmt(S.coins) + ' monete, ' + S.hints + ' suggerimenti e ' + S.jars + ' barattoli extra.</p>';
+  if (starterActive()) html += '<h3>Solo per poco</h3>' + prodRow('starter', I.gift, 'Pacchetto di benvenuto', giveText(SKU.starter.give) + ' · scade tra ' + starterLeft(), true);
+  html += '<h3>Gratis</h3><button class="prod" id="freeCoins"' + (adsLeft > 0 ? '' : ' disabled') + '>' + I.play + '<div><b>+40 monete</b><span>Guarda un annuncio · ' + (adsLeft > 0 ? 'ancora ' + adsLeft + ' oggi' : 'torna domani') + '</span></div><span class="p c">Gratis</span></button>';
+  html += '<h3>Aiuti con le monete</h3><div class="stack-v">' +
+    '<button class="prod" id="cHint">' + I.bulb + '<div><b>3 suggerimenti</b><span>Ti mostrano la mossa giusta</span></div><span class="p c num">' + fmt(COST.hint * 3) + '</span></button>' +
+    '<button class="prod" id="cJar">' + I.jar + '<div><b>1 barattolo extra</b><span>Un barattolo vuoto in più per un livello</span></div><span class="p c num">' + fmt(COST.jar) + '</span></button></div>';
+  html += '<h3>Monete</h3><div class="stack-v">' +
+    prodRow('c300', I.coin, '300 monete', 'Una manciata') +
+    prodRow('c1800', I.coin, '1.800 monete', 'Un sacchetto') +
+    prodRow('c4000', I.coin, '4.000 monete', 'Una scatola', true) +
+    prodRow('c9000', I.coin, '9.000 monete', 'Un vassoio da pasticceria') + '</div>';
+  html += '<h3>Senza pubblicità</h3>' + (S.noAds ? '<p class="done-chip">Pubblicità a schermo intero già rimossa</p>' : prodRow('noads', I.noads, 'Rimuovi la pubblicità', 'Via gli annunci tra un livello e l’altro. I video con premio restano, se li vuoi.'));
+  html += '<p class="legal">Prezzi IVA inclusa. Nessun acquisto casuale: sai sempre cosa compri. Nel browser gli acquisti sono simulati.</p>';
+  openSheet(html);
+  document.querySelectorAll('[data-buy]').forEach(b => b.onclick = async () => { const k = b.dataset.buy; closeSheet(true); await buy(k, 'shop'); if (screen === 'home') goHome(); else updateBar(); });
+  const fc = $('#freeCoins'); if (fc && adsLeft > 0) fc.onclick = async () => {
+    closeSheet(true);
+    if (await showRewarded('free_coins')) { S.ads.coinCount++; grant({ coins:40 }); toast('+40 monete'); }
+    openShop(source);
+  };
+  const spend = (cost, give, item) => {
+    if (S.coins < cost) { toast('Ti mancano ' + fmt(cost - S.coins) + ' monete'); return; }
+    S.coins -= cost; grant(give); track('coins_spend', { item, amount:cost }); toast('Fatto: ' + giveText(give)); openShop(source); if (screen === 'game') updateBar();
+  };
+  $('#cHint').onclick = () => spend(COST.hint * 3, { hints:3 }, 'hint');
+  $('#cJar').onclick = () => spend(COST.jar, { jars:1 }, 'jar');
+}
+function openPass() {
+  track('pass_view', { tier:passTier(), premium:S.pass.premium });
+  const t = passTier();
+  let html = '<h2>Stagione ' + seasonName() + '</h2><p class="small">Livello pass ' + t + ' di ' + TIERS + ' · ' + S.pass.xp + ' XP · finisce tra ' + seasonDaysLeft() + ' giorni. Ogni livello vale 20 XP (30 con tre stelle), la sfida del giorno 60.</p>';
+  if (!S.pass.premium) html += '<div class="stack-v">' + prodRow('pass', I.ticket, 'Pass Premium', 'Sblocca la colonna dorata: circa 4.000 monete, 5 barattoli e 5 suggerimenti in tutto', true) + '</div>';
+  html += '<h3>Premi</h3><div class="thead"><span></span><span>Gratis</span><span>Premium</span></div>';
+  for (let i = 1; i <= TIERS; i++) {
+    const reached = i <= t;
+    const cell = (track, list) => {
+      const g = passReward(track, i), has = list.includes(i), locked = track === 'prem' && !S.pass.premium;
+      let act;
+      if (has) act = '<span class="ok">Preso</span>';
+      else if (locked) act = '<span class="lock">' + I.lock + '</span>';
+      else if (reached) act = '<button data-claim="' + track + ':' + i + '">Ritira</button>';
+      else act = '';
+      return '<div class="rw' + (track === 'prem' ? ' prem' : '') + '"><span>' + giveText(g) + '</span>' + act + '</div>';
+    };
+    html += '<div class="tier' + (reached ? ' reached' : '') + '"><span class="n num">' + i + '</span>' + cell('free', S.pass.free) + cell('prem', S.pass.prem) + '</div>';
+  }
+  openSheet(html, () => { if (screen === 'home') goHome(); });
+  document.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => {
+    const [tr, n] = b.dataset.claim.split(':'), tier = +n;
+    const list = tr === 'free' ? S.pass.free : S.pass.prem;
+    if (list.includes(tier)) return;
+    list.push(tier); const g = passReward(tr, tier); grant(g);
+    track('pass_claim', { track:tr, tier }); toast('+' + giveText(g));
+    b.outerHTML = '<span class="ok">Preso</span>';
+  });
+  const pb = document.querySelector('[data-buy="pass"]'); if (pb) pb.onclick = async () => { closeSheet(true); await buy('pass', 'pass'); openPass(); };
+}
+function openGift() {
+  const pending = giftPending(), streak = S.login.streak, day = ((streak - 1) % 7) + 1, g = giftFor(streak);
+  let week = '';
+  for (let k = 1; k <= 7; k++) {
+    const gg = k === 7 ? { coins:200, jars:1 } : { coins:20 + k * 10 };
+    const cls = k < day || (k === day && !pending) ? 'got' : k === day ? 'now' : '';
+    week += '<div class="' + cls + '">G' + k + '<b class="num">' + gg.coins + '</b>' + (gg.jars ? '+🫙' : 'monete') + '</div>';
+  }
+  week = week.replace('+🫙', '+1 bar.');
+  const html = '<h2>Regalo del giorno</h2><p>' + (pending ? 'Giorno ' + day + ' di 7. Torna ogni giorno: il regalo cresce e al settimo arriva un barattolo extra.' : 'Già ritirato oggi. Domani c’è il giorno ' + ((day % 7) + 1) + '.') + '</p>' +
+    '<div class="week">' + week + '</div>' +
+    (pending ? '<div class="stack-v"><button class="btn primary big wide" id="gTake">Ritira ' + giveText(g) + '</button><button class="btn coin wide" id="gDbl">' + I.play + 'Raddoppia con un annuncio</button></div>' : '<p class="small">Accessi consecutivi: ' + streak + '</p>');
+  openSheet(html, () => { if (screen === 'home') goHome(); });
+  const take = mult => { S.login.claimed = today(); grant({ coins:(g.coins || 0) * mult, jars:g.jars || 0 }); track('daily_gift', { day, streak, doubled:mult > 1 }); toast('+' + giveText({ coins:(g.coins || 0) * mult, jars:g.jars })); closeSheet(true); if (screen === 'home') goHome(); };
+  const t1 = $('#gTake'); if (t1) t1.onclick = () => take(1);
+  const t2 = $('#gDbl'); if (t2) t2.onclick = async () => { closeSheet(true); if (await showRewarded('gift_double')) take(2); else openGift(); };
+}
+function openStats() {
+  const st = S.stats, days = Math.max(1, st.days.length);
+  const adsRev = (st.rewarded * ECPM.rewarded + st.inter * ECPM.inter) / 1000;
+  const iapNet = st.iapGross * (1 - STORE_CUT);
+  const ev = S.events.slice(-30).reverse();
+  const evRows = ev.map(e => { const d = new Date(e.t); return '<tr><td class="num">' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + '</td><td><b>' + e.n + '</b></td><td>' + Object.entries(e.p).map(([k, v]) => k + '=' + v).join(' · ') + '</td></tr>'; }).join('');
+  const html = '<h2>Dati di prova</h2><p class="small">Le metriche del soft launch, calcolate su questo dispositivo. Nell’app vera gli stessi eventi vanno a Firebase o GameAnalytics.</p>' +
+    '<div class="kpis">' +
+      '<div class="kpi"><span>Sessioni</span><b class="num">' + st.sessions + '</b></div>' +
+      '<div class="kpi"><span>Giorni attivi</span><b class="num">' + st.days.length + '</b></div>' +
+      '<div class="kpi"><span>Livelli completati</span><b class="num">' + st.levels + '</b></div>' +
+      '<div class="kpi"><span>Minuti di gioco</span><b class="num">' + Math.round(st.playMs / 60000) + '</b></div>' +
+      '<div class="kpi"><span>Video con premio</span><b class="num">' + st.rewarded + '</b></div>' +
+      '<div class="kpi"><span>Annunci tra livelli</span><b class="num">' + st.inter + '</b></div>' +
+      '<div class="kpi"><span>Acquisti simulati</span><b class="num">' + st.iapCount + ' · ' + eur(st.iapGross) + '</b></div>' +
+      '<div class="kpi"><span>ARPDAU stimato</span><b class="num">' + usd((adsRev + iapNet * 1.08) / days) + '</b></div>' +
+    '</div>' +
+    '<p class="legal">Stima: video con premio a ' + ECPM.rewarded + ' $ e annunci tra livelli a ' + ECPM.inter + ' $ ogni 1.000 visualizzazioni (eCPM Tier-1 indicativo), acquisti al netto del 15% dello store. Pubblicità ' + usd(adsRev) + ' · acquisti netti ' + eur(iapNet) + '.</p>' +
+    '<h3>Ultimi eventi</h3><div class="log"><table><tbody>' + (evRows || '<tr><td>Nessun evento</td></tr>') + '</tbody></table></div>' +
+    '<h3>Impostazioni</h3><div class="switch"><span>Suoni</span><button class="btn" id="sndT">' + (S.sound ? 'Attivi' : 'Spenti') + '</button></div>' +
+    '<div class="switch"><span>Ricomincia da zero</span><button class="btn" id="reset">Azzera progressi</button></div>';
+  openSheet(html);
+  $('#sndT').onclick = e => { S.sound = !S.sound; e.target.textContent = S.sound ? 'Attivi' : 'Spenti'; save(); };
+  $('#reset').onclick = e => {
+    if (e.target.dataset.armed) { try { localStorage.removeItem(SAVE_KEY); } catch (x) {} S = fresh(); bootDay(); closeSheet(true); goHome(); toast('Progressi azzerati'); return; }
+    e.target.dataset.armed = '1'; e.target.textContent = 'Tocca ancora per confermare';
+  };
+}
+
+/* =====================  Avvio  ===================== */
+setInterval(() => { if (screen === 'game' && document.visibilityState === 'visible' && G && !G.won) { S.stats.playMs += 5000; save(); } }, 5000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { track('session_pause', { screen }); saveNow(); } });
+let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (screen === 'game') drawBoard(); }, 120); });
+
+bootDay();
+goHome();
+if (giftPending()) setTimeout(openGift, 350);
+})();
+</script>
