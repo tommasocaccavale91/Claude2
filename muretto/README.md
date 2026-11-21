@@ -30,7 +30,7 @@ Squadre, piloti, campionato e circuito sono inventati: niente marchi F1, FIA, te
 
 ## Da fare dopo la prova
 
-1. Messa a punto con giocatori veri: differenza tra assistita e manuale, durata delle gomme, frequenza della pioggia.
+1. Messa a punto con giocatori veri: quanto penalizza uscire dalla linea, forza della spinta, durata delle gomme, frequenza della pioggia.
 2. Altri circuiti (il motore li genera da una lista di punti) e un mercato piloti come nel Procuratore.
 3. Più storia: rinnovi, rivalità, ingegneri da assumere.
 4. Negozio: livree e tute come premi del pass stagionale, pacchetti di crediti, rimozione della pubblicità.
