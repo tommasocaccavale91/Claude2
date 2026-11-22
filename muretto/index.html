@@ -273,7 +273,7 @@ table.std tr.me td{font-weight:800}
 #msg{position:absolute;left:0;right:0;top:24%;display:flex;justify-content:center;pointer-events:none}
 .mpill{padding:7px 16px;border-radius:999px;font-family:var(--f-display);font-weight:800;font-style:italic;font-size:20px;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:pop2 .22s ease}
 .mpill.big{font-size:28px;padding:9px 22px}
-.mpill.good{background:#4CC28A;color:#06200F}.mpill.bad{background:#FF5A4E;color:#fff}.mpill.warn{background:#F2B84B;color:#1E1503}.mpill.blue{background:#3DA5FF;color:#04121F}
+.mpill.gold{background:#F2B84B;color:#1E1503}.mpill.good{background:#4CC28A;color:#06200F}.mpill.bad{background:#FF5A4E;color:#fff}.mpill.warn{background:#F2B84B;color:#1E1503}.mpill.blue{background:#3DA5FF;color:#04121F}
 .pause{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(360px,calc(100% - 32px));background:#F6F3EA;color:#121826;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;pointer-events:auto;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .pause > b{font-family:var(--f-display);font-weight:800;font-size:30px;text-transform:uppercase}
 .prow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;padding:6px 0;border-top:1px solid rgba(18,24,38,.1)}
@@ -447,7 +447,13 @@ function softenTrack(t, target) {
 const TRACK_CACHE = {};
 let T, IDEAL, CW, KS, PROFI, BZ, EZ, DRSZ, LINE, PATHS, GP;
 const idx = s => { let i = Math.floor(s / T.ds) % T.N; return i < 0 ? i + T.N : i; };
-const posAt = (s, d) => { const i = idx(s); return [T.x[i] + T.ty[i]*d, T.y[i] - T.tx[i]*d]; };   // d>0 = sinistra
+const posAt = (s, d) => {   // d>0 = sinistra; interpolata tra i punti della pista per un movimento fluido
+  let u = s / T.ds; u = ((u % T.N) + T.N) % T.N;
+  const i = Math.floor(u) % T.N, j = (i + 1) % T.N, f = u - Math.floor(u);
+  const tx = T.tx[i] + (T.tx[j] - T.tx[i]) * f, ty = T.ty[i] + (T.ty[j] - T.ty[i]) * f, n = Math.hypot(tx, ty) || 1;
+  return [T.x[i] + (T.x[j] - T.x[i]) * f + ty / n * d, T.y[i] + (T.y[j] - T.y[i]) * f - tx / n * d];
+};
+const thAt = s => { const [x1, y1] = posAt(s - 3, 0), [x2, y2] = posAt(s + 3, 0); return Math.atan2(y2 - y1, x2 - x1); };
 function offPath(s0, s1, d) { const p = new Path2D(); let first = true; for (let s = s0; s <= s1; s += 4) { const [px, py] = posAt(s, d); if (first) { p.moveTo(px, py); first = false; } else p.lineTo(px, py); } return p; }
 function loadTrack(gp) {
   GP = gp;
@@ -819,9 +825,9 @@ function startSession(kind) {
   const rain = kind === 'race' && Math.random() < gp.rain ? { at:rnd(.25, .7) * laps * T.L, fc:false } : null;
   const me = cars.find(x => x.driven);
   R = { kind, mode, laps, cars, t:kind === 'race' ? -4.2 : -1, go:false, wet:0, rain, marks:[], radio:null, radioT:0, over:false, endT:0, speed:1, orderUsed:false, orderAsked:false,
-        input:{ steer:0, active:false, x0:null, y0:0, kl:false, kr:false }, cam:{ init:false }, assist:S.assist !== false, guide:S.guide !== false, skids:[], fx:[], shake:0, contactCd:0, paused:false, prompt:null, queue:[], flash:'', flashT:0, flashPos:0, lapFlash:0, lastPos:me ? me.grid : 0, lateOffer:null, lateSide:null,
+        input:{ steer:0, active:false, x0:null, y0:0, kl:false, kr:false, dT:0, dStart:0 }, cam:{ init:false }, assist:S.assist !== false, guide:S.guide !== false, skids:[], fx:[], shake:0, contactCd:0, paused:false, prompt:null, queue:[], flash:'', flashT:0, flashPos:0, lapFlash:0, lastPos:me ? me.grid : 0, lateOffer:null, lateSide:null,
         coach:mode === 'drive' && !S.coach, fast:null, slipMul:hasRule('scia') ? 1.09 : 1.06, drsMul:hasRule('scia') ? 1.1 : 1.07, wearMul:hasRule('gomme') ? .75 : 1 };
-  if (me) { R.dcal = driveCal(me); initFree(me); }
+  if (me) { R.dcal = 1; R.input.dT = me.d; }
   track('session_start', { kind, gp:gp.n, mode, laps, rain:!!rain });
   renderSession();
 }
@@ -858,7 +864,9 @@ function maybeAiPit(c) {
   if (left < .6 || c.pitReq) return;
   if (R.wet > .35 && c.comp !== 'I') { c.pitReq = 'I'; return; }
   const must = hasRule('pit') && !c.pits && left < 1.5;
-  if ((c.wear > .6 + Math.random() * .2 && left > .9) || must) c.pitReq = left > R.laps * .5 ? 'M' : 'S';
+  // si ferma solo se le gomme non arrivano in fondo
+  const atFlag = c.wear + wearPerLap(c) * left;
+  if ((c.wear > .55 && atFlag > .97 && left > .9) || must) c.pitReq = left > R.laps * .5 ? 'M' : 'S';
 }
 const fwdGap = (c, o) => { let g = o.s - c.s; if (g > T.L / 2) g -= T.L; if (g < -T.L / 2) g += T.L; return g; };
 function step(dt) {
@@ -872,25 +880,33 @@ function step(dt) {
     if (lead.dist > R.rain.at) R.wet = Math.min(.9, R.wet + dt / 10);
   }
   if (R.contactCd > 0) R.contactCd -= dt;
+  if (R.input.kl) R.input.dT = clamp(R.input.dT + 60 * dt, -HALF - 8, HALF + 8);
+  if (R.input.kr) R.input.dT = clamp(R.input.dT - 60 * dt, -HALF - 8, HALF + 8);
   for (const c of R.cars) {
-    const i = idx(c.s), grip = gripOf(c), free = c.driven && !c.inPit;
+    const i = idx(c.s), grip = gripOf(c), free = false;
     const boosting = c.boostT > 0;
     let target = 0;
     if (!free) {
       let dT;
       if (c.inPit) dT = PIT_D;
+      else if (c.driven) dT = R.input.active || !R.assist ? R.input.dT : IDEAL[i] * .85;
       else { if (c.offT > 0) c.offT -= dt; else c.off *= Math.max(0, 1 - dt * .8); dT = clamp(IDEAL[i] + c.off, -HALF + 4, HALF - 4); }
-      const lat = c.inPit ? 60 : 40, pd = c.d;
-      c.d += clamp(dT - c.d, -lat * dt, lat * dt);
+      // spostamento laterale morbido: accelera e frena dolcemente verso la posizione voluta
+      const pd = c.d, maxLat = c.inPit ? 60 : c.driven ? clamp(c.v * .4, 24, 75) : 40, gain = c.driven ? 5 : 3, accL = c.driven ? 260 : 150;
+      const wantV = clamp((dT - c.d) * gain, -maxLat, maxLat);
+      c.dVel = (c.dVel || 0) + clamp(wantV - (c.dVel || 0), -accL * dt, accL * dt);
+      c.d += c.dVel * dt;
+      if (Math.abs(c.d) > HALF + 26) { c.d = Math.sign(c.d) * (HALF + 26); c.dVel = 0; c.v *= 1 - dt * 1.5; }
       c.dv = (c.d - pd) / dt;
-      const vtop = VTOP * c.power * (c.slip ? R.slipMul : 1) * (c.drs ? R.drsMul : 1) * (boosting ? 1.07 : 1);
+      const sling = c.slingT > 0;
+      const vtop = VTOP * c.power * (c.slip ? R.slipMul : 1) * (c.drs ? R.drsMul : 1) * (boosting ? 1.07 : 1) * (sling ? 1.1 : 1);
       const cap = capAt(c, i);
       if (c.finished) target = Math.min(cap * .8, 120);
       else if (c.inPit) target = c.pitPhase === 'stop' ? 0 : PIT_V;
-      else target = Math.min(cap * aiPace(c) * (c.yieldT > 0 ? .9 : 1), vtop);
+      else target = Math.min(cap * (c.driven ? drivenPace(c) * (R.assist && !R.input.active ? .975 : 1) : aiPace(c)) * (c.yieldT > 0 ? .9 : 1), vtop);
       if (c.errT > 0) { c.errT -= dt; target = Math.min(target, 55); }
       // uscita di curva: largo all'esterno = più trazione, stretto all'interno = meno
-      let acc = ACC * Math.min(1, grip) * c.power * (boosting ? 1.22 : 1);
+      let acc = ACC * Math.min(1, grip) * c.power * (boosting ? 1.22 : 1) * (sling ? 1.35 : 1);
       c.exitGood = false;
       if (EZ[i] && !c.inPit) { const side = c.d * KS[i]; if (side < -5) { acc *= 1.22; c.exitGood = true; } else if (side > 8) acc *= .9; }
       if (c.exitPen > 0) { c.exitPen -= dt; acc *= .8; }
@@ -908,9 +924,12 @@ function step(dt) {
       }
     }
     if (c.defT > 0) c.defT -= dt;
+    if (c.slingT > 0) c.slingT = Math.max(0, c.slingT - dt);
+    c.dvSm = (c.dvSm || 0) + (c.dv - (c.dvSm || 0)) * Math.min(1, dt * 5);
     const onGrass = !c.inPit && Math.abs(c.d) > HALF + 1;
     if (onGrass && !c.grass) { c.offs++; if (c.driven) { R.flash = 'grass'; R.flashT = 1; } }
     c.grass = onGrass;
+    if (onGrass && c.driven && c.v > 30 && Math.random() < dt * 25) { const [gx, gy] = posAt(c.s - 9, c.d); fx('dust', gx, gy, 1); }
     c.ers = Math.min(1, c.ers + dt * ((free ? c.braking : target < c.v - 2) ? .12 : .015));
     if (boosting) { c.boostT -= dt; c.ers = Math.max(0, c.ers - dt * .3); if (!c.ers) c.boostT = 0; }
     else if (!c.driven && !c.finished && race && c.slip && c.ers > .6 && CW[i] < .2 && Math.random() < dt * .8) c.boostT = 1.8;
@@ -943,7 +962,7 @@ function step(dt) {
         const rel = c.s > T.L / 2 ? c.s - T.L : c.s;
         if (c.pitPhase === 'in' && rel >= 0) { c.pitPhase = 'stop'; c.pitT = (c.mine && C().role === 'manager' ? 2.6 - .25 * (C().parts.crew - 1) : 2.4) + rnd(0, .5); }
         else if (c.pitPhase === 'stop') { c.pitT -= dt; if (c.pitT <= 0) { c.comp = c.pitReq; c.wear = 0; c.pits++; c.pitReq = null; c.pitPhase = 'out'; if (c.mine) track('pit', { comp:c.comp }); } }
-        else if (c.pitPhase === 'out' && rel >= PIT_HALF) { c.inPit = false; if (c.driven) { c.d = -HALF + 8; initFree(c); } }
+        else if (c.pitPhase === 'out' && rel >= PIT_HALF) { c.inPit = false; if (c.driven) { c.d = -HALF + 8; R.input.dT = c.d; } }
       }
     }
   }
@@ -971,13 +990,16 @@ function traffic(dt) {
     for (const o of live) {
       if (o === c) continue;
       const g = fwdGap(c, o), dd = o.d - c.d;
-      if (!c.driven && g > 0 && g < 15 && Math.abs(dd) < 9) {
-        c.v = Math.min(c.v, o.v);
-        if (g < 12) { c.s -= 12 - g; c.dist -= 12 - g; if (c.s < 0) c.s += T.L; if (c.driven && R.flash !== 'grass') { R.flash = 'contact'; R.flashT = .7; } }
+      if (g > 0 && g < 32 && Math.abs(dd) < 9) {
+        c.v = Math.min(c.v, o.v * (g < 26 ? .98 : 1) + (g - 26) * .4);
+        if (c.driven && g < 23 && R.contactCd <= 0) { R.flash = 'contact'; R.flashT = .7; R.contactCd = .9; const [sx, sy] = posAt(c.s + 11, c.d); fx('spark', sx, sy, 6); R.shake = Math.max(R.shake || 0, 3); }
       }
-      if (!c.driven && !o.driven && Math.abs(g) < 10 && Math.abs(dd) < 8.5) { const push = (8.5 - Math.abs(dd)) / 2 * (dd >= 0 ? 1 : -1); if (!c.driven) c.d -= push; if (!o.driven) o.d += push; }
-      if (g > 18 && g < 80 && Math.abs(dd) < 12 && c.v > 80) c.slip = true;
-      if (g > 0 && g < 38 && Math.abs(dd) < 12 && CW[i] > .4) c.dirty = true;
+      // ruota a ruota: ci si spinge di lato con dolcezza
+      if (Math.abs(g) < 23 && Math.abs(dd) < 9) { const push = (9 - Math.abs(dd)) * (dd >= 0 ? 1 : -1); if (c.driven) c.dVel = (c.dVel || 0) - push * dt * 12; else c.d -= push * dt * 8; }
+      // l'IA lascia spazio a chi le è affiancato invece di stringerlo
+      if (!c.driven && o.driven && Math.abs(g) < 26 && Math.abs(dd) < 16) { c.off = clamp(c.off - Math.sign(dd || 1) * 30 * dt, -20, 20); c.offT = Math.max(c.offT, .6); }
+      if (g > 24 && g < 95 && Math.abs(dd) < 12 && c.v > 80) { c.slip = true; c.slipOn = o; }
+      if (g > 0 && g < 45 && Math.abs(dd) < 12 && CW[i] > .4) c.dirty = true;
       if (g < 0 && g > -30) behindClose = true;
       // chi è davanti si difende: chiude l'interno prima della frenata
       if (!o.driven && g > 0 && g < 20 && o.defT <= 0 && o.offT <= 0) {
@@ -986,16 +1008,24 @@ function traffic(dt) {
       }
       // staccata disponibile per chi guida
       // l'IA attacca: si sposta di lato o tenta la staccata
-      if (!c.driven && c.offT <= 0 && g > 0 && g < 50 && Math.abs(dd) < 10) {
+      if (!c.driven && c.offT <= 0 && g > 0 && g < 60 && Math.abs(dd) < 10) {
         const want = PROFI[i] * aiPace(c);
         if (want > o.v + .8 || o.yieldT > 0) {
           const sides = [15, -15].filter(s => Math.abs(IDEAL[i] + s) < HALF - 3).sort(() => Math.random() - .5);
-          for (const s of sides) { const nd = IDEAL[i] + s; if (live.every(x => x === c || Math.abs(fwdGap(c, x)) > 22 || Math.abs(x.d - nd) > 10)) { c.off = s; c.offT = 2.4; break; } }
+          for (const s of sides) { const nd = IDEAL[i] + s; if (live.every(x => x === c || Math.abs(fwdGap(c, x)) > 26 || Math.abs(x.d - nd) > 10)) { c.off = s; c.offT = 2.4; break; } }
           if (g < 30 && BZ[idx(c.s + 40)] && Math.random() < .02) { c.lateT = 1.6; c.lateArmed = false; c.off = clamp(KS[idx(c.s + 100)] * 15 - IDEAL[i], -26, 26); c.offT = 2; }
         }
       }
     }
     c.pressT = behindClose ? c.pressT + dt : 0;
+    // fionda: dopo un po' in scia, quando esci di lato prendi uno scatto per affiancare
+    if (c.slip && CW[i] < .3) c.slipT = Math.min(1.2, (c.slipT || 0) + dt);
+    else if (c.slip) c.slipT = Math.max(0, (c.slipT || 0) - dt * .5);
+    else {
+      const o = c.slipOn;
+      if ((c.slipT || 0) > .5 && o && fwdGap(c, o) > 0 && fwdGap(c, o) < 110 && Math.abs(o.d - c.d) >= 9) { c.slingT = 2; if (c.driven) track('sling', {}); }
+      c.slipT = Math.max(0, (c.slipT || 0) - dt * 1.5); if (!c.slipT) c.slipOn = null;
+    }
   }
 }
 function decisions() {
@@ -1150,23 +1180,42 @@ function mix(hex, t) { // t>0 schiarisce, t<0 scurisce
 const SPRITES = {};
 function sprite(color) {
   if (SPRITES[color]) return SPRITES[color];
-  const k = 8, c2 = document.createElement('canvas'); c2.width = 28 * k; c2.height = 16 * k;
-  const g = c2.getContext('2d'); g.scale(k, k); g.translate(13, 8);
+  const k = 12, c2 = document.createElement('canvas'); c2.width = 25 * k; c2.height = 12 * k;
+  const g = c2.getContext('2d'); g.scale(k, k); g.translate(12.5, 6);
   const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); g.fill(); };
-  g.fillStyle = '#121418'; rr(-9.2, -6.6, 4.6, 2.8, .9); rr(-9.2, 3.8, 4.6, 2.8, .9); rr(4, -6.1, 3.8, 2.4, .8); rr(4, 3.7, 3.8, 2.4, .8);
-  g.fillStyle = 'rgba(255,255,255,.18)'; rr(-8.8, -6.3, 3.8, .7, .3); rr(-8.8, 4.1, 3.8, .7, .3);
-  g.fillStyle = '#1a1c21'; rr(-11, -5.4, 2.6, 10.8, .6);                       // ala posteriore
-  g.fillStyle = color; rr(-10.8, -5.4, 2.2, 1.4, .3); rr(-10.8, 4, 2.2, 1.4, .3); // derive
-  g.fillStyle = '#1a1c21'; rr(9, -5.6, 1.8, 11.2, .5);                          // ala anteriore
-  g.fillStyle = color; rr(9.1, -5.6, 1.6, 1.6, .3); rr(9.1, 4, 1.6, 1.6, .3);
-  const body = g.createLinearGradient(0, -3.5, 0, 3.5);
-  body.addColorStop(0, mix(color, .35)); body.addColorStop(.45, color); body.addColorStop(1, mix(color, -.35));
-  g.fillStyle = body;
-  g.beginPath(); g.moveTo(10.4, 0); g.quadraticCurveTo(7, -1.2, 3, -1.6); g.lineTo(1, -3.6); g.quadraticCurveTo(-3, -4.2, -6.5, -3); g.lineTo(-8.6, -1.6); g.lineTo(-8.6, 1.6); g.lineTo(-6.5, 3); g.quadraticCurveTo(-3, 4.2, 1, 3.6); g.lineTo(3, 1.6); g.quadraticCurveTo(7, 1.2, 10.4, 0); g.closePath(); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.moveTo(9.6, 0); g.lineTo(3, -.45); g.lineTo(3, .45); g.closePath(); g.fill();
-  g.fillStyle = '#0b0c10'; g.beginPath(); g.ellipse(-.6, 0, 2.3, 1.35, 0, 0, 7); g.fill();          // abitacolo
-  g.strokeStyle = '#2b2e35'; g.lineWidth = .6; g.beginPath(); g.ellipse(.2, 0, 2.6, 1.6, 0, -1.3, 1.3); g.stroke(); // halo
-  g.fillStyle = mix(color, .15); g.beginPath(); g.arc(-1.2, 0, .9, 0, 7); g.fill();                 // casco
+  const dark = '#15171c', carbon = '#23262d';
+  const n = parseInt(color.slice(1), 16), lum = ((n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11);
+  const accent = lum < 110 ? '#F4F2EC' : mix(color, -.55);
+  // sospensioni
+  g.strokeStyle = '#30333a'; g.lineWidth = .35;
+  g.beginPath(); g.moveTo(6.2, -1); g.lineTo(6.2, -3.8); g.moveTo(6.2, 1); g.lineTo(6.2, 3.8); g.moveTo(-8, -2.4); g.lineTo(-8.5, -3.8); g.moveTo(-8, 2.4); g.lineTo(-8.5, 3.8); g.stroke();
+  // gomme: posteriori più larghe, anteriori più strette
+  g.fillStyle = dark; rr(-10.4, -5.6, 3.9, 2.2, .7); rr(-10.4, 3.4, 3.9, 2.2, .7); rr(4.8, -5.2, 3, 1.8, .6); rr(4.8, 3.4, 3, 1.8, .6);
+  g.fillStyle = 'rgba(255,255,255,.16)'; rr(-10, -5.4, 3.1, .45, .2); rr(-10, 3.55, 3.1, .45, .2); rr(5.1, -5.05, 2.4, .4, .2); rr(5.1, 3.55, 2.4, .4, .2);
+  // fondo vettura
+  g.fillStyle = carbon; g.beginPath(); g.moveTo(-9.8, -3.3); g.lineTo(-2, -3.4); g.lineTo(4, -2); g.lineTo(4, 2); g.lineTo(-2, 3.4); g.lineTo(-9.8, 3.3); g.closePath(); g.fill();
+  // carrozzeria: muso lungo, pance laterali, cofano motore
+  const body = g.createLinearGradient(0, -3.2, 0, 3.2);
+  body.addColorStop(0, mix(color, .35)); body.addColorStop(.5, color); body.addColorStop(1, mix(color, -.38));
+  g.fillStyle = body; g.beginPath();
+  g.moveTo(11, 0); g.quadraticCurveTo(8, -.55, 4.5, -.75); g.lineTo(2.6, -1.1); g.quadraticCurveTo(1.6, -2.9, -.8, -3); g.quadraticCurveTo(-4.6, -3, -6.4, -1.9); g.lineTo(-9.2, -.9);
+  g.lineTo(-9.2, .9); g.lineTo(-6.4, 1.9); g.quadraticCurveTo(-4.6, 3, -.8, 3); g.quadraticCurveTo(1.6, 2.9, 2.6, 1.1); g.lineTo(4.5, .75); g.quadraticCurveTo(8, .55, 11, 0); g.closePath(); g.fill();
+  // prese d'aria delle pance
+  g.fillStyle = 'rgba(0,0,0,.45)'; rr(1.2, -2.6, .7, 1.2, .3); rr(1.2, 1.4, .7, 1.2, .3);
+  // striscia della livrea
+  g.fillStyle = accent; g.beginPath(); g.moveTo(10.6, 0); g.lineTo(3, -.32); g.lineTo(-8.8, -.28); g.lineTo(-8.8, .28); g.lineTo(3, .32); g.closePath(); g.fill();
+  // abitacolo, casco, halo, pinna
+  g.fillStyle = '#08090c'; g.beginPath(); g.ellipse(-.9, 0, 1.9, 1.05, 0, 0, 7); g.fill();
+  g.fillStyle = accent; g.beginPath(); g.arc(-1.3, 0, .78, 0, 7); g.fill();
+  g.strokeStyle = '#1c1e23'; g.lineWidth = .42; g.beginPath(); g.moveTo(1.4, 0); g.lineTo(.6, 0); g.moveTo(.9, -1.2); g.quadraticCurveTo(-1.2, -1.5, -2.4, -1.15); g.moveTo(.9, 1.2); g.quadraticCurveTo(-1.2, 1.5, -2.4, 1.15); g.stroke();
+  g.strokeStyle = mix(color, -.45); g.lineWidth = .3; g.beginPath(); g.moveTo(-3.2, 0); g.lineTo(-9, 0); g.stroke();
+  // ala anteriore larga con derive colorate
+  g.fillStyle = dark; rr(9.6, -4.9, 1.5, 9.8, .3);
+  g.fillStyle = color; rr(9.6, -5, 1.5, .8, .2); rr(9.6, 4.2, 1.5, .8, .2); g.fillStyle = accent; rr(9.9, -3.6, .5, 7.2, .2);
+  // ala posteriore
+  g.fillStyle = dark; rr(-12.1, -4, 1.9, 8, .3);
+  g.fillStyle = color; rr(-12.1, -4.2, 1.9, .8, .2); rr(-12.1, 3.4, 1.9, .8, .2);
+  g.fillStyle = 'rgba(255,255,255,.18)'; rr(-11.7, -3.5, .45, 7, .2);
   SPRITES[color] = c2; return c2;
 }
 function grassPattern() {
@@ -1230,19 +1279,19 @@ function drawTrees(cx, cy, rad) {
   for (const [x, y, r] of dc.trees) { if (Math.abs(x - cx) > rad + 20 || Math.abs(y - cy) > rad + 20) continue; ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.arc(x + r * .35, y + r * .45, r, 0, 7); ctx.fill(); }
   for (const [x, y, r, h] of dc.trees) { if (Math.abs(x - cx) > rad + 20 || Math.abs(y - cy) > rad + 20) continue; ctx.fillStyle = 'hsl(' + h + ',42%,26%)'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.fillStyle = 'hsla(' + h + ',45%,38%,.9)'; ctx.beginPath(); ctx.arc(x - r * .25, y - r * .25, r * .62, 0, 7); ctx.fill(); }
 }
-function carXYH(c) { if (c.driven && !c.inPit && c.x !== undefined) return [c.x, c.y, c.h]; const [x, y] = posAt(c.s, c.d); return [x, y, T.th[idx(c.s)] - clamp(c.dv * .006, -.35, .35)]; }
+function carXYH(c) { const [x, y] = posAt(c.s, c.d); return [x, y, thAt(c.s) - clamp(Math.atan2(c.dvSm || 0, Math.max(c.v, 40)), -.32, .32)]; }
 function drawCars() {
   for (const c of order().reverse()) {
     const [x, y, h] = carXYH(c);
     ctx.save(); ctx.translate(x, y); ctx.rotate(h);
     if (c.finished && !c.driven) ctx.globalAlpha = .6;
-    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-10, -4.4, 22, 11, 4); else ctx.rect(-10, -4.4, 22, 11); ctx.fill();
-    if (c.boostT > 0 || c.drs) { ctx.fillStyle = 'rgba(90,180,255,.55)'; ctx.beginPath(); ctx.ellipse(-15, 0, 6, 2.2, 0, 0, 7); ctx.fill(); }
-    if (c.driven) { ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.beginPath(); ctx.ellipse(1, 0, 19, 12, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(17, -3.5); ctx.lineTo(17, 3.5); ctx.closePath(); ctx.fill(); }
-    ctx.drawImage(sprite(c.color), -13, -8, 28, 16);
-    if (c.inPit && c.pitPhase === 'stop') { ctx.strokeStyle = '#F2B84B'; ctx.lineWidth = 1.2; ctx.strokeRect(-12, -8, 26, 16); }
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-10.5, -3.6, 23, 9, 4); else ctx.rect(-10.5, -3.6, 23, 9); ctx.fill();
+    if (c.boostT > 0 || c.drs || c.slingT > 0) { ctx.fillStyle = c.slingT > 0 ? 'rgba(255,200,90,.6)' : 'rgba(90,180,255,.55)'; ctx.beginPath(); ctx.ellipse(-15, 0, 5, 1.8, 0, 0, 7); ctx.fill(); }
+    if (c.driven) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 9, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(14, -2.8); ctx.lineTo(14, 2.8); ctx.closePath(); ctx.fill(); }
+    ctx.drawImage(sprite(c.color), -12.5, -6, 25, 12);
+    if (c.inPit && c.pitPhase === 'stop') { ctx.strokeStyle = '#F2B84B'; ctx.lineWidth = 1.2; ctx.strokeRect(-12.5, -6.5, 25, 13); }
     ctx.restore();
-    if (R.wet > .25 && c.v > 60) { ctx.fillStyle = 'rgba(225,232,242,' + (.07 + R.wet * .14) + ')'; ctx.beginPath(); ctx.ellipse(x - Math.cos(h) * 20, y - Math.sin(h) * 20, 13, 6, h, 0, 7); ctx.fill(); }
+    if (R.wet > .25 && c.v > 60) { ctx.fillStyle = 'rgba(225,232,242,' + (.07 + R.wet * .14) + ')'; ctx.beginPath(); ctx.ellipse(x - Math.cos(h) * 16, y - Math.sin(h) * 16, 11, 5, h, 0, 7); ctx.fill(); }
   }
 }
 function drawFx(dt) {
@@ -1260,10 +1309,10 @@ function draw(dt) {
   const me = R.cars.find(c => c.driven);
   if (R.mode === 'drive' && me) {
     const [x, y, h] = carXYH(me), cam = R.cam;
-    const zt = clamp(H / 300, 1.7, 2.8) * (1 - Math.min(.22, me.v / VTOP * .22)) * (me.boostT > 0 ? .95 : 1);
+    const zt = clamp(H / 270, 1.9, 3.1) * (1 - Math.min(.22, me.v / VTOP * .22)) * (me.boostT > 0 ? .95 : 1);
     if (!cam.init) Object.assign(cam, { x, y, h, z:zt, init:true });
-    cam.h += angDiff(h - cam.h) * Math.min(1, dt * 4.5);
-    const la = me.v * .32;
+    cam.h += angDiff(thAt(me.s + 30) - cam.h) * Math.min(1, dt * 3);
+    const la = me.v * .3;
     cam.x += (x + Math.cos(cam.h) * la - cam.x) * Math.min(1, dt * 8); cam.y += (y + Math.sin(cam.h) * la - cam.y) * Math.min(1, dt * 8);
     cam.z += (zt - cam.z) * Math.min(1, dt * 2);
     R.shake = Math.max(0, (R.shake || 0) - dt * 20);
@@ -1271,10 +1320,16 @@ function draw(dt) {
     ctx.save(); ctx.translate(W / 2 + sx, H * .62 + sy); ctx.scale(cam.z, cam.z); ctx.rotate(-cam.h - Math.PI / 2); ctx.translate(-cam.x, -cam.y);
     const rad = Math.hypot(W, H) / cam.z * .75;
     drawWorld(cam.x, cam.y, rad, cam.z, R.guide);
+    if (me.slip && me.slipOn) {
+      const o = me.slipOn, [ox, oy] = posAt(o.s, o.d), oh = thAt(o.s), k = Math.min(1, (me.slipT || 0) / .5);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (.18 + .25 * k) + ')'; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (let q = 0; q < 7; q++) { const off = (q - 3) * 1.6, t0 = (R.t * 90 + q * 17) % 60, bx = ox - Math.cos(oh) * (14 + t0) - Math.sin(oh) * off, by = oy - Math.sin(oh) * (14 + t0) + Math.cos(oh) * off; ctx.moveTo(bx, by); ctx.lineTo(bx - Math.cos(oh) * 10, by - Math.sin(oh) * 10); }
+      ctx.stroke();
+    }
     drawCars(); drawFx(dt); drawTrees(cam.x, cam.y, rad);
     ctx.restore();
     // linee di velocità con spinta o DRS
-    if (me.boostT > 0 || me.drs) {
+    if (me.boostT > 0 || me.drs || me.slingT > 0) {
       ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.5; ctx.beginPath();
       for (let q = 0; q < 26; q++) { const a = Math.random() * Math.PI * 2, r1 = Math.min(W, H) * (.42 + Math.random() * .2), r2 = r1 + 40 + Math.random() * 60; ctx.moveTo(W / 2 + Math.cos(a) * r1, H * .55 + Math.sin(a) * r1); ctx.lineTo(W / 2 + Math.cos(a) * r2, H * .55 + Math.sin(a) * r2); }
       ctx.stroke();
@@ -1320,10 +1375,10 @@ function renderSession() {
   const drive = R.mode === 'drive', race = R.kind === 'race';
   const title = { fp:'Prove libere', quali:'Qualifica', race:'Gara' }[R.kind];
   const coach = R.coach ? '<div class="coach" id="coach"><b>Come si guida</b><ol>' +
-      '<li><span class="ic">☝</span><span><b>Tieni il pollice sullo schermo e spostalo</b> a destra o a sinistra per sterzare. Gas e freno sono automatici.</span></li>' +
+      '<li><span class="ic">☝</span><span><b>Tieni il pollice sullo schermo e spostalo</b> a destra o a sinistra: l’auto va dove indichi. Gas e freno sono automatici.</span></li>' +
       '<li><span class="ic">⟲</span><span><b>Sterzo assistito</b>: se lasci il dito l’auto segue la traiettoria da sola. Lo trovi nella pausa.</span></li>' +
       '<li><span class="ic"><i class="ln g"></i><i class="ln r"></i></span><span>Il <b>tratteggio</b> è la traiettoria più veloce: verde gas, rosso frenata. È un consiglio, non un binario.</span></li>' +
-      '<li><span class="ic">»</span><span><b>Sorpassa</b> affiancandoti: in scia e con il DRS vai più forte, poi premi <b>Spinta</b>.</span></li>' +
+      '<li><span class="ic">»</span><span><b>Sorpasso con la fionda</b>: mettiti in scia finché la barra è piena, poi spostati di lato. Prendi uno scatto e affianchi. Con <b>Spinta</b> chiudi il sorpasso.</span></li>' +
       '</ol><button class="btn primary wide" id="coachOk">Ho capito, via!</button></div>' : '';
   app.innerHTML = '<section class="race" id="race" aria-label="' + title + '"><canvas id="cv"></canvas><div class="hud">' +
     (drive
@@ -1338,9 +1393,9 @@ function renderSession() {
   cv = $('#cv'); ctx = cv.getContext('2d'); resize(); GRASS = null;
   const el = $('#race');
   if (drive) {
-    el.addEventListener('pointerdown', e => { if (e.target.closest('button,.prompt,.coach,.pause')) return; Object.assign(R.input, { active:true, x0:e.clientX, y0:e.clientY, pid:e.pointerId, steer:0 }); try { el.setPointerCapture(e.pointerId); } catch (x) {} });
-    el.addEventListener('pointermove', e => { if (!R.input.active || e.pointerId !== R.input.pid) return; R.input.steer = clamp((e.clientX - R.input.x0) / 70, -1, 1); });
-    const up = e => { if (e.pointerId === R.input.pid) Object.assign(R.input, { active:false, x0:null, steer:0 }); };
+    el.addEventListener('pointerdown', e => { if (e.target.closest('button,.prompt,.coach,.pause')) return; const me = R.cars.find(c => c.driven); Object.assign(R.input, { active:true, x0:e.clientX, y0:e.clientY, pid:e.pointerId, steer:0, dStart:me ? me.d : 0, dT:me ? me.d : 0 }); try { el.setPointerCapture(e.pointerId); } catch (x) {} });
+    el.addEventListener('pointermove', e => { if (!R.input.active || e.pointerId !== R.input.pid) return; const dx = e.clientX - R.input.x0; R.input.steer = clamp(dx / 70, -1, 1); R.input.dT = clamp(R.input.dStart - dx * (TW / 130), -HALF - 8, HALF + 8); });
+    const up = e => { if (e.pointerId === R.input.pid) { const me = R.cars.find(c => c.driven); Object.assign(R.input, { active:false, x0:null, steer:0 }); if (me && !R.assist) R.input.dT = me.d; } };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
     $('#ers').onclick = boost;
     $('#pause').onclick = openPause;
@@ -1423,10 +1478,12 @@ function updateHud() {
     else if (me.inPit) m = '<div class="mpill warn">Ai box</div>';
     else if (Math.abs(me.d) > HALF + 1) m = '<div class="mpill bad">Sull’erba</div>';
     else if (me.pitReq) m = '<div class="mpill warn">Box a fine giro</div>';
+    else if (me.slingT > 0) m = '<div class="mpill gold big">Fionda!</div>';
+    else if (R.cars.some(o => o !== me && !o.inPit && Math.abs(fwdGap(me, o)) < 16 && Math.abs(o.d - me.d) >= 9 && Math.abs(o.d - me.d) < 15)) m = '<div class="mpill blue">Ruota a ruota</div>';
+    else if (me.slip && (me.slipT || 0) >= .5) m = '<div class="mpill gold">Esci dalla scia!</div>';
+    else if (me.slip) m = '<div class="mpill blue">In scia' + ((me.slipT || 0) > .05 ? ' · ' + Math.round(Math.min(1, me.slipT / .5) * 100) + '%' : '') + '</div>';
     else if (me.drs) m = '<div class="mpill blue">DRS aperto</div>';
     else if (me.boostT > 0) m = '<div class="mpill blue">Spinta</div>';
-    else if (me.slip) m = '<div class="mpill blue">In scia</div>';
-    else if (me.slide > 14) m = '<div class="mpill warn">Derapata</div>';
     else if (me.exitGood) m = '<div class="mpill good">Uscita perfetta</div>';
     const me2 = $('#msg'); if (me2.dataset.k !== m) { me2.dataset.k = m; me2.innerHTML = m; }
   } else {
@@ -1460,7 +1517,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'd') { R.input.kr = true; e.preventDefault(); }
   if (e.key === ' ' || e.key === 'ArrowUp') { boost(); e.preventDefault(); }
   if (e.key === 'Escape' || e.key === 'p') openPause();
-  if (R.input.kl || R.input.kr) { R.input.active = true; R.input.x0 = null; R.input.steer = (R.input.kr ? 1 : 0) - (R.input.kl ? 1 : 0); }
+  if (R.input.kl || R.input.kr) { if (!R.input.active) { const me = R.cars.find(c => c.driven); if (me) R.input.dT = me.d; } R.input.active = true; R.input.x0 = null; R.input.steer = (R.input.kr ? 1 : 0) - (R.input.kl ? 1 : 0); }
 });
 window.addEventListener('keyup', e => {
   if (!R) return;
@@ -1700,7 +1757,7 @@ async function rewarded(placement) {
   return ok;
 }
 
-window.__muretto = { get R() { return R; }, get T() { return T; }, get IDEAL() { return IDEAL; }, get PROFI() { return PROFI; }, get KS() { return KS; }, get BZ() { return BZ; },
+window.__muretto = { CWv:i => CW[i], carH:c => carXYH(c)[2], get R() { return R; }, get T() { return T; }, get IDEAL() { return IDEAL; }, get PROFI() { return PROFI; }, get KS() { return KS; }, get BZ() { return BZ; },
   step:dt => step(dt), order:() => order(), startSession, closePrompt:k => closePrompt(k), boost, lateBrake, S:() => S, newCareer, draft, loadTrack, CALENDAR, refLap, simQuali, renderBox, endSession };
 if (S.career) renderBox(); else renderStart();
 })();

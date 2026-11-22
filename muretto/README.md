@@ -19,16 +19,16 @@ I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine 
 
 ## Guida
 
-- **Guida libera**: l'auto guidata si muove davvero nel piano (posizione, direzione, derapata). Si sterza tenendo il pollice sullo schermo e spostandolo a destra o a sinistra (frecce da tastiera). Gas e freno sono automatici.
-- **Sterzo assistito** (attivo all'inizio, si cambia nella pausa): se lasci il dito l'auto segue la traiettoria, un po' più piano. Chi sterza da sé può andare forte come un pilota dell'IA con la stessa macchina.
-- La traiettoria è un tratteggio leggero (verde gas, rosso frenata), disattivabile. Non è un binario: in curva c'è una fascia libera e solo allontanandosi molto si deve rallentare. Entrando troppo forte l'auto scivola verso l'esterno.
-- **Uscita larga** con trazione migliore, **scia**, **DRS** sul rettilineo dei box, **Spinta** (si ricarica frenando), **aria sporca** in curva dietro a un'altra auto.
-- Erba più lenta della pista, muretto esterno con rimbalzo, contatti con le altre auto con scintille e sobbalzo.
-- Gli avversari chiudono l'interno quando li attacchi da vicino e sbagliano di più se gli stai attaccato a lungo.
-- Le decisioni (gomme, pioggia, ordini di scuderia) arrivano come domanda dell'ingegnere, e la gara rallenta mentre scegli.
-- **Grafica**: prato a strisce, alberi, tribune con il pubblico, box, cordoli a blocchi, gomma sulla traiettoria, monoposto dettagliate, segni di frenata, fumo, scintille, linee di velocità con la Spinta. La telecamera segue in modo fluido e si allarga con la velocità.
+- **Un gesto solo**: tieni il pollice sullo schermo e spostalo a destra o a sinistra. L'auto va dove indichi con un movimento laterale morbido, senza derapate. Gas e freno sono automatici. Da tastiera: frecce.
+- **Sterzo assistito** (attivo all'inizio, si cambia nella pausa): se lasci il dito l'auto torna sulla traiettoria, un po' più piano di chi guida da sé.
+- La traiettoria è un tratteggio leggero (verde gas, rosso frenata), disattivabile. In curva c'è una fascia libera: solo allontanandosi molto si rallenta.
+- **Sorpasso con la fionda**: in rettilineo, in scia, la barra si carica ("In scia · 60%"). Quando è piena ("Esci dalla scia!") ti sposti di lato e prendi uno scatto di 2 secondi (+10% di velocità di punta, accelerazione più forte) per affiancare. Con **Spinta** chiudi il sorpasso. Poi c'è il DRS sul rettilineo dei box.
+- **Ruota a ruota**: affiancati ci si spinge piano. Gli avversari lasciano spazio invece di stringerti e chiudono l'interno solo se li attacchi da vicino.
+- **Aria sporca** in curva dietro a un'altra auto, erba più lenta della pista, muretto esterno.
+- **Movimento fluido**: posizione e direzione interpolate tra i punti della pista, rotazione delle auto smorzata, telecamera che ruota con la pista davanti.
+- **Monoposto in stile F1**, proporzionate alla pista: muso lungo, ala anteriore larga, ruote scoperte, pance laterali con prese d'aria, halo, ala posteriore, striscia della livrea.
 
-**Equilibrio.** Le curve troppo strette vengono ammorbidite in automatico (raggio minimo 40), così non si possono "tagliare" i tornanti. La velocità dell'auto guidata è calibrata pista per pista contro quella degli avversari, con la stessa macchina e lo stesso pilota. La durata delle gomme è fissa in giri (morbide circa 2,7, medie 3,9, dure 5,7): le gare sprint si fanno senza soste, quelle medie e lunghe richiedono strategia.
+**Equilibrio.** Le curve troppo strette vengono ammorbidite (raggio minimo 40). Le gomme durano un numero fisso di giri (morbide circa 2,7, medie 3,9, dure 5,7) e l'IA si ferma ai box solo se le gomme non arrivano in fondo.
 
 ## Carriera
 
