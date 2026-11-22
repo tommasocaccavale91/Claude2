@@ -19,19 +19,18 @@ I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine 
 
 ## In gara
 
-La macchina **guida da sola**: tu la gestisci come un pilota con il suo ingegnere di pista. Da pilota lo fai sempre. Da manager scegli se seguire da vicino uno dei tuoi piloti ("Con il pilota") o comandare entrambe le auto dal muretto.
+La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e come gestire gomme e benzina. Da pilota lo fai sempre. Da manager scegli se seguire da vicino uno dei tuoi piloti ("Con il pilota") o comandare entrambe le auto dal muretto.
 
-- **DRS**: entrando nel rettilineo dei box a meno di circa un secondo da chi ti precede, il pulsante si accende ("premi!"). Se non lo apri, perdi l'occasione. +10% di velocità di punta.
-- **Carburante**: Grassa (+10% di consumo, più veloce), Normale (arriva in fondo con un piccolo margine), Magra (consuma il 10% in meno, più lenta). A secco si rallenta moltissimo.
-- **Gomme**: Gestisci (durano di più), Normale, Spingi (più veloce, consuma prima). Morbide circa 40% della gara, medie 60%, dure 90%.
-- **Danni**: nei contatti l'ala si può rompere (fino al 10% di passo in meno). Si ripara al box.
-- **Scia**: più forte (+11% di velocità di punta e accelerazione migliore) e visibile, con filetti d'aria tra le due auto. Uscendo dalla scia in rettilineo si prende la fionda per affiancare.
-- **Ingegnere di pista** (radio in basso): a ogni giro tempo, differenza dal giro prima, distacchi da chi è davanti e dietro, se recuperi o perdi. Avvisa per DRS, gomme che calano, danni, pioggia. Propone scelte con **Accetta / Rifiuta**: Grassa per N giri per attaccare (poi torna da sola a Normale), Magra se il carburante non basta, Spingi per attaccare o difenderti, Gestisci se le gomme soffrono, box quando le gomme non arrivano in fondo, muso nuovo solo se il danno costa più della sosta. Mentre decidi la gara rallenta.
-- Velocità ×1, ×2, ×4 e pausa.
-- **Zoom**: pulsanti − e +, pizzico con due dita o rotellina. Quattro livelli di distanza e, in fondo, la pista intera vista dall'alto con le auto come pallini. La tua auto ha sempre un cerchio dorato, è disegnata più in alto dello schermo e le decisioni dell'ingegnere compaiono in alto per non coprirla.
-- **Movimenti morbidi**: ogni auto ruota seguendo il proprio movimento reale, smorzato nel tempo (nelle prove circa 0,2° per fotogramma in media, al massimo 4°). Spostamenti laterali lenti, posizione interpolata. Monoposto in stile F1.
+- **ATTACCA**: entro 0,8 s da chi ti precede si accende il grande pulsante con la probabilità di riuscita ("62% di riuscita su KEL"). La probabilità sale sul dritto, in scia, con il DRS, con gomme più fresche e con il ritmo Spingi. Se riesce, la tua auto si sposta di lato, scatta e lo supera. Se fallisce, "ha chiuso la porta". Chi è stato appena superato non può ritentare per qualche secondo.
+- **DIFENDI**: quando un'auto più veloce ti attacca, il pulsante diventa blu per un attimo, con il tempo rallentato. Se lo premi in tempo tieni la posizione nella maggior parte dei casi. Con la tua auto si passa solo attraverso i duelli.
+- **Batteria**: 3 tacche, ogni attacco o difesa ne consuma una, se ne recupera una a ogni giro. Va dosata.
+- **Carburante** (Grassa / Normale / Magra) e **gomme** (Gestisci / Normale / Spingi) restano nel pannello. Morbide circa 40% della gara, medie 60%, dure 90%, ma con un minimo in giri (3 / 5 / 7): nelle sprint da 5 giri le medie arrivano in fondo.
+- **Ingegnere discreto**: interrompe solo per pioggia e gomme che non arrivano in fondo, rallentando poco la gara. Se lasci scadere la domanda vale la scelta consigliata. Il resto sono messaggi brevi che spariscono da soli, e il tempo sul giro compare piccolo sotto il contatore dei giri.
+- **Scia**: un unico flusso bianco morbido tra l'auto davanti e la tua. Spinge forte.
+- **Prima gara**: batteria piena, sorpassi più facili, nessun danno e un fumetto che indica quando premere ATTACCA e DIFENDI. I danni da contatto non ci sono mai nel primo giro.
+- **Zoom** con − e +, pizzico o rotellina, fino alla pista intera a pallini. La tua auto ha un cerchio dorato. Velocità ×1, ×2, ×4 e pausa.
 
-**Prove libere e qualifica** sono scelte rapide. Le prove portano la conoscenza della pista al 100% e rivelano l'assetto giusto. In qualifica scegli "Giro sicuro" oppure "Al limite" (circa mezzo punto percentuale più veloce, ma 22% di rischio di errore). Con un video premio si può ripetere.
+**Prove libere e qualifica** sono scelte rapide: "Fai le prove" o "Salta", "Giro sicuro" o "Al limite" (più veloce, 22% di rischio di errore).
 
 **Durata delle gare**: 5, 10 o 20 giri.
 
