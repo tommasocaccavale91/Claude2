@@ -320,13 +320,25 @@ function hashStr(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCode
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 /* =====================  Calendario e circuiti  ===================== */
+// Tracciati disegnati a mano, ispirati agli originali: forma generale e curve simbolo riconoscibili, non identici.
+// Ordine dei punti = senso di marcia; start = punto sul rettilineo dei box.
+const HAND = {
+  "Monza": { start:[600,620], ctrl:[[1000,620],[800,620],[600,620],[400,620],[260,620],[190,612],[160,588],[120,572],[75,530],[55,440],[65,340],[95,270],[130,245],[140,205],[165,140],[220,95],[295,85],[355,115],[470,200],[580,280],[640,300],[690,335],[740,330],[790,355],[900,372],[1020,378],[1100,405],[1140,485],[1110,570],[1050,612]] },
+  "Spa": { start:[200,385], ctrl:[[200,620],[200,470],[200,330],[200,170],[214,130],[245,80],[292,60],[345,98],[378,200],[390,290],[405,352],[445,380],[488,342],[620,265],[770,190],[860,150],[900,178],[940,172],[980,215],[1012,290],[985,338],[928,345],[880,385],[852,445],[858,505],[818,565],[790,630],[700,662],[560,642],[420,652],[300,668],[240,672]] },
+  "Monaco": { start:[590,680], ctrl:[[840,680],[700,680],[560,680],[420,680],[320,672],[262,628],[252,540],[262,430],[285,350],[290,290],[262,235],[280,180],[345,158],[410,182],[440,240],[458,302],[495,352],[555,362],[590,318],[595,250],[606,198],[680,172],[800,172],[910,202],[975,268],[995,360],[978,420],[932,436],[890,412],[845,426],[795,438],[752,426],[712,445],[690,485],[718,522],[775,545],[865,548],[950,590],[955,650],[910,682]] },
+  "Silverstone": { start:[650,620], ctrl:[[950,620],[800,620],[650,620],[500,620],[380,620],[318,602],[290,555],[300,505],[262,465],[245,400],[215,320],[180,265],[135,240],[100,200],[110,150],[155,112],[225,95],[330,92],[420,98],[470,135],[515,185],[570,160],[625,205],[680,185],[730,225],[860,284],[960,322],[992,392],[962,452],[992,505],[1010,560],[1000,605]] },
+  "Melbourne": { start:[700,600], ctrl:[[950,600],[825,600],[700,600],[575,600],[470,598],[410,585],[372,555],[330,552],[270,538],[240,480],[228,420],[200,378],[188,300],[215,222],[270,172],[340,150],[480,158],[560,132],[602,152],[645,127],[760,112],[900,140],[978,190],[1002,242],[1042,282],[1060,362],[1030,422],[982,442],[962,482],[990,540],[1000,580]] },
+  "San Paolo": { start:[520,622], ctrl:[[250,622],[385,624],[520,624],[655,622],[770,612],[850,598],[900,555],[880,500],[920,448],[952,350],[925,252],[855,192],[700,152],[505,124],[380,115],[300,145],[262,215],[282,290],[345,322],[382,378],[352,432],[282,445],[222,472],[180,522],[185,580],[205,612]] },
+  "Imola": { start:[480,620], ctrl:[[250,620],[400,620],[550,620],[700,620],[800,605],[850,582],[885,588],[932,570],[965,545],[1030,520],[1082,480],[1072,418],[1020,398],[930,390],[860,362],[822,318],[795,258],[742,202],[682,192],[640,232],[562,242],[522,215],[480,232],[380,232],[262,252],[192,302],[168,382],[188,462],[208,555],[226,608]] },
+  "Barcellona": { start:[600,620], ctrl:[[1000,620],[800,620],[600,620],[400,620],[270,615],[220,585],[230,540],[195,500],[150,420],[140,330],[175,260],[240,240],[300,275],[330,340],[390,360],[440,320],[430,250],[470,190],[560,150],[700,130],[820,140],[900,170],[935,230],[895,270],[850,300],[870,360],[950,400],[1010,460],[1040,540],[1030,600]] }
+};
 // Solo nomi di località: niente nomi di autodromi o marchi.
 const CALENDAR = [
   ['Melbourne','misto',.3],['Sakhir','misto',.03],['Jeddah','veloce',.03],['Suzuka','misto',.45],['Shanghai','misto',.35],['Miami','cittadino',.35],
   ['Imola','misto',.4],['Monaco','cittadino',.25],['Barcellona','misto',.2],['Montréal','cittadino',.45],['Spielberg','veloce',.4],['Silverstone','veloce',.5],
   ['Budapest','misto',.3],['Spa','veloce',.6],['Zandvoort','misto',.4],['Monza','veloce',.3],['Baku','cittadino',.1],['Singapore','cittadino',.4],
   ['Austin','misto',.25],['Città del Messico','misto',.15],['San Paolo','misto',.55],['Las Vegas','veloce',.05],['Lusail','veloce',.03],['Abu Dhabi','misto',.03]
-].map(([n, style, rain]) => ({ n, style, rain }));
+].map(([n, style, rain]) => ({ n, style, rain, ...(HAND[n] || {}) }));
 const STYLE = {
   veloce:    { n:[8,10],  f:[.68,1.05], sc:1.2,  minR:36, setup:'basso', label:'Veloce' },
   misto:     { n:[10,13], f:[.6,1.05],  sc:1.05, minR:32, setup:'medio', label:'Misto' },
@@ -392,6 +404,7 @@ function loadTrack(gp) {
   GP = gp;
   if (!TRACK_CACHE[gp.n]) {
     let built = null;
+    if (gp.ctrl) built = buildTrack(gp.ctrl, gp.start);
     for (let a = 0; a < 300 && !built; a++) { const g = genCtrl(gp, a), t = buildTrack(g.ctrl, g.start); if (trackOk(t, STYLE[gp.style].minR)) built = t; }
     if (!built) { const g = genCtrl({ n:'Lago', style:'misto' }, 0); built = buildTrack(g.ctrl, g.start); }
     TRACK_CACHE[gp.n] = derive(built);
@@ -614,7 +627,7 @@ function renderBox() {
     '<div class="wrap sect">' +
     (live ? '<button class="prod feature" id="starterB"><span class="pi">★</span><div><b>' + SKU.starter.n + '</b><span>' + SKU.starter.d + ' · scade tra ' + Math.max(1, Math.round((S.starterAt + 48 * 3600e3 - Date.now()) / 3600e3)) + ' h</span></div><span class="p">' + eur(SKU.starter.price) + '</span></button>' : '') +
     '<div class="card"><div class="gp"><div><p class="kicker" style="color:var(--muted);opacity:1">Prossimo weekend</p><h2>GP ' + esc(gp.n) + '</h2>' +
-      '<div class="meta"><span class="chip">' + STYLE[gp.style].label + '</span><span class="chip">' + c.laps + ' giri</span><span class="chip">Pioggia ' + Math.round(gp.rain * 100) + '%</span></div></div>' + svg + '</div>' +
+      '<div class="meta">' + (gp.ctrl ? '<span class="chip hot">Ispirato all’originale</span>' : '') + '<span class="chip">' + STYLE[gp.style].label + '</span><span class="chip">' + c.laps + ' giri</span><span class="chip">Pioggia ' + Math.round(gp.rain * 100) + '%</span></div></div>' + svg + '</div>' +
       '<div class="sessions">' +
         sess(1, 'Prove libere', fpTxt, w.fp ? 'done' : 'now', w.fp ? '' : '<button class="btn sm go2" id="fpGo">Guida</button><button class="btn sm" id="fpSim">Salta</button>') +
         sess(2, 'Qualifica', qTxt, w.quali ? 'done' : (w.fp ? 'now' : ''), w.quali ? '' : '<button class="btn sm go2" id="qGo">Guida</button><button class="btn sm" id="qSim">Simula</button>') +
@@ -1058,7 +1071,7 @@ function drawMini(x0, y0, size) {
 
 /* =====================  Sessione: HUD e comandi  ===================== */
 function renderSession() {
-  screen = 'race';
+  stopRace(); screen = 'race';
   const drive = R.mode === 'drive', race = R.kind === 'race';
   const title = { fp:'Prove libere', quali:'Qualifica', race:'Gara' }[R.kind];
   app.innerHTML = '<section class="race" id="race" aria-label="' + title + '"><canvas id="cv"></canvas><div class="hud">' +
@@ -1120,7 +1133,7 @@ function buildBottom() {
 function wearHtml(c) { const left = Math.round((1 - c.wear) * 100), col = left > 45 ? '#4CC28A' : left > 20 ? '#F2B84B' : '#FF4B3E'; return tyreIco(c.comp) + '<span class="wbar"><i style="width:' + left + '%;background:' + col + '"></i></span>' + left + '%'; }
 let hudT = 0;
 function updateHud() {
-  if (!R) return;
+  if (!R || !$('#lap')) return;
   const ord = order(), lead = ord[0], race = R.kind === 'race';
   const lt = $('#lights');
   if (lt) { if (!R.go) { const on = R.coach ? 0 : Math.min(5, Math.floor((R.t + 4.2) / .7)); lt.querySelectorAll('i').forEach((l, k) => l.className = k < on ? 'on' : ''); } else lt.remove(); }

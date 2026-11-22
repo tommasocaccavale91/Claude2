@@ -6,7 +6,12 @@ Tutto è in un solo file: `muretto/index.html`.
 
 ## Weekend di gara
 
-Ogni GP ha il nome di una località (GP Monza, GP Spa, GP Suzuka…) e un circuito suo, generato dal nome: veloce, misto o cittadino, con probabilità di pioggia diverse.
+Ogni GP ha il nome di una località (GP Monza, GP Spa, GP Suzuka…) e un circuito suo, con probabilità di pioggia diverse.
+
+- **8 tracciati disegnati a mano, ispirati agli originali**: Monza, Monaco, Spa, Silverstone, Melbourne, San Paolo, Imola, Barcellona. Forma generale e curve simbolo riconoscibili (Parabolica, La Source ed Eau Rouge, i curvoni di Becketts…), semplificati e non identici. Le chicane più strette sono addolcite per restare guidabili.
+- **Gli altri 16** sono generati dal nome: veloci, misti o cittadini.
+
+I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine dei punti = senso di marcia, `start` = punto sul rettilineo dei box). Prima di pubblicare l'app conviene una verifica legale: alcuni autodromi hanno registrato la sagoma della pista come marchio.
 
 1. **Prove libere** (facoltative): 3 giri da solo. Alzano la conoscenza della pista (qualche decimo in più) e rivelano l'assetto giusto: carico basso, bilanciato o alto.
 2. **Qualifica**: un giro secco con le morbide. Decide la griglia. Si può simulare, e con un video premio si può ripetere il giro.
@@ -58,7 +63,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 ## Prossimi passi
 
 1. Messa a punto con giocatori veri: quanto rende la staccata, forza della scia e del DRS, difficoltà in qualifica.
-2. Circuiti disegnati a mano per i GP più famosi (oggi sono generati).
+2. Disegnare a mano anche gli altri GP (Suzuka richiede un ponte per l'incrocio).
 3. Mercato piloti per il manager, rinnovi e trattative di contratto.
 4. Sfida del giorno (giro secco con classifica) e obiettivi settimanali.
 5. Suono del motore e vibrazione nell'app.
