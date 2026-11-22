@@ -163,7 +163,7 @@ table.std tr.me td{font-weight:800}
 .hero .stripe{position:absolute;inset:auto 0 0 0;height:8px;background:linear-gradient(90deg,var(--accent) 0 55%,var(--gold) 55% 70%,var(--on-navy) 70%)}
 
 /* ---------- Sessione ---------- */
-.race{position:relative;flex:1;min-height:0;overflow:hidden;background:#2F6B3E;touch-action:none;user-select:none;-webkit-user-select:none}
+.race{position:relative;flex:1;min-height:0;overflow:hidden;background:#2F6B3E;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
 .race canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hud{position:absolute;inset:0;pointer-events:none;color:#fff}
 .hud button{pointer-events:auto}
@@ -306,7 +306,7 @@ table.std tr.me td{font-weight:800}
 .plab b{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:11px;letter-spacing:0;text-transform:none;color:#fff}
 .plab i{font-style:normal}.plab i.ok{color:#4CC28A}.plab i.warn{color:#F2B84B}.plab i.bad{color:#FF6B5E}
 .pgrp .modes button{padding:8px 2px;font-size:12px}
-.pd .prompt{bottom:calc(196px + env(safe-area-inset-bottom,0px))}
+.pd .prompt{top:calc(64px + env(safe-area-inset-top,0px));bottom:auto}
 
 /* ---------- Risultati ---------- */
 .cls{width:100%;border-collapse:collapse;font-size:14px}
@@ -401,6 +401,7 @@ const STYLE = {
 const TW = 46, HALF = TW / 2, PIT_D = -40, PIT_HALF = 140, PIT_V = 70;
 const A_LAT = 115, BRAKE = 130, VTOP = 225, ACC = 95;
 const TS = 4.6, KMH = 1.45;
+const ZOOMS = [1.5, 1, .62, .4];   // vicino, medio, lontano, molto lontano; dopo: pista intera a pallini
 function buildTrack(ctrl, start) {
   const pts = [], n = ctrl.length;
   for (let i = 0; i < n; i++) {
@@ -884,7 +885,7 @@ function gripOf(c) {
 const drivenPace = c => Math.min(1, .956 + c.vel * .0005 + (c.mor - 70) * .0002);
 function aiPace(c) {
   const base = .95 + c.vel * .0005 + (c.mor - 70) * .0002;
-  const fuelF = c.fuel <= 0 ? .78 : [.988, 1, 1.012][c.fmode ?? 1];   // magra / normale / ricca
+  const fuelF = c.fuel <= 0 ? .78 : [.988, 1, 1.012][c.fmode ?? 1];   // magra / normale / grassa
   return Math.min(1.01, base * [.985, 1, 1.012][c.mode]) * fuelF * (1 - .1 * (c.dmg || 0)) + c.jit;
 }
 function wearPerLap(c) {
@@ -1100,7 +1101,7 @@ function decisions() {
 }
 /* =====================  Ingegnere di pista  ===================== */
 // Parla solo con chi segue il proprio pilota: tempi, distacchi, carburante, gomme, danni e consigli da accettare o rifiutare.
-function eng(txt, kind) { if (!R || R.mode !== 'drive' || R.calib) return; R.feed.push({ txt, kind:kind || 'info' }); if (R.feed.length > 3) R.feed.shift(); R.feedV++; }
+function eng(txt, kind) { if (!R || R.mode !== 'drive' || R.calib) return; R.feed.push({ txt, kind:kind || 'info' }); if (R.feed.length > 2) R.feed.shift(); R.feedV++; }
 const gapAhead = (c, o) => Math.max(0, (o.dist - c.dist) / Math.max(c.v, 40) * TS);
 function setFuel(c, k) { c.fmode = k; track('fuel_mode', { mode:k }); }
 function setTyre(c, k) { c.mode = k; track('tyre_mode', { mode:k }); }
@@ -1129,10 +1130,10 @@ function engineer(c) {
   const cons = .965 / R.laps, margin = c.fuel - left * cons * [.9, 1, 1.1][c.fmode];
   const ga = ah ? gapAhead(c, ah) : 99, gb = bh ? gapAhead(bh, c) : 99;
   // carburante
-  if (c.fmode === 2 && c.richUntil && c.dist / T.L >= c.richUntil) { c.richUntil = 0; setFuel(c, 1); eng('Finita la finestra in Ricca: torniamo a Normale.', 'info'); }
+  if (c.fmode === 2 && c.richUntil && c.dist / T.L >= c.richUntil) { c.richUntil = 0; setFuel(c, 1); eng('Finita la finestra in Grassa: torniamo a Normale.', 'info'); }
   if (margin < -.004 && c.fmode === 1) { if (advise('fuelLow', 'Carburante al limite', 'Così non arriviamo in fondo. Passiamo a Magra fino alla fine?', () => setFuel(c, 0), 25)) return; }
   if (c.fmode === 0 && c.fuel - left * cons > .03) { if (advise('fuelOk', 'Carburante a posto', 'Abbiamo recuperato margine. Torniamo a Normale?', () => setFuel(c, 1), 30)) return; }
-  if (c.fmode === 2 && !c.richUntil && margin < .005) { if (advise('fuelRichEnd', 'Basta con la Ricca', 'Il margine di carburante è finito. Torniamo a Normale?', () => setFuel(c, 1), 25)) return; }
+  if (c.fmode === 2 && !c.richUntil && margin < .005) { if (advise('fuelRichEnd', 'Basta con la Grassa', 'Il margine di carburante è finito. Torniamo a Normale?', () => setFuel(c, 1), 25)) return; }
   // danni
   const lapT = c.last || T.L / 120, dmgLoss = .1 * c.dmg * lapT;   // secondi persi a giro con l'ala rotta
   if (c.dmg >= .25 && left > 1.3 && !c.pitReq && dmgLoss * left > 5) { if (advise('damage', 'Ala danneggiata', 'Perdiamo circa ' + (dmgLoss * TS).toFixed(1) + ' s al giro. Box per il muso nuovo?', () => { c.pitReq = c.comp; }, 60)) return; }
@@ -1143,7 +1144,7 @@ function engineer(c) {
   // attacco e difesa
   if (ah && ga < .9 && c.mode < 2 && c.wear < .5) { if (advise('attack', 'Puoi attaccare', ah.code + ' è a ' + ga.toFixed(1) + ' s. Spingiamo sulle gomme per prenderlo?', () => setTyre(c, 2), 40)) return; }
   const richLaps = Math.min(3, Math.floor(margin / (cons * .1)));
-  if (ah && ga < 1.2 && c.fmode === 1 && richLaps >= 1 && left > 1) { if (advise('fuelRich', 'Margine di carburante', 'Abbiamo benzina per ' + richLaps + (richLaps === 1 ? ' giro' : ' giri') + ' in Ricca: la usiamo per attaccare ' + ah.code + '?', () => { setFuel(c, 2); c.richUntil = c.dist / T.L + richLaps; }, 60)) return; }
+  if (ah && ga < 1.2 && c.fmode === 1 && richLaps >= 1 && left > 1) { if (advise('fuelRich', 'Margine di carburante', 'Abbiamo benzina per ' + richLaps + (richLaps === 1 ? ' giro' : ' giri') + ' in Grassa: la usiamo per attaccare ' + ah.code + '?', () => { setFuel(c, 2); c.richUntil = c.dist / T.L + richLaps; }, 60)) return; }
   if (bh && gb < .6 && c.mode < 2 && c.wear < .55) { if (advise('defend', 'Ti attaccano', bh.code + ' è a ' + gb.toFixed(1) + ' s. Spingiamo per difenderci?', () => setTyre(c, 2), 40)) return; }
   if (!R.adv.infoWear && c.wear > .5) { R.adv.infoWear = 1; eng('Gomme al ' + Math.round((1 - c.wear) * 100) + '%: iniziano a calare.', 'warn'); }
 }
@@ -1379,7 +1380,16 @@ function drawTrees(cx, cy, rad) {
   for (const [x, y, r] of dc.trees) { if (Math.abs(x - cx) > rad + 20 || Math.abs(y - cy) > rad + 20) continue; ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.arc(x + r * .35, y + r * .45, r, 0, 7); ctx.fill(); }
   for (const [x, y, r, h] of dc.trees) { if (Math.abs(x - cx) > rad + 20 || Math.abs(y - cy) > rad + 20) continue; ctx.fillStyle = 'hsl(' + h + ',42%,26%)'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.fillStyle = 'hsla(' + h + ',45%,38%,.9)'; ctx.beginPath(); ctx.arc(x - r * .25, y - r * .25, r * .62, 0, 7); ctx.fill(); }
 }
-function carXYH(c) { const [x, y] = posAt(c.s, c.d); return [x, y, thAt(c.s) - clamp(Math.atan2(c.dvSm || 0, Math.max(c.v, 50)), -.14, .14)]; }
+function carXYH(c) { const [x, y] = posAt(c.s, c.d); return [x, y, c.rh !== undefined ? c.rh : thAt(c.s)]; }
+// Direzione disegnata = direzione del movimento reale, smorzata: niente gradini in curva
+function updateHeads(dt) {
+  for (const c of R.cars) {
+    const [x, y] = posAt(c.s, c.d);
+    if (c.px === undefined || dt <= 0) { if (c.rh === undefined) c.rh = thAt(c.s); }
+    else { const dx = x - c.px, dy = y - c.py; if (dx * dx + dy * dy > .01) c.rh += angDiff(Math.atan2(dy, dx) - c.rh) * Math.min(1, dt * 7); }
+    c.px = x; c.py = y;
+  }
+}
 function drawCars() {
   for (const c of order().reverse()) {
     const [x, y, h] = carXYH(c);
@@ -1387,7 +1397,7 @@ function drawCars() {
     if (c.finished && !c.driven) ctx.globalAlpha = .6;
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-10.5, -3.6, 23, 9, 4); else ctx.rect(-10.5, -3.6, 23, 9); ctx.fill();
     if (c.boostT > 0 || c.drs || c.slingT > 0) { ctx.fillStyle = c.slingT > 0 ? 'rgba(255,200,90,.6)' : 'rgba(90,180,255,.55)'; ctx.beginPath(); ctx.ellipse(-15, 0, 5, 1.8, 0, 0, 7); ctx.fill(); }
-    if (c.driven) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 9, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(14, -2.8); ctx.lineTo(14, 2.8); ctx.closePath(); ctx.fill(); }
+    if (c.driven) { ctx.fillStyle = 'rgba(242,184,75,.16)'; ctx.beginPath(); ctx.arc(0, 0, 16, 0, 7); ctx.fill(); ctx.strokeStyle = '#F2B84B'; ctx.lineWidth = 2.2; ctx.stroke(); }
     ctx.drawImage(sprite(c.color), -12.5, -6, 25, 12);
     if (c.inPit && c.pitPhase === 'stop') { ctx.strokeStyle = '#F2B84B'; ctx.lineWidth = 1.2; ctx.strokeRect(-12.5, -6.5, 25, 13); }
     ctx.restore();
@@ -1407,17 +1417,18 @@ function draw(dt) {
   if (!ctx || !R) return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const me = R.cars.find(c => c.driven);
-  if (R.mode === 'drive' && me) {
+  updateHeads(dt);
+  if (R.mode === 'drive' && me && (R.zi ?? 1) < 4) {
     const [x, y, h] = carXYH(me), cam = R.cam;
-    const zt = clamp(H / 270, 1.9, 3.1) * (1 - Math.min(.22, me.v / VTOP * .22)) * (me.boostT > 0 ? .95 : 1);
+    const zt = clamp(H / 270, 1.9, 3.1) * ZOOMS[R.zi ?? 1] * (1 - Math.min(.22, me.v / VTOP * .22));
     if (!cam.init) Object.assign(cam, { x, y, h, z:zt, init:true });
-    cam.h += angDiff(thAt(me.s + 30) - cam.h) * Math.min(1, dt * 3);
+    cam.h += angDiff(h - cam.h) * Math.min(1, dt * 2.2);
     const la = me.v * .3;
     cam.x += (x + Math.cos(cam.h) * la - cam.x) * Math.min(1, dt * 8); cam.y += (y + Math.sin(cam.h) * la - cam.y) * Math.min(1, dt * 8);
     cam.z += (zt - cam.z) * Math.min(1, dt * 2);
     R.shake = Math.max(0, (R.shake || 0) - dt * 20);
     const sx = (Math.random() - .5) * R.shake, sy = (Math.random() - .5) * R.shake;
-    ctx.save(); ctx.translate(W / 2 + sx, H * .62 + sy); ctx.scale(cam.z, cam.z); ctx.rotate(-cam.h - Math.PI / 2); ctx.translate(-cam.x, -cam.y);
+    ctx.save(); ctx.translate(W / 2 + sx, H * .46 + sy); ctx.scale(cam.z, cam.z); ctx.rotate(-cam.h - Math.PI / 2); ctx.translate(-cam.x, -cam.y);
     const rad = Math.hypot(W, H) / cam.z * .75;
     drawWorld(cam.x, cam.y, rad, cam.z, R.guide);
     for (const c of R.cars) {
@@ -1444,12 +1455,13 @@ function draw(dt) {
       ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(ox + Math.cos(a) * 46, oy + Math.sin(a) * 46, 9, 0, 7); ctx.fill();
     }
   } else {
-    const [a, b, c2, d] = PATHS.bb, top = 70, bottom = 240;
+    const [a, b, c2, d] = PATHS.bb, top = R.mode === 'drive' ? 80 : 70, bottom = R.mode === 'drive' ? 260 : 240;
     const z = Math.min((W - 24) / (c2 - a), (H - top - bottom) / (d - b));
     ctx.save(); ctx.translate((W - (c2 - a) * z) / 2 - a * z, top + ((H - top - bottom) - (d - b) * z) / 2 - b * z); ctx.scale(z, z);
     drawWorld((a + c2) / 2, (b + d) / 2, Math.max(c2 - a, d - b), z, false); drawTrees((a + c2) / 2, (b + d) / 2, Math.max(c2 - a, d - b));
     for (const c of order().reverse()) {
       const [x, y] = posAt(c.s, c.d);
+      if (c.driven) { ctx.strokeStyle = '#F2B84B'; ctx.lineWidth = 3 / z; ctx.beginPath(); ctx.arc(x, y, 14 / z, 0, 7); ctx.stroke(); }
       ctx.fillStyle = c.color; ctx.strokeStyle = c.mine ? '#fff' : 'rgba(0,0,0,.6)'; ctx.lineWidth = (c.mine ? 3 : 1.5) / z;
       ctx.beginPath(); ctx.arc(x, y, (c.mine ? 9 : 7) / z, 0, 7); ctx.fill(); ctx.stroke();
       if (c.mine) { ctx.font = '700 ' + (11 / z) + 'px "JetBrains Mono",monospace'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(c.code, x, y - 13 / z); }
@@ -1478,17 +1490,17 @@ function renderSession() {
   const coach = R.coach ? '<div class="coach" id="coach"><b>Sei in gara</b><ol>' +
       '<li><span class="ic">⟳</span><span>La macchina <b>guida da sola</b>. Tu gestisci la gara, come un pilota con il suo ingegnere.</span></li>' +
       '<li><span class="ic">D</span><span><b>DRS</b>: sul rettilineo dei box, se sei a meno di un secondo da chi ti precede, il pulsante si accende. Premilo.</span></li>' +
-      '<li><span class="ic">⛽</span><span><b>Carburante</b>: Magra risparmia, Ricca va più forte ma consuma. Se finisce, rallenti tantissimo.</span></li>' +
+      '<li><span class="ic">⛽</span><span><b>Carburante</b>: Magra risparmia, Grassa va più forte ma consuma. Se finisce, rallenti tantissimo.</span></li>' +
       '<li><span class="ic">◎</span><span><b>Gomme</b>: Gestisci le fa durare, Spingi rende di più ma le consuma.</span></li>' +
       '<li><span class="ic">📻</span><span>L’<b>ingegnere</b> ti dà tempi e consigli: <b>Accetta</b> o <b>Rifiuta</b>. In scia vai molto più forte: è lì che nascono i sorpassi.</span></li>' +
       '</ol><button class="btn primary wide" id="coachOk">Si parte!</button></div>' : '';
   app.innerHTML = '<section class="race" id="race" aria-label="' + title + '"><canvas id="cv"></canvas><div class="hud">' +
     (drive
-      ? '<div class="dtop"><div class="dpos" id="dpos"></div><div class="dright"><div class="dlap"><small>' + (race ? 'Giro' : title) + '</small><b id="lap"></b></div><button class="dbtn" id="spdD" aria-label="Velocità">×1</button><button class="dbtn" id="pause" aria-label="Pausa">❚❚</button></div></div>' +
+      ? '<div class="dtop"><div class="dpos" id="dpos"></div><div class="dright"><div class="dlap"><small>' + (race ? 'Giro' : title) + '</small><b id="lap"></b></div><button class="dbtn" id="zOut" aria-label="Allontana">−</button><button class="dbtn" id="zIn" aria-label="Avvicina">+</button><button class="dbtn" id="spdD" aria-label="Velocità">×1</button><button class="dbtn" id="pause" aria-label="Pausa">❚❚</button></div></div>' +
         '<div id="msg"></div>' + (race ? '<div class="lights" id="lights">' + '<i></i>'.repeat(5) + '</div>' : '') + coach +
         '<div class="pilot"><div class="feed" id="feed" aria-live="polite"></div><div class="pctl">' +
           '<button class="drsbtn" id="drs" aria-label="Apri il DRS"><b>DRS</b><small id="drsS">chiuso</small></button>' +
-          '<div class="pgrps"><div class="pgrp"><div class="plab"><span>Carburante</span><b id="fuelTxt"></b></div><div class="modes" id="fm">' + ['Magra','Normale','Ricca'].map((x, k) => '<button data-f="' + k + '">' + x + '</button>').join('') + '</div></div>' +
+          '<div class="pgrps"><div class="pgrp"><div class="plab"><span>Carburante</span><b id="fuelTxt"></b></div><div class="modes" id="fm">' + [[2,'Grassa'],[1,'Normale'],[0,'Magra']].map(([k, x]) => '<button data-f="' + k + '">' + x + '</button>').join('') + '</div></div>' +
           '<div class="pgrp"><div class="plab"><span>Gomme</span><b id="tyreTxt"></b></div><div class="modes" id="tm">' + ['Gestisci','Normale','Spingi'].map((x, k) => '<button data-t="' + k + '">' + x + '</button>').join('') + '</div></div></div>' +
         '</div></div><div id="prompt" class="pd"></div><div id="pausebox"></div>'
       : '<div class="htop"><div class="tower" id="tower"></div><div class="hr"><div class="lapb"><small>Giro</small><b id="lap"></b></div><div class="wx" id="wx"></div><button class="hbtn" id="spd">Velocità ×1</button><button class="hbtn" id="quit">Ritirati</button></div></div>' +
@@ -1504,6 +1516,14 @@ function renderSession() {
     $('#tm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTyre(me, +b.dataset.t));
     $('#spdD').onclick = e => { R.speed = R.speed === 1 ? 2 : R.speed === 2 ? 4 : 1; e.currentTarget.textContent = '×' + R.speed; };
     $('#pause').onclick = openPause;
+    const zoom = k => { R.zi = clamp((R.zi ?? 1) + k, 0, 4); track('zoom', { level:R.zi }); };
+    $('#zIn').onclick = () => zoom(-1); $('#zOut').onclick = () => zoom(1);
+    el.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY > 0 ? 1 : -1); }, { passive:false });
+    const pts = new Map(); let base = 0;
+    el.addEventListener('pointerdown', e => { if (e.target.closest('button,.prompt,.coach,.pause,.pctl')) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { const [p1, p2] = [...pts.values()]; base = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]); } });
+    el.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2 && base) { const [p1, p2] = [...pts.values()], d = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]); if (d > base * 1.3) { zoom(-1); base = d; } else if (d < base / 1.3) { zoom(1); base = d; } } });
+    const lift = e => { pts.delete(e.pointerId); if (pts.size < 2) base = 0; };
+    el.addEventListener('pointerup', lift); el.addEventListener('pointercancel', lift);
   } else {
     $('#quit').onclick = e => { const b = e.currentTarget; if (b.dataset.armed) { track('session_quit', { kind:R.kind }); R = null; renderBox(); return; } b.dataset.armed = 1; b.textContent = 'Conferma ritiro'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Ritirati'; } }, 2500); };
     $('#spd').onclick = e => { R.speed = R.speed === 1 ? 2 : 1; e.currentTarget.textContent = 'Velocità ×' + R.speed; };
@@ -1572,7 +1592,7 @@ function updateHud() {
     const dp = $('#dpos'); if (dp.dataset.k !== pos) { dp.dataset.k = pos; dp.innerHTML = pos; }
     const left = Math.max(0, R.laps - me.dist / T.L), cons = .965 / R.laps, margin = (me.fuel - left * cons * [.9, 1, 1.1][me.fmode]) / cons;
     const richLeft = me.fmode === 2 && me.richUntil ? me.richUntil - me.dist / T.L : 0;
-    const ft = race && richLeft > 0 ? '<i class="ok">Ricca · ancora ' + richLeft.toFixed(1) + ' giri</i>' : race ? (me.fuel <= 0 ? '<i class="bad">vuoto</i>' : (margin >= 0 ? '<i class="' + (margin < .3 ? 'warn' : 'ok') + '">+' + margin.toFixed(1) + ' giri</i>' : '<i class="bad">' + margin.toFixed(1) + ' giri</i>')) : '';
+    const ft = race && richLeft > 0 ? '<i class="ok">Grassa · ancora ' + richLeft.toFixed(1) + ' giri</i>' : race ? (me.fuel <= 0 ? '<i class="bad">vuoto</i>' : (margin >= 0 ? '<i class="' + (margin < .3 ? 'warn' : 'ok') + '">+' + margin.toFixed(1) + ' giri</i>' : '<i class="bad">' + margin.toFixed(1) + ' giri</i>')) : '';
     const fte = $('#fuelTxt'); if (fte.dataset.k !== ft) { fte.dataset.k = ft; fte.innerHTML = ft; }
     const tw = wearHtml(me) + (me.dmg ? ' <i class="bad">ala −' + Math.round(me.dmg * 100) + '%</i>' : ''); const twe = $('#tyreTxt'); if (twe.dataset.k !== tw) { twe.dataset.k = tw; twe.innerHTML = tw; }
     $('#fm').querySelectorAll('[data-f]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.f === me.fmode));
