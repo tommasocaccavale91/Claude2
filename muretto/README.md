@@ -19,14 +19,16 @@ I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine 
 
 ## Guida
 
-- Trascini il dito per sterzare, mentre gas e freno li gestisce l'auto.
-- In pista c'è la traiettoria a curvatura minima, esterno-interno-esterno: verde dove si accelera, rossa dove si frena. Uscirne di poco non costa nulla, di più rallenta in curva.
-- **Uscita larga**: all'esterno in uscita di curva l'auto accelera di più ("Uscita perfetta"). Stretta all'interno accelera di meno.
-- **Staccata**: attaccato a un'auto prima di una frenata compare il pulsante rosso. Ti butti all'interno e freni più tardi; poi l'uscita è peggiore, e se non eri all'interno vai lungo.
-- **Scia**, **DRS** sul rettilineo dei box (entro circa 1 s da chi precede) e **Spinta** (si ricarica frenando).
-- **Aria sporca**: in curva dietro a un'altra auto si perde aderenza.
-- Gli avversari chiudono l'interno quando li attacchi e sbagliano di più se gli stai attaccato a lungo.
+- **Guida libera**: l'auto guidata si muove davvero nel piano (posizione, direzione, derapata). Si sterza tenendo il pollice sullo schermo e spostandolo a destra o a sinistra (frecce da tastiera). Gas e freno sono automatici.
+- **Sterzo assistito** (attivo all'inizio, si cambia nella pausa): se lasci il dito l'auto segue la traiettoria, un po' più piano. Chi sterza da sé può andare forte come un pilota dell'IA con la stessa macchina.
+- La traiettoria è un tratteggio leggero (verde gas, rosso frenata), disattivabile. Non è un binario: in curva c'è una fascia libera e solo allontanandosi molto si deve rallentare. Entrando troppo forte l'auto scivola verso l'esterno.
+- **Uscita larga** con trazione migliore, **scia**, **DRS** sul rettilineo dei box, **Spinta** (si ricarica frenando), **aria sporca** in curva dietro a un'altra auto.
+- Erba più lenta della pista, muretto esterno con rimbalzo, contatti con le altre auto con scintille e sobbalzo.
+- Gli avversari chiudono l'interno quando li attacchi da vicino e sbagliano di più se gli stai attaccato a lungo.
 - Le decisioni (gomme, pioggia, ordini di scuderia) arrivano come domanda dell'ingegnere, e la gara rallenta mentre scegli.
+- **Grafica**: prato a strisce, alberi, tribune con il pubblico, box, cordoli a blocchi, gomma sulla traiettoria, monoposto dettagliate, segni di frenata, fumo, scintille, linee di velocità con la Spinta. La telecamera segue in modo fluido e si allarga con la velocità.
+
+**Equilibrio.** Le curve troppo strette vengono ammorbidite in automatico (raggio minimo 40), così non si possono "tagliare" i tornanti. La velocità dell'auto guidata è calibrata pista per pista contro quella degli avversari, con la stessa macchina e lo stesso pilota. La durata delle gomme è fissa in giri (morbide circa 2,7, medie 3,9, dure 5,7): le gare sprint si fanno senza soste, quelle medie e lunghe richiedono strategia.
 
 ## Carriera
 
@@ -58,7 +60,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `pit_call`, `pit_skip`, `pit`, `late_brake`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 
