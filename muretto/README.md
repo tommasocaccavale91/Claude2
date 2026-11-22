@@ -17,18 +17,22 @@ I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine 
 2. **Qualifica**: un giro secco con le morbide. Decide la griglia. Si può simulare, e con un video premio si può ripetere il giro.
 3. **Gara**: da pilota guidi sempre tu. Da manager scegli se guidare uno dei tuoi piloti o comandare dal muretto (ritmo, pit stop, ordini di scuderia).
 
-## Guida
+## In gara
 
-- **Un gesto solo**: tieni il pollice sullo schermo e spostalo a destra o a sinistra. L'auto va dove indichi con un movimento laterale morbido, senza derapate. Gas e freno sono automatici. Da tastiera: frecce.
-- **Sterzo assistito** (attivo all'inizio, si cambia nella pausa): se lasci il dito l'auto torna sulla traiettoria, un po' più piano di chi guida da sé.
-- La traiettoria è un tratteggio leggero (verde gas, rosso frenata), disattivabile. In curva c'è una fascia libera: solo allontanandosi molto si rallenta.
-- **Sorpasso con la fionda**: in rettilineo, in scia, la barra si carica ("In scia · 60%"). Quando è piena ("Esci dalla scia!") ti sposti di lato e prendi uno scatto di 2 secondi (+10% di velocità di punta, accelerazione più forte) per affiancare. Con **Spinta** chiudi il sorpasso. Poi c'è il DRS sul rettilineo dei box.
-- **Ruota a ruota**: affiancati ci si spinge piano. Gli avversari lasciano spazio invece di stringerti e chiudono l'interno solo se li attacchi da vicino.
-- **Aria sporca** in curva dietro a un'altra auto, erba più lenta della pista, muretto esterno.
-- **Movimento fluido**: posizione e direzione interpolate tra i punti della pista, rotazione delle auto smorzata, telecamera che ruota con la pista davanti.
-- **Monoposto in stile F1**, proporzionate alla pista: muso lungo, ala anteriore larga, ruote scoperte, pance laterali con prese d'aria, halo, ala posteriore, striscia della livrea.
+La macchina **guida da sola**: tu la gestisci come un pilota con il suo ingegnere di pista. Da pilota lo fai sempre. Da manager scegli se seguire da vicino uno dei tuoi piloti ("Con il pilota") o comandare entrambe le auto dal muretto.
 
-**Equilibrio.** Le curve troppo strette vengono ammorbidite (raggio minimo 40). Le gomme durano un numero fisso di giri (morbide circa 2,7, medie 3,9, dure 5,7) e l'IA si ferma ai box solo se le gomme non arrivano in fondo.
+- **DRS**: entrando nel rettilineo dei box a meno di circa un secondo da chi ti precede, il pulsante si accende ("premi!"). Se non lo apri, perdi l'occasione. +10% di velocità di punta.
+- **Carburante**: Magra (consuma il 10% in meno, più lenta), Normale (arriva in fondo con un piccolo margine), Ricca (+10% di consumo, più veloce). A secco si rallenta moltissimo.
+- **Gomme**: Gestisci (durano di più), Normale, Spingi (più veloce, consuma prima). Morbide circa 40% della gara, medie 60%, dure 90%.
+- **Danni**: nei contatti l'ala si può rompere (fino al 10% di passo in meno). Si ripara al box.
+- **Scia**: più forte (+11% di velocità di punta e accelerazione migliore) e visibile, con filetti d'aria tra le due auto. Uscendo dalla scia in rettilineo si prende la fionda per affiancare.
+- **Ingegnere di pista** (radio in basso): a ogni giro tempo, differenza dal giro prima, distacchi da chi è davanti e dietro, se recuperi o perdi. Avvisa per DRS, gomme che calano, danni, pioggia. Propone scelte con **Accetta / Rifiuta**: Ricca per N giri per attaccare (poi torna da sola a Normale), Magra se il carburante non basta, Spingi per attaccare o difenderti, Gestisci se le gomme soffrono, box quando le gomme non arrivano in fondo, muso nuovo solo se il danno costa più della sosta. Mentre decidi la gara rallenta.
+- Velocità ×1, ×2, ×4 e pausa.
+- **Movimenti calmi**: spostamenti laterali lenti e smorzati, rotazioni contenute, posizione interpolata. Monoposto in stile F1.
+
+**Prove libere e qualifica** sono scelte rapide. Le prove portano la conoscenza della pista al 100% e rivelano l'assetto giusto. In qualifica scegli "Giro sicuro" oppure "Al limite" (circa mezzo punto percentuale più veloce, ma 22% di rischio di errore). Con un video premio si può ripetere.
+
+**Durata delle gare**: 5, 10 o 20 giri.
 
 ## Carriera
 
