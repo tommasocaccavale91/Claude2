@@ -1,6 +1,6 @@
 # Muretto
 
-Gioco di corse e carriera in un campionato inventato di monoposto. All'inizio scegli se essere **pilota** o **manager**, quanto dura la stagione (6, 12 o 24 GP) e quanto durano le gare (sprint 3 giri, media 5, lunga 8: si cambia in qualsiasi momento).
+Gioco di corse e carriera in un campionato inventato di monoposto. All'inizio scegli se essere **pilota** o **manager**, quanto dura la stagione (6, 12 o 24 GP) e quanto durano le gare (sprint 8 giri, gara 12, lunga 20: si cambia in qualsiasi momento).
 
 Tutto è in un solo file: `muretto/index.html`.
 
@@ -24,15 +24,20 @@ La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e c
 - **ATTACCA**: entro 0,8 s da chi ti precede si accende il grande pulsante con la probabilità di riuscita ("62% di riuscita su KEL"). La probabilità sale sul dritto, in scia, con il DRS, con gomme più fresche e con il ritmo Spingi. Se riesce, la tua auto si sposta di lato, scatta e lo supera. Se fallisce, "ha chiuso la porta". Chi è stato appena superato non può ritentare per qualche secondo.
 - **DIFENDI**: quando un'auto più veloce ti attacca, il pulsante diventa blu per un attimo, con il tempo rallentato. Se lo premi in tempo tieni la posizione nella maggior parte dei casi. Con la tua auto si passa solo attraverso i duelli.
 - **Batteria**: 3 tacche, ogni attacco o difesa ne consuma una, se ne recupera una a ogni giro. Va dosata.
-- **Carburante** (Grassa / Normale / Magra) e **gomme** (Gestisci / Normale / Spingi) restano nel pannello. Morbide circa 40% della gara, medie 60%, dure 90%, ma con un minimo in giri (3 / 5 / 7): nelle sprint da 5 giri le medie arrivano in fondo.
-- **Ingegnere discreto**: interrompe solo per pioggia e gomme che non arrivano in fondo, rallentando poco la gara. Se lasci scadere la domanda vale la scelta consigliata. Il resto sono messaggi brevi che spariscono da soli, e il tempo sul giro compare piccolo sotto il contatore dei giri.
+- **Strategia**: prima della gara il box propone tre piani calcolati per quella durata (per esempio "Una sosta · aggressiva", morbide → medie, box al giro 5) con il tempo stimato rispetto al più veloce. Il piano decide le gomme al via e le soste.
+- **Finestra box**: al giro previsto il box chiede "Montiamo le medie?". Puoi seguire il piano, restare fuori un altro giro o cambiare mescola.
+- **Radio**: il pulsante 🎧 apre le chiamate al box: "Come sono messo?" (posizione, distacchi, gomme, benzina, prossima sosta), "Ritmo di chi ho davanti?", "Undercut su X?" (guadagno al giro e probabilità di passarlo dopo la sua sosta), "Box questo giro" (con la mescola) e "Meteo?".
+- **Momenti decisivi**: il box ti chiama solo quando conta. Un rivale vicino si ferma (lo segui, resti fuori e spingi per due giri, o ignori: al massimo due volte a gara), arriva la pioggia, o entra la **safety car**.
+- **Safety car**: capita più spesso nei cittadini (55%) che nei veloci (30%). Il gruppo si ricompatta, nessuno sorpassa e una sosta costa circa la metà. Alla ripartenza ricevi una tacca di batteria in più.
+- **Carburante** (Grassa / Normale / Magra) e **gomme** (Gestisci / Normale / Spingi) restano nel pannello. Morbide circa 40% della gara, medie 60%, dure 90%, ma con un minimo in giri (3 / 5 / 7): nelle sprint da 8 giri serve comunque una sosta.
+- **Ingegnere discreto**: oltre ai momenti decisivi, solo brevi messaggi che spariscono da soli. Se lasci scadere una domanda vale la scelta consigliata. Il tempo sul giro compare piccolo sotto il contatore dei giri.
 - **Scia**: un unico flusso bianco morbido tra l'auto davanti e la tua. Spinge forte.
 - **Prima gara**: batteria piena, sorpassi più facili, nessun danno e un fumetto che indica quando premere ATTACCA e DIFENDI. I danni da contatto non ci sono mai nel primo giro.
 - **Zoom** con − e +, pizzico o rotellina, fino alla pista intera a pallini. La tua auto ha un cerchio dorato. Velocità ×1, ×2, ×4 e pausa.
 
 **Prove libere e qualifica** sono scelte rapide: "Fai le prove" o "Salta", "Giro sicuro" o "Al limite" (più veloce, 22% di rischio di errore).
 
-**Durata delle gare**: 5, 10 o 20 giri.
+**Durata delle gare**: 8, 12 (predefinita) o 20 giri. I salvataggi con le vecchie durate passano a 12.
 
 ## Carriera
 
@@ -64,7 +69,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 

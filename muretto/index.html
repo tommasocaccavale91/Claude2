@@ -309,6 +309,20 @@ table.std tr.me td{font-weight:800}
 .pd .prompt{top:calc(64px + env(safe-area-inset-top,0px));bottom:auto}
 
 .duel{display:grid;grid-template-columns:1fr 74px;gap:8px;pointer-events:auto}
+.duel.r3{grid-template-columns:1fr 74px 64px}
+.radbtn{border:0;border-radius:16px;background:rgba(10,14,24,.86);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:20px;backdrop-filter:blur(6px)}
+.radbtn small{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#F2B84B}
+.radbtn[aria-expanded="true"]{background:#F2B84B;color:#1E1503}.radbtn[aria-expanded="true"] small{color:#1E1503}
+#radMenu{position:relative;pointer-events:auto}
+.radmenu{position:absolute;right:0;bottom:6px;display:flex;flex-direction:column;gap:6px;background:rgba(10,14,24,.94);border-radius:16px;padding:10px;min-width:220px;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:pop2 .2s ease;z-index:5}
+.radmenu small{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#F2B84B;padding:0 4px}
+.radmenu button{border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:14px;padding:10px 12px;text-align:left}
+.radmenu button:active{background:rgba(255,255,255,.2)}
+.plans{display:grid;gap:8px;margin-top:6px}
+.plan{border:1.5px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.04);color:inherit;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;align-items:center}
+.plan b{font-size:15px}.plan small{grid-column:1/-1;font-size:12px;opacity:.75}
+.plan .stints{display:flex;align-items:center;gap:4px}.plan .stints i{font-style:normal;opacity:.5;font-size:11px}
+.plan[aria-pressed="true"]{border-color:#F2B84B;background:rgba(242,184,75,.12)}
 .atkbtn{position:relative;overflow:hidden;border:0;border-radius:16px;min-height:64px;background:rgba(10,14,24,.86);color:#8b93a6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;backdrop-filter:blur(6px)}
 .atkbtn b{font-family:var(--f-display);font-weight:800;font-style:italic;font-size:28px;line-height:1;text-transform:uppercase;letter-spacing:.04em}
 .atkbtn small{font-size:12px;font-weight:700}
@@ -607,11 +621,36 @@ const COMP = {
   I:{ n:'Intermedie', c:'var(--inter)', grip:.86, life:.55 }
 };
 const SETUPS = { basso:{ n:'Carico basso', d:'Più veloce sul dritto', p:1.012, c:.985 }, medio:{ n:'Bilanciato', d:'Via di mezzo', p:1, c:1 }, alto:{ n:'Carico alto', d:'Più veloce in curva', p:.988, c:1.015 } };
-const RACE_LEN = { 5:'Sprint · 5 giri', 10:'Media · 10 giri', 20:'Lunga · 20 giri' };
+const RACE_LEN = { 8:'Sprint · 8 giri', 12:'Gara · 12 giri', 20:'Lunga · 20 giri' };
 const SEASON_LEN = { 6:'Corta · 6 GP', 12:'Media · 12 GP', 24:'Completa · 24 GP' };
 const POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const PARTS = [ { k:'engine', n:'Motore', d:'Velocità di punta e accelerazione' }, { k:'aero', n:'Aerodinamica', d:'Velocità in curva' }, { k:'crew', n:'Squadra box', d:'Pit stop più rapidi' } ];
 const PART_COST = [0, 350, 600, 900, 1300];
+// Piani di strategia: per ogni numero di soste il più veloce, con giri di sosta e tempo stimato.
+// Il modello è tarato sulla simulazione: una sosta costa ~0,4 giri, le morbide rendono ~5% sulle dure, le medie ~2,5%.
+const PIT_LOSS = .41, COMP_GAIN = { S:.05, M:.025, H:0 };
+const tyreLife = (k, L) => Math.max(COMP[k].life * L, { S:3, M:5, H:7 }[k]);
+function plansFor(L) {
+  const cands = [['H'],['M'],['S'],['M','H'],['H','M'],['S','H'],['H','S'],['S','M'],['M','S'],['M','M'],['S','S'],['S','M','S'],['S','S','M'],['M','S','S'],['M','M','S'],['S','S','S'],['S','M','M'],['M','M','M'],['M','H','S'],['S','H','S']];
+  const lap = (T ? T.L : 2600) / 120, all = [];
+  for (const st of cands) {
+    const tot = st.reduce((a, k) => a + tyreLife(k, L), 0); if (tot < L) continue;
+    // stint proporzionali alla durata delle gomme
+    const lens = st.map(k => tyreLife(k, L) * L / tot);
+    let t = (st.length - 1) * PIT_LOSS;
+    st.forEach((k, i) => { const u = lens[i] / tyreLife(k, L); t += lens[i] * (1 - COMP_GAIN[k] + .045 * u); });
+    all.push({ st, lens, t });
+  }
+  // il migliore per ogni numero di soste, poi alternative con gomme di partenza diverse
+  all.sort((a, b) => a.t - b.t);
+  const arr = [];
+  for (const p of all) if (!arr.some(q => q.st.length === p.st.length)) arr.push(p);
+  for (const p of all) if (arr.length < 3 && !arr.includes(p) && !arr.some(q => q.st[0] === p.st[0] && q.st.length === p.st.length)) arr.push(p);
+  arr.splice(3); arr.sort((a, b) => a.t - b.t);
+  arr.forEach(p => { let acc = 0; p.box = p.lens.slice(0, -1).map(x => Math.max(1, Math.round(acc += x))); p.d = (p.t - arr[0].t) * lap * TS; });
+  return arr;
+}
+const PLAN_NAME = ['Senza soste', 'Una sosta', 'Due soste'], planName = p => PLAN_NAME[p.st.length - 1] + (p.st[0] === 'S' ? ' · aggressiva' : p.st[0] === 'H' ? ' · prudente' : '');
 const SPONSOR = { n:'Lumen Energy', mark:'LE' };
 const OBJECTIVES = [
   { t:'Entrambe le auto a punti', r:300, test:res => res.mine.every(c => c.pos <= 10) },
@@ -655,7 +694,7 @@ const salaryOfRank = r => [600, 480, 380, 300, 240][r] || 240;
 
 /* =====================  Nuova carriera  ===================== */
 let screen = 'start', standTab = 'd';
-const draft = { role:'manager', name:'', team:'Scuderia Aurora', season:12, laps:10 };
+const draft = { role:'manager', name:'', team:'Scuderia Aurora', season:12, laps:12 };
 function renderStart() {
   screen = 'start'; stopRace();
   app.innerHTML = '<div class="page"><header class="hero"><div class="wrap"><p class="kicker">Campionato Mondiale Gran Turismo</p><h1>Muretto</h1><p>Corse e strategia: guida in pista o comanda la squadra dal muretto box.</p></div><div class="stripe"></div></header>' +
@@ -706,11 +745,12 @@ function renderBox() {
   screen = 'box'; stopRace(); closeSheet();
   const c = C(); if (!c) return renderStart();
   if (c.round > c.seasonLen) return renderSeasonEnd();
-  if (!RACE_LEN[c.laps]) c.laps = 10;
+  if (!RACE_LEN[c.laps]) c.laps = 12;
   const w = weekend(), gp = gpOf(c.round), mt = teamOf(myTeamId()), isDrv = c.role === 'driver';
   const me = isDrv ? drvOf('me') : null, mine = c.drivers.filter(d => d.team === myTeamId());
   const live = S.starterAt && !S.starterBought && Date.now() < S.starterAt + 48 * 3600e3;
   const svg = trackSvg(gp);
+  const plans = plansFor(c.laps); if (c.planIdx == null || c.planIdx >= plans.length) c.planIdx = 0; c.startComp = plans[c.planIdx].st[0];
   const sets = Object.entries(SETUPS).map(([k, v]) => '<button data-setup="' + k + '" aria-pressed="' + (w.setup === k) + '"><b>' + v.n + '</b><small>' + v.d + (w.fp && w.fp.reveal && STYLE[gp.style].setup === k ? ' · ideale qui' : '') + '</small></button>').join('');
   const fpTxt = w.fp ? 'Fatte' + (w.fp.best ? ' · miglior giro ' + lapStr(w.fp.best) : '') + ' · conoscenza pista ' + w.know + '%' : 'I piloti imparano la pista e l’ingegnere trova l’assetto giusto. Facoltative.';
   const qTxt = w.quali ? 'Fatta · ' + (isDrv ? 'partirai P' + (w.quali.grid.indexOf('me') + 1) : mine.map(d => esc(first(d.n)) + ' P' + (w.quali.grid.indexOf(d.id) + 1)).join(', ')) : 'Un giro secco con le morbide. Giro sicuro, o al limite: più veloce ma rischi un errore.';
@@ -736,7 +776,7 @@ function renderBox() {
     '<div class="card">' +
       (!isDrv ? '<div class="opt col"><span class="lab">In gara</span><div class="seg"><button data-mode="drive" aria-pressed="' + (c.mode === 'drive') + '"><b>Con il pilota</b><small>Segui un pilota da vicino: DRS, carburante, gomme, radio</small></button><button data-mode="wall" aria-pressed="' + (c.mode === 'wall') + '"><b>Dal muretto</b><small>Ritmo, pit stop e ordini di scuderia</small></button></div></div>' +
         (c.mode === 'drive' ? '<div class="opt"><span class="lab">Segui</span><span class="pills">' + mine.map(d => '<button data-drv="' + d.id + '" aria-pressed="' + (c.driveId === d.id) + '">' + esc(first(d.n)) + '</button>').join('') + '</span></div>' : '') : '') +
-      '<div class="opt col"><span class="lab">Gomme al via della gara</span><span class="pills">' + ['S','M','H'].map(k => '<button data-start="' + k + '" aria-pressed="' + (c.startComp === k) + '">' + tyreIco(k) + COMP[k].n + '</button>').join('') + '</span></div>' +
+      '<div class="opt col"><span class="lab">Strategia di gara<small>Il piano che segue il box. In gara puoi sempre cambiarlo.</small></span><div class="plans">' + plans.map((p, k) => '<button class="plan" data-plan="' + k + '" aria-pressed="' + (c.planIdx === k) + '"><b>' + planName(p) + '</b><span class="stints">' + p.st.map(tyreIco).join('<i>→</i>') + '</span><small>' + (p.box.length ? 'Box al giro ' + p.box.join(' e ') : 'Nessun pit stop') + ' · ' + (k === 0 ? 'la più veloce' : p.d < .5 ? 'stesso tempo' : '+' + p.d.toFixed(1) + ' s') + '</small></button>').join('') + '</div></div>' +
       '<div class="opt col"><span class="lab">Durata delle gare</span><span class="pills">' + Object.entries(RACE_LEN).map(([k, v]) => '<button data-laps="' + k + '" aria-pressed="' + (c.laps == k) + '">' + v + '</button>').join('') + '</span></div></div>' +
     '<h3 class="h2">Regolamento stagione ' + c.season + '</h3><div class="card rule"><span class="ico">' + rl.ico + '</span><b>' + rl.n + (c.revolution ? ' + rivoluzione tecnica' : '') + '</b><span>' + rl.d + (c.revolution ? ' Nuove regole aerodinamiche: le squadre sono più vicine.' : '') + '</span></div>';
   if (isDrv) {
@@ -769,7 +809,7 @@ function renderBox() {
   app.querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { w.setup = b.dataset.setup; save(); renderBox(); });
   app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { c.mode = b.dataset.mode; save(); renderBox(); });
   app.querySelectorAll('[data-drv]').forEach(b => b.onclick = () => { c.driveId = b.dataset.drv; save(); renderBox(); });
-  app.querySelectorAll('[data-start]').forEach(b => b.onclick = () => { c.startComp = b.dataset.start; save(); renderBox(); });
+  app.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => { c.planIdx = +b.dataset.plan; track('plan', { stops:plans[c.planIdx].st.length - 1 }); save(); renderBox(); });
   app.querySelectorAll('[data-laps]').forEach(b => b.onclick = () => { c.laps = +b.dataset.laps; track('race_length', { laps:c.laps }); save(); renderBox(); });
   app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { standTab = b.dataset.tab; renderBox(); });
   app.querySelectorAll('[data-train]').forEach(b => b.onclick = () => { const k = b.dataset.train, cost = 150 + Math.max(0, me[k] - 70) * 25; if (c.credits < cost) return; c.credits -= cost; me[k]++; track('train', { attr:k, value:me[k] }); save(); toast('Allenamento fatto: ' + me[k]); renderBox(); });
@@ -877,7 +917,8 @@ function startSession(kind) {
   let cars;
   if (kind === 'race') {
     const grid = (w.quali && w.quali.grid) || simQuali(null).grid;
-    cars = grid.map((id, p) => { const d = drvOf(id), car = makeCar(d, teamOf(d.team), p); car.grid = p + 1; car.d = p % 2 ? -10 : 10; car.dist = -14 - p * 24; car.s = (car.dist % T.L + T.L) % T.L; car.comp = car.mine ? c.startComp : (Math.random() < .3 ? 'S' : Math.random() < .8 ? 'M' : 'H'); return car; });
+    const plans = plansFor(c.laps), plan = plans[c.planIdx || 0] || plans[0];
+    cars = grid.map((id, p) => { const d = drvOf(id), car = makeCar(d, teamOf(d.team), p); car.grid = p + 1; car.d = p % 2 ? -10 : 10; car.dist = -14 - p * 24; car.s = (car.dist % T.L + T.L) % T.L; car.comp = car.mine ? plan.st[0] : (Math.random() < .3 ? 'S' : Math.random() < .8 ? 'M' : 'H'); if (car.id === drivenId) car.plan = { st:plan.st.slice(), box:plan.box.slice(), next:0 }; return car; });
     if (mode === 'drive') cars.find(x => x.id === drivenId).driven = true;
   } else {
     const d = drvOf(drivenId), car = makeCar(d, teamOf(d.team), 0);
@@ -891,6 +932,7 @@ function startSession(kind) {
         input:{ steer:0, active:false, x0:null, y0:0, kl:false, kr:false, dT:0, dStart:0 }, cam:{ init:false }, assist:S.assist !== false, guide:S.guide !== false, skids:[], fx:[], shake:0, contactCd:0, paused:false, prompt:null, queue:[], flash:'', flashT:0, flashPos:0, lapFlash:0, lastPos:me ? me.grid : 0, lateOffer:null, lateSide:null,
         coach:mode === 'drive' && !S.coach3, fast:null, feed:[], feedV:0, adv:{}, guide:false, slipMul:hasRule('scia') ? 1.14 : 1.11, drsMul:hasRule('scia') ? 1.13 : 1.1, wearMul:hasRule('gomme') ? .75 : 1 };
   if (me) { R.dcal = 1; R.input.dT = me.d; }
+  R.scPlan = kind === 'race' && Math.random() < { cittadino:.55, misto:.4, veloce:.3 }[gp.style] ? rnd(.25, .65) * laps * T.L : null;
   R.tutor = kind === 'race' && mode === 'drive' && !S.firstDone; if (me && kind === 'race') me.bat = 3;
   track('session_start', { kind, gp:gp.n, mode, laps, rain:!!rain });
   renderSession();
@@ -931,6 +973,7 @@ function radio(msg, who) { if (R.mode === 'drive') { eng(msg, 'info'); return; }
 function maybeAiPit(c) {
   const left = R.laps - c.dist / T.L;
   if (left < .6 || c.pitReq) return;
+  if (R.sc && c.wear > .3 && left > 2) { c.pitReq = left > R.laps * .5 ? 'M' : 'S'; return; }
   if (R.wet > .35 && c.comp !== 'I') { c.pitReq = 'I'; return; }
   const must = hasRule('pit') && !c.pits && left < 1.5;
   // si ferma solo se le gomme non arrivano in fondo
@@ -950,6 +993,8 @@ function step(dt) {
   }
   if (R.contactCd > 0) R.contactCd -= dt;
   R.ord = order();
+  if (race && R.scPlan && !R.sc && lead.dist >= R.scPlan) { R.scPlan = null; R.sc = { until:lead.dist + rnd(.8, 1.1) * T.L }; safetyCar(); }
+  if (R.sc && lead.dist >= R.sc.until) { R.sc = null; R.flash = 'restart'; R.flashT = 2; const me = R.cars.find(c => c.driven); if (me) { me.bat = Math.min(3, me.bat + 1); eng('Ripartenza! Ti ho dato una tacca di batteria in più: attacca!', 'go'); } else radio('Ripartenza: si torna a correre.', 'Direzione gara'); }
   if (race) battles(dt);
   if (R.input.kl) R.input.dT = clamp(R.input.dT + 60 * dt, -HALF - 8, HALF + 8);
   if (R.input.kr) R.input.dT = clamp(R.input.dT - 60 * dt, -HALF - 8, HALF + 8);
@@ -976,6 +1021,7 @@ function step(dt) {
       else if (c.inPit) target = c.pitPhase === 'stop' ? 0 : PIT_V;
       else target = Math.min(cap * aiPace(c) * (c.yieldT > 0 ? .9 : 1) * (atk && c.atk.ok ? 1.05 : 1), vtop);
       if (c.errT > 0) { c.errT -= dt; target = Math.min(target, cap * .82); }
+      if (R.sc && !c.inPit && !c.finished) target = Math.min(target, c === lead ? 78 : 112);   // dietro la safety car il gruppo si ricompatta
       // uscita di curva: largo all'esterno = più trazione, stretto all'interno = meno
       let acc = ACC * Math.min(1, grip) * c.power * (boosting ? 1.22 : 1) * (sling ? 1.35 : 1) * (c.slip ? 1.12 : 1) * (atk ? 1.3 : 1);
       c.exitGood = false;
@@ -1032,11 +1078,11 @@ function step(dt) {
       const entry = T.L - PIT_HALF;
       if (!c.inPit && !c.finished) {
         if (!c.mine || (R.mode === 'drive' && !c.driven)) { if (prevS < entry - 80 && c.s >= entry - 80) maybeAiPit(c); }
-        if (c.pitReq && prevS < entry && c.s >= entry && c.dist < R.laps * T.L - T.L * .3) { c.inPit = true; c.pitPhase = 'in'; }
+        if (c.pitReq && prevS < entry && c.s >= entry && c.dist < R.laps * T.L - T.L * .3) { c.inPit = true; c.pitPhase = 'in'; if (!c.driven) rivalPitted(c); }
       } else if (c.inPit) {
         const rel = c.s > T.L / 2 ? c.s - T.L : c.s;
         if (c.pitPhase === 'in' && rel >= 0) { c.pitPhase = 'stop'; c.pitT = (c.mine && C().role === 'manager' ? 2.6 - .25 * (C().parts.crew - 1) : 2.4) + rnd(0, .5) + (c.dmg ? 1.5 : 0); }
-        else if (c.pitPhase === 'stop') { c.pitT -= dt; if (c.pitT <= 0) { c.comp = c.pitReq; c.wear = 0; if (c.dmg) { c.dmg = 0; if (c.driven) eng('Muso nuovo montato, danno riparato.', 'info'); } c.pits++; c.pitReq = null; c.pitPhase = 'out'; if (c.mine) track('pit', { comp:c.comp }); } }
+        else if (c.pitPhase === 'stop') { c.pitT -= dt; if (c.pitT <= 0) { c.comp = c.pitReq; c.wear = 0; if (c.dmg) { c.dmg = 0; if (c.driven) eng('Muso nuovo montato, danno riparato.', 'info'); } c.pits++; c.pitReq = null; c.pitPhase = 'out'; if (c.plan) c.plan.next = Math.min(c.plan.box.length, c.plan.next + 1); if (c.mine) track('pit', { comp:c.comp }); } }
         else if (c.pitPhase === 'out' && rel >= PIT_HALF) { c.inPit = false; if (c.driven) { c.d = -HALF + 8; R.input.dT = c.d; } }
       }
     }
@@ -1066,8 +1112,9 @@ function traffic(dt) {
     for (const o of live) {
       if (o === c) continue;
       const g = fwdGap(c, o), dd = o.d - c.d;
-      if (g > 0 && g < 32 && Math.abs(dd) < 9) {
+      if (g > 0 && g < (R.sc ? 44 : 32) && Math.abs(dd) < 9) {
         c.v = Math.min(c.v, o.v * (g < 26 ? .98 : 1) + (g - 26) * .4);
+        if (R.sc) { c.v = Math.min(c.v, o.v * (g < 30 ? .95 : 1)); continue; }   // in fila dietro la safety car, senza toccarsi
         if ((c.driven || o.driven) && g < 22 && R.contactCd <= 0) {
           R.contactCd = 2; R.flash = 'contact'; R.flashT = .9; const [sx, sy] = posAt(c.s + 11, c.d); fx('spark', sx, sy, 8); R.shake = Math.max(R.shake || 0, 3);
           if (c.driven && !R.tutor && c.lapN >= 1 && Math.random() < .4) { c.dmg = Math.min(1, c.dmg + .25); eng('Contatto con ' + o.code + ': ala anteriore danneggiata.', 'warn'); }
@@ -1085,8 +1132,8 @@ function traffic(dt) {
       }
       // staccata disponibile per chi guida
       // l'IA attacca: si sposta di lato o tenta la staccata
-      // con la tua auto si passa solo dal duello (ATTACCA / DIFENDI)
-      if (c.offT <= 0 && !c.driven && !o.driven && g > 0 && g < 60 && Math.abs(dd) < 10) {
+      // con la tua auto si passa solo dal duello (ATTACCA / DIFENDI); dietro la safety car nessuno sorpassa
+      if (c.offT <= 0 && !R.sc && !c.driven && !o.driven && g > 0 && g < 60 && Math.abs(dd) < 10) {
         const want = PROFI[i] * aiPace(c);
         if (want > o.v + .8 || o.yieldT > 0) {
           const sides = [15, -15].filter(s => Math.abs(IDEAL[i] + s) < HALF - 3).sort(() => Math.random() - .5);
@@ -1112,6 +1159,7 @@ function decisions() {
     if (R.mode === 'drive' && !c.driven) continue;
     const left = R.laps - c.dist / T.L;
     if (R.wet > .25 && c.comp !== 'I' && !c.askedWet && left > .4) { c.askedWet = true; ask(tyrePrompt(c, 'wet')); }
+    else if (c.plan && c.plan.next < c.plan.box.length) continue;   // c'è già una sosta nel piano: ci pensa la finestra box
     else if (((c.wear > .5 && c.wear + left * wearPerLap(c) > .95) || (hasRule('pit') && !c.pits && left < 1.6)) && left > .6 && c.askedWear !== c.pits) { c.askedWear = c.pits; ask(tyrePrompt(c, 'wear')); }
   }
   if (R.mode === 'wall' && !R.orderAsked) {
@@ -1127,7 +1175,7 @@ function decisions() {
 }
 /* =====================  Ingegnere di pista  ===================== */
 // Parla solo con chi segue il proprio pilota: tempi, distacchi, carburante, gomme, danni e consigli da accettare o rifiutare.
-function eng(txt, kind) { if (!R || R.mode !== 'drive' || R.calib) return; R.feed.push({ txt, kind:kind || 'info', t:R.t }); if (R.feed.length > 2) R.feed.shift(); R.feedV++; }
+function eng(txt, kind) { if (!R || R.mode !== 'drive' || R.calib) return; R.feed.push({ txt, kind:kind || 'info', t:R.t }); if (R.feed.length > 3) R.feed.shift(); R.feedV++; }
 const gapAhead = (c, o) => Math.max(0, (o.dist - c.dist) / Math.max(c.v, 40) * TS);
 function setFuel(c, k) { c.fmode = k; track('fuel_mode', { mode:k }); }
 function setTyre(c, k) { c.mode = k; track('tyre_mode', { mode:k }); }
@@ -1147,11 +1195,91 @@ function engLap(c) {
 function engineer(c) {
   if (c.finished || c.inPit) return;
   const left = R.laps - c.dist / T.L; if (left < .4) return;
+  if (planWindow(c)) return;
   const cons = .965 / R.laps, margin = c.fuel - left * cons * [.9, 1, 1.1][c.fmode];
   if (c.fmode === 2 && c.richUntil && c.dist / T.L >= c.richUntil) { c.richUntil = 0; setFuel(c, 1); }
   if (margin < -.004 && c.fmode > 0 && !R.adv.fuel) { R.adv.fuel = 1; eng('Carburante corto: passa a Magra o non arriviamo.', 'warn'); }
   if (c.dmg >= .25 && !R.adv.dmg) { R.adv.dmg = 1; eng('Ala danneggiata: perdiamo qualche decimo al giro.', 'warn'); }
   if (c.wear > .6 && !R.adv.wear) { R.adv.wear = 1; eng('Gomme al ' + Math.round((1 - c.wear) * 100) + '%: calano.', 'warn'); }
+}
+/* =====================  Box e team radio  ===================== */
+// Il box interviene solo nei momenti decisivi: finestra di sosta del piano, safety car, rivale vicino ai box, pioggia.
+// Il resto lo chiedi tu con il pulsante Radio.
+const mePilot = () => R && R.mode === 'drive' ? R.cars.find(c => c.driven) : null;
+const otherComp = k => k === 'S' ? 'M' : 'S';
+function boxOpt(c, k, sub) { return { label:'Box · ' + COMP[k].n, comp:k, sub, fn:() => { c.pitReq = k; eng('Box, box. Montiamo le ' + COMP[k].n.toLowerCase() + '.', 'info'); track('pit_call', { comp:k }); } }; }
+function nextComp(c) { const pl = c.plan; return pl && pl.next < pl.box.length ? pl.st[pl.next + 1] : (R.laps - c.dist / T.L > R.laps * .45 ? 'M' : 'S'); }
+function safetyCar() {
+  const me = mePilot();
+  if (!me) { radio('Safety car in pista: il gruppo si ricompatta.', 'Direzione gara'); return; }
+  R.flash = 'sc'; R.flashT = 2.5;
+  const left = R.laps - me.dist / T.L;
+  if (me.inPit || me.pitReq || left < 1.5) { eng('Safety car in pista: il gruppo si ricompatta.', 'warn'); return; }
+  const k = nextComp(me);
+  ask({ title:'Safety car!', text:'Il gruppo rallenta: un pit stop adesso costa circa la metà. Ci fermiamo?', def:me.wear > .35 ? 0 : 2, time:9, options:[
+    boxOpt(me, k, 'Sosta quasi gratis, ' + (me.plan && me.plan.next < me.plan.box.length ? 'anticipi il piano' : 'gomme nuove fino alla fine')),
+    boxOpt(me, otherComp(k), 'Cambi mescola'),
+    { label:'Resta fuori', sub:'Guadagni chi si ferma, ma con gomme più vecchie', fn:() => track('sc_stay', {}) } ] });
+}
+function rivalPitted(o) {
+  const me = mePilot(); if (!me || me.inPit || me.pitReq || R.prompt || R.sc || (R.adv.rivals || 0) >= 2) return;
+  const left = R.laps - me.dist / T.L; if (left < 1.5) return;
+  const ord = R.ord || order(), p = ord.indexOf(me), q = ord.indexOf(o);
+  if (Math.abs(p - q) !== 1) return;
+  const gap = q < p ? gapAhead(me, o) : gapAhead(o, me); if (gap > 3) return;
+  R.adv.rivals = (R.adv.rivals || 0) + 1;
+  const ahead = q < p, k = nextComp(me);
+  ask({ title:o.code + ' ai box!', text:(ahead ? 'Era davanti a ' : 'Era dietro a ') + gap.toFixed(1) + ' s. ' + (ahead ? 'Se resti fuori e spingi puoi passarlo dopo la sua sosta.' : 'Con gomme nuove ti verrà addosso: lo copri rientrando subito?'), def:2, time:8, options:[
+    boxOpt(me, k, ahead ? 'Lo segui ai box' : 'Copri l’undercut'),
+    { label:'Resta fuori e spingi', sub:'Due giri a tutta, Grassa e Spingi', fn:() => { setTyre(me, 2); setFuel(me, 2); me.richUntil = me.dist / T.L + 2; eng('Ricevuto: due giri a tutta.', 'info'); } },
+    { label:'Ignora', sub:'Restiamo sul piano', fn:() => {} } ] });
+}
+function planWindow(c) {
+  const pl = c.plan; if (!pl || pl.next >= pl.box.length || c.pitReq || R.prompt || R.sc) return false;
+  const lapNow = c.dist / T.L, due = pl.box[pl.next], key = pl.next + ':' + Math.floor(lapNow + .25);
+  if (lapNow < due - .75 || R.adv.planAsk === key) return false;
+  R.adv.planAsk = key;
+  const k = pl.st[pl.next + 1];
+  ask({ title:'Finestra box', text:'Siamo al giro previsto dal piano (gomme al ' + Math.round((1 - c.wear) * 100) + '%). Montiamo le ' + COMP[k].n.toLowerCase() + '?', def:0, time:8, options:[
+    boxOpt(c, k, 'Come da piano'),
+    { label:'Resta fuori un altro giro', sub:'Allunghi lo stint: te lo richiedo al prossimo giro', fn:() => track('plan_stay', {}) },
+    boxOpt(c, otherComp(k), 'Cambi piano') ] });
+  return true;
+}
+function radioCall(k) {
+  const me = mePilot(); if (!me) return;
+  R.radOpen = false; renderRadio(); const rb = $('#radB'); if (rb) rb.setAttribute('aria-expanded', 'false');
+  const ord = R.ord || order(), p = ord.indexOf(me), ah = ord[p - 1], bh = ord[p + 1], left = R.laps - me.dist / T.L, lapT = T.L / 120;
+  const asks = ['Come sono messo?', 'Che ritmo ha chi mi sta davanti?', 'Possiamo fare l’undercut?', 'Box questo giro.', 'Che tempo fa?'];
+  eng(asks[k], 'me'); track('radio', { k });
+  if (k === 0) {
+    const cons = .965 / R.laps, fm = (me.fuel - left * cons * [.9, 1, 1.1][me.fmode]) / cons, pl = me.plan;
+    eng('P' + (p + 1) + (ah ? ', ' + ah.code + ' a ' + gapAhead(me, ah).toFixed(1) + ' s' : ', sei in testa') + (bh ? ', ' + bh.code + ' dietro a ' + gapAhead(bh, me).toFixed(1) + ' s' : '') + '. Gomme ' + Math.round((1 - me.wear) * 100) + '%, benzina ' + (fm >= 0 ? '+' : '') + fm.toFixed(1) + ' giri. ' + (pl && pl.next < pl.box.length ? 'Box al giro ' + pl.box[pl.next] + ' per le ' + COMP[pl.st[pl.next + 1]].n.toLowerCase() + '.' : 'Nessuna sosta prevista.'), 'info');
+  } else if (k === 1) {
+    if (!ah) { eng('Sei in testa: gestisci gomme e distacco.', 'info'); return; }
+    const sec = ((aiPace(me) * Math.sqrt(gripOf(me))) - (aiPace(ah) * Math.sqrt(gripOf(ah)))) * lapT * TS;
+    eng(ah.code + ' ha le ' + COMP[ah.comp].n.toLowerCase() + ' al ' + Math.round((1 - ah.wear) * 100) + '%. ' + (sec > .05 ? 'Sei più veloce di circa ' + sec.toFixed(1) + ' s al giro: lo prendi.' : sec < -.05 ? 'È più veloce di ' + (-sec).toFixed(1) + ' s al giro: serve un attacco al momento giusto.' : 'Avete lo stesso passo.'), 'info');
+  } else if (k === 2) {
+    if (!ah || ah.pits > me.pits || left < 1.5 || me.pitReq) { eng(!ah ? 'Sei in testa: niente undercut da fare.' : 'Adesso non conviene: ' + (left < 1.5 ? 'mancano troppo pochi giri.' : 'ha già le gomme più fresche delle tue.'), 'info'); return; }
+    const kk = nextComp(me), fresh = Math.sqrt(COMP[kk].grip), his = Math.sqrt(gripOf(ah));
+    const gainLap = (fresh / his - 1) * lapT * TS, lapsTo = clamp((.75 - ah.wear) / Math.max(.01, wearPerLap(ah)), 1, 3);
+    const gain = gainLap * lapsTo, gap = gapAhead(me, ah), pct = Math.round(clamp(.5 + (gain - gap) / 4, .08, .92) * 100);
+    ask({ title:'Undercut su ' + ah.code, text:'Con le ' + COMP[kk].n.toLowerCase() + ' nuove guadagni circa ' + gainLap.toFixed(1) + ' s al giro. Probabilità di trovarti davanti dopo la sua sosta: ' + pct + '%.', def:1, time:8, options:[
+      boxOpt(me, kk, 'Rientri adesso'), { label:'No, aspettiamo', sub:'Restiamo fuori', fn:() => {} } ] });
+  } else if (k === 3) {
+    if (me.pitReq) { me.pitReq = null; eng('Annullato, restiamo fuori.', 'info'); return; }
+    ask({ title:'Box questo giro', text:'Gomme al ' + Math.round((1 - me.wear) * 100) + '%. Quali montiamo?', def:3, time:8, options:['S','M','H'].map(kk => boxOpt(me, kk, { S:'Veloci, durano poco', M:'Equilibrate', H:'Durano a lungo' }[kk])).concat([{ label:'Annulla', sub:'Restiamo fuori', fn:() => {} }]) });
+  } else {
+    const lead = ord[0];
+    eng(!R.rain ? 'Niente pioggia in vista: asciutto fino alla fine.' : R.wet > .15 ? 'Piove: con le slick si perde tanto, valuta le intermedie.' : 'Pioggia prevista tra circa ' + Math.max(1, Math.round((R.rain.at - lead.dist) / T.L)) + ' giri.', 'info');
+  }
+}
+function renderRadio() {
+  const el = $('#radMenu'); if (!el) return;
+  const me = mePilot(), ord = R.ord || order(), ah = me ? ord[ord.indexOf(me) - 1] : null;
+  el.innerHTML = !R.radOpen ? '' : '<div class="radmenu" role="menu"><small>Chiama il box</small>' +
+    ['Come sono messo?', 'Ritmo di chi ho davanti?', ah ? 'Undercut su ' + ah.code + '?' : 'Undercut?', me && me.pitReq ? 'Annulla il box' : 'Box questo giro', 'Meteo?'].map((t, k) => '<button data-r="' + k + '">' + t + '</button>').join('') + '</div>';
+  el.querySelectorAll('[data-r]').forEach(b => b.onclick = () => radioCall(+b.dataset.r));
 }
 /* =====================  Duelli: attacco, difesa, batteria  ===================== */
 // A ridosso di chi ti precede premi ATTACCA (costa una tacca di batteria): ti affianchi e passi, oppure ti chiude la porta.
@@ -1164,7 +1292,7 @@ function atkChance(c, o) {
   if (R.tutor && c.driven) p += .15;
   return clamp(p, .12, .92);
 }
-function canAttack(c) { const o = carAhead(c); return o && R.go && !o.inPit && !o.finished && !c.inPit && !c.finished && !c.atk && !o.atk && c.bat >= 1 && c.atkCd <= 0 && gapAhead(c, o) < ATK_GAP ? o : null; }
+function canAttack(c) { const o = carAhead(c); return o && R.go && !R.sc && !o.inPit && !o.finished && !c.inPit && !c.finished && !c.atk && !o.atk && c.bat >= 1 && c.atkCd <= 0 && gapAhead(c, o) < ATK_GAP ? o : null; }
 function startAttack(c, o, ok) {
   c.atk = { o, t:ok ? 7 : 2.6, ok }; c.atkCd = 3; c.bat = Math.max(0, c.bat - 1);
   const ii = idx(c.s), side = o.d > IDEAL[ii] ? -13 : 13;
@@ -1181,6 +1309,7 @@ function defend() {
   R.defend.used = true; me.bat -= 1; R.tipDef = 'done'; track('defend', {});
 }
 function battles(dt) {
+  if (R.sc) { R.defend = null; for (const c of R.cars) if (c.atk) c.atk = null; return; }
   for (const c of R.cars) {
     if (c.atkCd > 0) c.atkCd -= dt;
     if (c.atk) {
@@ -1460,6 +1589,9 @@ function updateHeads(dt) {
   }
 }
 function drawCars() {
+  if (R.sc) { const lead = order()[0], ss = lead.s + 40, [x, y] = posAt(ss, 0), h = thAt(ss);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(h); ctx.fillStyle = '#F6F3EA'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-11, -5.5, 22, 11, 3); else ctx.rect(-11, -5.5, 22, 11); ctx.fill();
+    ctx.fillStyle = (R.t * 3 | 0) % 2 ? '#F2B84B' : '#FF8A3D'; ctx.fillRect(-2, -5, 4, 10); ctx.restore(); }
   for (const c of order().reverse()) {
     const [x, y, h] = carXYH(c);
     ctx.save(); ctx.translate(x, y); ctx.rotate(h);
@@ -1564,7 +1696,7 @@ function renderSession() {
       ? '<div class="dtop"><div class="dpos" id="dpos"></div><div class="dright"><div class="dlap"><small>' + (race ? 'Giro' : title) + '</small><b id="lap"></b><em id="lapT"></em></div><button class="dbtn" id="zOut" aria-label="Allontana">−</button><button class="dbtn" id="zIn" aria-label="Avvicina">+</button><button class="dbtn" id="spdD" aria-label="Velocità">×1</button><button class="dbtn" id="pause" aria-label="Pausa">❚❚</button></div></div>' +
         '<div id="msg"></div>' + (race ? '<div class="lights" id="lights">' + '<i></i>'.repeat(5) + '</div>' : '') + coach +
         '<div class="pilot"><div class="feed" id="feed" aria-live="polite"></div><div id="tip"></div>' +
-          '<div class="duel"><button class="atkbtn" id="atk"><b id="atkL">Attacca</b><small id="atkS"></small><span class="atkbar" id="atkBar"></span></button><div class="batt" id="batt" aria-label="Batteria"><small>Batteria</small><span><i></i><i></i><i></i></span></div></div>' +
+          '<div id="radMenu"></div><div class="duel' + (race ? ' r3' : '') + '"><button class="atkbtn" id="atk"><b id="atkL">Attacca</b><small id="atkS"></small><span class="atkbar" id="atkBar"></span></button><div class="batt" id="batt" aria-label="Batteria"><small>Batteria</small><span><i></i><i></i><i></i></span></div>' + (race ? '<button class="radbtn" id="radB" aria-expanded="false" aria-label="Radio">🎧<small>Radio</small></button>' : '') + '</div>' +
           '<div class="pctl">' +
           '<div class="pgrps"><div class="pgrp"><div class="plab"><span>Carburante</span><b id="fuelTxt"></b></div><div class="modes" id="fm">' + [[2,'Grassa'],[1,'Normale'],[0,'Magra']].map(([k, x]) => '<button data-f="' + k + '">' + x + '</button>').join('') + '</div></div>' +
           '<div class="pgrp"><div class="plab"><span>Gomme</span><b id="tyreTxt"></b></div><div class="modes" id="tm">' + ['Gestisci','Normale','Spingi'].map((x, k) => '<button data-t="' + k + '">' + x + '</button>').join('') + '</div></div></div>' +
@@ -1578,6 +1710,7 @@ function renderSession() {
   if (drive) {
     const me = R.cars.find(c => c.driven);
     $('#atk').onclick = () => { if (R.defend) defend(); else attack(); };
+    if ($('#radB')) $('#radB').onclick = e => { R.radOpen = !R.radOpen; e.currentTarget.setAttribute('aria-expanded', R.radOpen); renderRadio(); };
     $('#fm').querySelectorAll('[data-f]').forEach(b => b.onclick = () => setFuel(me, +b.dataset.f));
     $('#tm').querySelectorAll('[data-t]').forEach(b => b.onclick = () => setTyre(me, +b.dataset.t));
     $('#spdD').onclick = e => { R.speed = R.speed === 1 ? 2 : R.speed === 2 ? 4 : 1; e.currentTarget.textContent = '×' + R.speed; };
@@ -1650,7 +1783,7 @@ function updateHud() {
       const p = ord.indexOf(me) + 1, ah = ord[p - 2];
       if (R.go && p < R.lastPos && !me.finished) { R.flash = 'pass'; R.flashT = 1.3; R.flashPos = p; me.passes++; }
       R.lastPos = p;
-      pos = '<b>P' + p + '</b><span>/' + ord.length + '</span><em>' + (ah ? ah.code + ' ' + (gapBetween(me) ? '−' + gapBetween(me) + ' s' : '') : 'In testa') + '</em>';
+      pos = '<b>P' + p + '</b><span>/' + ord.length + '</span><em>' + (ah ? ah.code + ' a ' + gapAhead(me, ah).toFixed(1) + ' s' : 'In testa') + '</em>';
     } else {
       const cur = me.lapN >= 0 && R.go ? R.t - me.lapStart : 0;
       pos = me.lapN < 0 ? '<b class="sm">Giro di lancio</b><em>Il tempo parte al traguardo</em>' : '<b class="sm">' + lapStr(cur) + '</b><em>' + (me.best ? 'Migliore ' + lapStr(me.best) : R.kind === 'quali' ? 'Giro secco' : 'Prove libere') + '</em>';
@@ -1670,6 +1803,7 @@ function updateHud() {
     else if (me.atk) { cls += ' busy'; L = 'All’attacco'; S2 = 'su ' + me.atk.o.code; }
     else if (o) { cls += ' ready'; S2 = Math.round(atkChance(me, o) * 100) + '% di riuscita su ' + o.code; }
     else if (!race || me.finished) S2 = '';
+    else if (R.sc) S2 = 'Safety car: attendi la ripartenza';
     else if (!ah) S2 = 'Sei in testa';
     else if (me.bat < 1) S2 = 'Batteria scarica';
     else S2 = ah.code + ' a ' + gapAhead(me, ah).toFixed(1) + ' s · avvicinati';
@@ -1686,10 +1820,12 @@ function updateHud() {
     lt2.textContent = lc ? lc.txt : ''; lt2.className = lc && lc.good ? 'good' : '';
     // radio: pochi messaggi, spariscono da soli
     const fv = R.feed.filter(f => R.t - f.t < 5), fk = fv.map(f => f.txt).join('|');
-    if (fk !== R.feedShown) { R.feedShown = fk; $('#feed').innerHTML = fv.map(f => '<p class="f-' + f.kind + ' new"><small>Ingegnere</small>' + esc(f.txt) + '</p>').join(''); }
+    if (fk !== R.feedShown) { R.feedShown = fk; $('#feed').innerHTML = fv.map(f => '<p class="f-' + f.kind + ' new"><small>' + (f.kind === 'me' ? 'Tu' : 'Ingegnere') + '</small>' + esc(f.txt) + '</p>').join(''); }
     // un solo messaggio alla volta, il più importante
     let m = '';
     if (me.finished) m = '<div class="mpill good">' + (race ? 'Traguardo · P' + (ord.indexOf(me) + 1) : 'Sessione finita') + '</div>';
+    else if (R.flashT > 0 && R.flash === 'sc') m = '<div class="mpill warn big">Safety car</div>';
+    else if (R.flashT > 0 && R.flash === 'restart') m = '<div class="mpill good big">Ripartenza!</div>';
     else if (R.flashT > 0 && R.flash === 'pass') m = '<div class="mpill good big">Sorpasso! P' + R.flashPos + '</div>';
     else if (R.flashT > 0 && R.flash === 'contact') m = '<div class="mpill bad">Contatto</div>';
     else if (me.inPit) m = '<div class="mpill warn">Ai box</div>';
@@ -1697,6 +1833,7 @@ function updateHud() {
     else if (R.flashT > 0 && R.flash === 'closed') m = '<div class="mpill bad">Ha chiuso la porta</div>';
     else if (R.flashT > 0 && R.flash === 'defended') m = '<div class="mpill good big">Difeso!</div>';
     else if (R.flashT > 0 && R.flash === 'held') m = '<div class="mpill good">Posizione tenuta</div>';
+    else if (R.sc) m = '<div class="mpill warn">Safety car · niente sorpassi</div>';
     else if (me.atk) m = '<div class="mpill gold big">Attacco!</div>';
     else if (me.drs) m = '<div class="mpill blue">DRS aperto</div>';
     else if (me.slip && me.slipOn) m = '<div class="mpill blue">In scia di ' + me.slipOn.code + '</div>';
@@ -1963,7 +2100,7 @@ async function rewarded(placement) {
   return ok;
 }
 
-window.__muretto = { aiPaceOf:c => aiPace(c), attack:() => attack(), defend:() => defend(), canAttack:c => canAttack(c), openDrs:() => openDrs(), CWv:i => CW[i], carH:c => carXYH(c)[2], get R() { return R; }, get T() { return T; }, get IDEAL() { return IDEAL; }, get PROFI() { return PROFI; }, get KS() { return KS; }, get BZ() { return BZ; },
+window.__muretto = { plansFor:L => plansFor(L), aiPaceOf:c => aiPace(c), attack:() => attack(), defend:() => defend(), canAttack:c => canAttack(c), openDrs:() => openDrs(), CWv:i => CW[i], carH:c => carXYH(c)[2], get R() { return R; }, get T() { return T; }, get IDEAL() { return IDEAL; }, get PROFI() { return PROFI; }, get KS() { return KS; }, get BZ() { return BZ; },
   step:dt => step(dt), order:() => order(), startSession, closePrompt:k => closePrompt(k), boost, lateBrake, S:() => S, newCareer, draft, loadTrack, CALENDAR, refLap, simQuali, renderBox, endSession };
 if (S.career) renderBox(); else renderStart();
 })();
