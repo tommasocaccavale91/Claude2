@@ -126,6 +126,27 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .lv{display:flex;gap:3px;margin-top:5px}
 .lv i{width:22px;height:6px;border-radius:2px;background:var(--surface2)}
 .lv i.on{background:var(--accent)}
+.lv i.wip{background:repeating-linear-gradient(45deg,var(--accent) 0 3px,var(--surface2) 3px 6px)}
+.mtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;background:var(--surface2);border-radius:14px;position:sticky;top:0;z-index:5}
+.mtabs button{border:0;border-radius:10px;padding:10px 4px;background:transparent;font-weight:800;font-size:14px;position:relative}
+.mtabs button[aria-selected="true"]{background:var(--surface);box-shadow:var(--shadow);color:var(--accent)}
+.mtabs .dot{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.news{border-left:4px solid var(--gold)}.news ul{margin:6px 0 0;padding-left:18px;font-size:14px;line-height:1.45}.news .linkbtn{padding-bottom:0}
+.list{display:flex;flex-direction:column}
+.lrow{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.lrow:first-child{border-top:0;padding-top:0}
+.lrow .ico{width:34px;height:34px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;font-weight:800;font-family:var(--f-mono);font-size:14px}
+.lrow .ico.sw2{background:var(--surface2);color:var(--muted)}
+.lrow b{display:block;font-weight:800;font-size:15px}.lrow small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
+.stars{color:var(--gold);letter-spacing:1px;font-size:12px;white-space:nowrap}.stars i{font-style:normal;color:var(--surface2)}
+.meter{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:12px;font-weight:700;color:var(--muted)}
+.meter i{display:block;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent) calc(var(--f)*100%),var(--surface2) calc(var(--f)*100%))}
+.wbar2{display:inline-block;width:46px;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;vertical-align:1px}.wbar2 i{display:block;height:100%}
+.sub2{margin:14px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lab2{font-weight:800;font-size:13px;margin-top:6px}
+.warnc{color:var(--warn)}
+.setsrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700;font-size:13px}
+.plan[disabled]{opacity:.4}
 .rule{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
 .rule .ico{grid-row:1 / span 2;width:46px;height:46px;border-radius:12px;background:var(--navy);color:var(--gold);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:20px}
 .rule b{font-weight:800}
@@ -723,7 +744,7 @@ function newCareer() {
     c.driveId = 'me';
   } else teams.find(t => t.id === 'aurora').name = draft.team || 'Scuderia Aurora';
   S.career = c;
-  newSeasonRules();
+  newSeasonRules(); ensureMgr(c);
   track('career_start', { role:c.role, season:c.seasonLen, laps:c.laps });
   save(); renderBox(); setTimeout(showRuleSheet, 300);
 }
@@ -734,52 +755,414 @@ function newSeasonRules() {
   if (c.revolution) {
     const mean = c.teams.reduce((s, t) => s + t.corner, 0) / c.teams.length;
     c.teams.forEach(t => { t.corner = mean + (t.corner - mean) * .4 + rnd(-.008, .008); });
-    if (c.role === 'manager') c.parts.aero = Math.max(1, c.parts.aero - 2);
+    if (c.role === 'manager') c.parts.aero = Math.max(1, c.parts.aero - (c.nextCar >= 1500 ? 1 : 2));
   }
   c.focus = null;
 }
 
+/* =====================  Gestione della scuderia (manager)  ===================== */
+// Bilancio, sponsor con obiettivi, staff, progetti di sviluppo, motori contati, strutture, mercato piloti e accademia.
+const NAMES_F = ['Elena','Marta','Chiara','Lina','Yuki','Ines','Freya','Zoe','Ana','Mila','Noor','Clara','Sara','Ida'];
+const NAMES_M = ['Luca','Tomás','Erik','Omar','Felix','Hugo','Mateo','Arjun','Nils','Pietro','Kofi','Liam','Dario','Jonah'];
+const SURN = ['Ferraro','Lindqvist','Moreau','Haddad','Novak','Santos','Okoye','Ishikawa','Bauer','Costa','Varga','Delacroix','Reyes','Galli','Petrov','Nakamura','Silva','Byrne','Weiss','Conti','Abara','Holm','Duarte','Kaplan'];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const uid = () => 'g' + Date.now().toString(36) + Math.floor(Math.random() * 1e5).toString(36);
+const avgOf = d => (d.vel + d.cos + d.gom) / 3;
+const salaryFor = d => Math.round(Math.max(40, (avgOf(d) - 70) * 9 + 40) / 5) * 5;
+const stars = (v, max) => '<span class="stars" aria-label="' + v + ' su ' + (max || 5) + '">' + '★'.repeat(v) + '<i>' + '★'.repeat((max || 5) - v) + '</i></span>';
+const potStars = p => clamp(Math.round((p - 74) / 4), 1, 5);
+const STAFF = {
+  td:   { n:'Direttore tecnico', ico:'⚙', d:'Più progetti di sviluppo riusciti' },
+  strat:{ n:'Stratega',          ico:'♟', d:'Conosce la pista prima delle prove, stime radio più precise' },
+  mech: { n:'Capo meccanico',    ico:'🔧', d:'Pit stop più rapidi, meno guasti, ricambi meno cari' },
+  coach:{ n:'Preparatore',       ico:'♥', d:'Morale dei piloti e crescita dei giovani' }
+};
+const staffSal = lv => 10 + lv * 12;
+const FAC = {
+  wind:{ n:'Galleria del vento', d:lv => 'Progetti aerodinamici riusciti +' + (lv - 1) * 6 + '%' + (lv >= 3 ? ', in 1 GP' : '') },
+  sim: { n:'Simulatore',          d:lv => 'Conoscenza pista di partenza +' + (lv - 1) * 15 + '%, giovani più rapidi' },
+  fact:{ n:'Fabbrica',            d:lv => lv + (lv > 1 ? ' progetti' : ' progetto') + ' alla volta, ricambi −' + (lv - 1) * 15 + '%' }
+};
+const FAC_COST = [0, 0, 2500, 5000], FAC_TIME = [0, 0, 3, 4];
+const SPONSORS = [['Lumen Energy','LE'],['Vela Telecom','VT'],['Orsa Assicurazioni','OA'],['Brillo Bevande','BB'],['Ferro Logistica','FL'],['Nimbus Cloud','NC'],['Corallo Moda','CM'],['Pietra Banca','PB'],['Astro Orologi','AO'],['Maestrale Nautica','MN']];
+const TIER = {
+  safe:{ n:'Sicuro',      fee:300, bonus:150, miss:6 },
+  mid: { n:'Equilibrato', fee:220, bonus:350, miss:10 },
+  bold:{ n:'Ambizioso',   fee:130, bonus:700, miss:14 }
+};
+const bestPos = r => Math.min(...r.mine.map(x => x.pos));
+function goalTxt(g) {
+  return { best8:'Un’auto nei primi 8', both8:'Entrambe le auto nei primi 8', best6:'Un’auto nei primi 6', best4:'Un’auto nei primi 4', both6:'Entrambe le auto nei primi 6',
+    podium:'Un podio', win:'Una vittoria', gain3:'Guadagna 3 posizioni con un pilota', beat:'Davanti a entrambe le ' + (teamOf(g.team) ? esc(teamOf(g.team).name) : 'rivali') }[g.k];
+}
+function goalOk(g, r) {
+  const b = bestPos(r);
+  switch (g.k) {
+    case 'best8': return b <= 8; case 'best6': return b <= 6; case 'best4': return b <= 4; case 'podium': return b <= 3; case 'win': return b === 1;
+    case 'both8': return r.mine.every(x => x.pos <= 8); case 'both6': return r.mine.every(x => x.pos <= 6);
+    case 'gain3': return r.mine.some(x => x.grid - x.pos >= 3);
+    case 'beat': { const th = r.pos.filter(x => x.c.team === g.team).map(x => x.pos); return !th.length || b < Math.min(...th); }
+  }
+  return false;
+}
+// classifica di forza: 0 = la più forte
+function rankOf(id) {
+  const c = C(), str = t => teamStrength(t) + (t.id === 'aurora' && c.role === 'manager' ? .004 * (c.parts.engine + c.parts.aero - 2) : 0);
+  return c.teams.slice().sort((a, b) => str(b) - str(a)).findIndex(t => t.id === id);
+}
+function makeSponsor(slot, tier) {
+  const c = C(), used = c.sponsors.map(s => s.n), [n, mark] = pick(SPONSORS.filter(s => !used.includes(s[0]))), rk = rankOf('aurora');
+  const lvl = clamp(4 - rk, 0, 4);   // 0 = squadra più debole
+  const pools = { safe:[['best8'], ['best8'], ['best6'], ['best4'], ['podium']], mid:[['both8','gain3'], ['both8','gain3','best6'], ['best4','both8'], ['podium','both6'], ['win','podium']], bold:[['best4','beat'], ['best4','beat'], ['podium','beat'], ['win','beat'], ['win']] };
+  let k = pick(pools[tier][lvl]); const g = { k };
+  if (k === 'beat') { const above = c.teams.filter(t => rankOf(t.id) === rk - 1)[0]; if (above) g.team = above.id; else g.k = 'win'; }
+  const mul = slot ? .5 : 1, T0 = TIER[tier];
+  return { n, mark, tier, slot, goal:g, fee:Math.round(T0.fee * mul / 10) * 10, bonus:Math.round(T0.bonus * mul / 10) * 10, gp:6, sat:60 };
+}
+function sponsorOffers(slot) { return ['safe', 'mid', 'bold'].map(t => makeSponsor(slot, t)); }
+function staffMember(lv) { return { n:pick(Math.random() < .5 ? NAMES_F : NAMES_M) + ' ' + pick(SURN), lv }; }
+function freshName() {
+  const c = C(), taken = new Set([...c.drivers, ...(c.free || []), ...(c.academy || []), ...((c.scout || []))].map(d => code(d.n)));
+  for (let k = 0; k < 60; k++) { const n = pick(Math.random() < .5 ? NAMES_F : NAMES_M) + ' ' + pick(SURN); if (!taken.has(code(n))) return n; }
+  return 'Alex Nuovo' + Math.floor(Math.random() * 99);
+}
+function freshNo() { const used = new Set(C().drivers.map(d => d.no)); let n; do n = 2 + Math.floor(Math.random() * 97); while (used.has(n)); return n; }
+function genDriver(lo, hi, age) {
+  const b = rnd(lo, hi), d = { id:uid(), n:freshName(), no:freshNo(), vel:Math.round(b + rnd(-3, 3)), cos:Math.round(b + rnd(-4, 4)), gom:Math.round(b + rnd(-4, 4)), mor:70, age:age || Math.round(rnd(20, 34)), con:2 };
+  d.pot = Math.max(d.vel, Math.round(d.age < 24 ? rnd(84, 95) : d.age < 29 ? d.vel + rnd(0, 4) : d.vel));
+  d.sal = salaryFor(d); return d;
+}
+function genFree(n) { const out = []; for (let k = 0; k < n; k++) out.push(genDriver(74, 85)); return out; }
+function genJunior() { const d = genDriver(64, 71, Math.round(rnd(17, 19))); d.pot = Math.round(rnd(80, 96)); d.sal = 30; d.con = 3; d.est = [d.pot - Math.round(rnd(0, 6)), d.pot + Math.round(rnd(0, 6))]; return d; }
+const engAllow = c => Math.max(2, Math.round(c.seasonLen / 4));
+const engOf = id => { const c = C(); c.engines[id] = c.engines[id] || { n:1, w:0 }; return c.engines[id]; };
+const mineDrivers = () => C().drivers.filter(d => d.team === 'aurora');
+const devCap = c => hasRule('budget') ? c.seasonLen * 400 : Infinity;
+const canSpendDev = (c, x) => c.credits >= x && c.fin.dev + x <= devCap(c);
+const projOdds = (c, part) => clamp(.6 + .06 * c.staff.td.lv + (part === 'aero' ? .06 * (c.fac.wind.lv - 1) : 0) - (part === 'engine' && hasRule('motori') ? .05 : 0), .4, .96);
+const projTime = (c, part) => part === 'crew' ? 1 : part === 'aero' && c.fac.wind.lv >= 3 ? 1 : 2;
+function ensureMgr(c) {
+  if (!c || c.role !== 'manager' || c.mgr) return;
+  const AGES = { and:29, bra:26, kel:31, rou:24, tan:27, kow:30, rin:21, mar:34, pra:28, oka:23 }, POT = { rin:93, rou:89, oka:88, bra:89 };
+  c.drivers.forEach(d => { d.age = d.age || AGES[d.id] || 27; d.pot = d.pot || POT[d.id] || Math.max(d.vel, 84); d.sal = d.sal || salaryFor(d); if (d.con == null) d.con = d.id === 'mar' ? 1 : 2; });
+  Object.assign(c, { mgr:1, fin:{ last:null, inc:0, exp:0, dev:0 }, sponsors:[], offers:{}, projects:[], nextCar:0, engines:{}, academy:[], scout:null, news:[], tab:'w',
+    staff:{ td:staffMember(2), strat:staffMember(2), mech:staffMember(2), coach:staffMember(1) }, staffMkt:{},
+    fac:{ wind:{ lv:1, b:0 }, sim:{ lv:1, b:0 }, fact:{ lv:1, b:0 } } });
+  c.free = genFree(4);
+  const sp = makeSponsor(0, 'mid'); sp.n = 'Lumen Energy'; sp.mark = 'LE'; c.sponsors.push(sp);
+  c.offers[1] = sponsorOffers(1);
+  c.credits = Math.max(c.credits, 1500);
+  c.news.push('Benvenuto al muretto. Lo sponsor principale è Lumen Energy; il posto da sponsor secondario è libero: scegli un’offerta in Finanze.');
+}
+function fixedCosts(c) {
+  const drv = mineDrivers().reduce((s, d) => s + d.sal, 0), st = Object.values(c.staff).reduce((s, x) => s + staffSal(x.lv), 0);
+  const ac = c.academy.length * 30, fac = Object.values(c.fac).reduce((s, f) => s + f.lv * 15, 0);
+  return { drv, st, ac, fac, tot:drv + st + ac + fac };
+}
+// Chiusura dei conti dopo ogni GP: entrate, uscite, sponsor, progetti, strutture, motori, accademia.
+function settleGP(c, res, prize, info) {
+  const rows = [['Premi gara' + (c.pass ? ' (pass +50%)' : ''), prize]], news = [];
+  for (const sp of c.sponsors) {
+    rows.push([sp.n + ' · quota', sp.fee]);
+    const ok = goalOk(sp.goal, res); sp.lastOk = ok;
+    if (ok) rows.push([sp.n + ' · ' + goalTxt(sp.goal), sp.bonus]);
+    sp.sat = clamp(sp.sat + (ok ? 12 : -TIER[sp.tier].miss), 0, 100); sp.gp--;
+  }
+  const fc = fixedCosts(c);
+  rows.push(['Stipendi piloti', -fc.drv], ['Staff', -fc.st]);
+  if (fc.ac) rows.push(['Accademia', -fc.ac]);
+  rows.push(['Strutture', -fc.fac]);
+  const cheap = (1 - .08 * (c.staff.mech.lv - 1)) * (1 - .15 * (c.fac.fact.lv - 1));
+  const rep = Math.round(res.mine.reduce((s, r) => s + 50 + (r.c.hadDmg || Math.random() < .15 ? 150 : 0) + (r.c.engBroke ? 250 : 0), 0) * cheap);
+  rows.push(['Ricambi e trasferta', -rep]);
+  const net = rows.reduce((s, r) => s + r[1], 0);
+  c.credits += net; c.fin.inc += rows.filter(r => r[1] > 0).reduce((s, r) => s + r[1], 0); c.fin.exp -= rows.filter(r => r[1] < 0).reduce((s, r) => s + r[1], 0);
+  c.fin.last = { rows, net, gp:info.gp };
+  // sponsor: rinnovo o addio
+  c.sponsors = c.sponsors.filter(sp => {
+    if (sp.sat <= 0) { news.push(sp.n + ' ha rescisso il contratto: troppi obiettivi mancati.'); c.offers[sp.slot] = sponsorOffers(sp.slot); return false; }
+    if (sp.gp <= 0) {
+      if (sp.sat >= 50) { sp.gp = 6; sp.fee = Math.round(sp.fee * 1.1 / 10) * 10; news.push(sp.n + ' rinnova per altri 6 GP, con la quota alzata a ' + fmtCr(sp.fee) + '.'); return true; }
+      news.push(sp.n + ' non rinnova: il contratto è finito.'); c.offers[sp.slot] = sponsorOffers(sp.slot); return false;
+    }
+    return true;
+  });
+  // progetti di sviluppo
+  c.projects = c.projects.filter(p => {
+    if (--p.gp > 0) return true;
+    const P = PARTS.find(x => x.k === p.part);
+    if (Math.random() < p.odds) { c.parts[p.part] = Math.min(5, c.parts[p.part] + 1); news.push(P.n + ': il nuovo pezzo funziona. Livello ' + c.parts[p.part] + '.'); track('project_ok', { part:p.part }); }
+    else { const back = Math.round(p.cost * .4); c.credits += back; news.push(P.n + ': il pezzo non ha reso in pista. Recuperati ' + fmtCr(back) + ' crediti, si può ritentare.'); track('project_fail', { part:p.part }); }
+    return false;
+  });
+  // strutture in costruzione
+  for (const [k, f] of Object.entries(c.fac)) if (f.b > 0 && --f.b === 0) { f.lv++; news.push(FAC[k].n + ' pronta: livello ' + f.lv + '.'); }
+  // motori
+  const life = c.seasonLen / engAllow(c);
+  for (const r of res.mine) { const e = engOf(r.c.id); e.w += (1 + .35 * (r.c.richF || 0)) / life * (r.c.engBroke ? 1.6 : 1); if (e.w > .85) news.push('Il motore di ' + first(r.c.n) + ' è usurato al ' + Math.round(e.w * 100) + '%: rischio di guasto.'); }
+  // piloti: preparatore e accademia
+  mineDrivers().forEach(d => { d.mor = clamp(d.mor + c.staff.coach.lv - 2, 30, 100); });
+  for (const j of c.academy) {
+    const g = .18 + .05 * c.staff.coach.lv + .06 * (c.fac.sim.lv - 1);
+    ['vel', 'cos', 'gom'].forEach(k => { if (j[k] < j.pot && Math.random() < g) j[k]++; });
+  }
+  if (c.credits < 0) news.push('Conti in rosso: niente sviluppo finché la cassa non torna positiva. Cerca sponsor o taglia i costi.');
+  c.news.push(...news);
+  return { rows, net, news };
+}
+// effetti dello staff e delle strutture sul weekend
+function baseKnow(c) { return c.role === 'manager' && c.mgr ? Math.min(60, 10 * (c.staff.strat.lv - 1) + 15 * (c.fac.sim.lv - 1)) : 0; }
+
+/* ---------- azioni ---------- */
+function startProject(part) {
+  const c = C(), lv = c.parts[part]; if (lv >= 5 || c.projects.some(p => p.part === part) || c.projects.length >= c.fac.fact.lv) return;
+  const cost = Math.round(PART_COST[lv] * (hasRule('budget') ? 1.3 : 1) * (c.focus === part ? .7 : 1));
+  if (!canSpendDev(c, cost)) { toast(c.credits < cost ? 'Crediti insufficienti' : 'Superi il tetto di spesa'); return; }
+  c.credits -= cost; c.fin.dev += cost;
+  c.projects.push({ part, cost, gp:projTime(c, part), odds:projOdds(c, part) });
+  track('project_start', { part, level:lv + 1 }); save(); toast('Progetto avviato'); renderBox();
+}
+function rushProject(part) {
+  const c = C(), p = c.projects.find(x => x.part === part); if (!p || p.gp <= 1) return;
+  const cost = Math.round(p.cost * .5); if (c.credits < cost) { openShop('rush'); return; }
+  c.credits -= cost; p.gp = 1; track('project_rush', { part }); save(); toast('Progetto accelerato: pronto dopo il prossimo GP'); renderBox();
+}
+function newEngine(id) {
+  const c = C(), e = engOf(id), w = weekend();
+  e.n++; e.w = 0;
+  if (e.n > engAllow(c)) { w.engPen = (w.engPen || []).concat(id); toast('Motore nuovo: 5 posizioni di penalità in griglia'); } else toast('Motore nuovo montato');
+  track('engine_new', { n:e.n }); save(); renderBox();
+}
+function buildFac(k) {
+  const c = C(), f = c.fac[k], cost = FAC_COST[f.lv + 1]; if (f.lv >= 3 || f.b) return;
+  if (c.credits < cost) { toast('Crediti insufficienti'); return; }
+  c.credits -= cost; f.b = FAC_TIME[f.lv + 1]; track('facility', { k, lv:f.lv + 1 }); save(); toast(FAC[k].n + ': lavori iniziati'); renderBox();
+}
+function investNext() {
+  const c = C(); if (!canSpendDev(c, 500)) { toast(c.credits < 500 ? 'Crediti insufficienti' : 'Superi il tetto di spesa'); return; }
+  c.credits -= 500; c.fin.dev += 500; c.nextCar += 500; track('next_car', { total:c.nextCar }); save(); renderBox();
+}
+const nextCarBonus = c => Math.min(.012, c.nextCar / 1000 * .003);
+function hireStaff(role, k) {
+  const c = C(), cand = c.staffMkt[role][k], fee = 200 * cand.lv;
+  if (c.credits < fee) { toast('Crediti insufficienti'); return; }
+  c.credits -= fee; c.staff[role] = { n:cand.n, lv:cand.lv }; c.staffMkt[role] = null;
+  track('staff_hire', { role, lv:cand.lv }); save(); closeSheet(); toast(STAFF[role].n + ': benvenuto ' + first(cand.n)); renderBox();
+}
+function openStaff(role) {
+  const c = C();
+  if (!c.staffMkt[role]) c.staffMkt[role] = [1, 2, 3].map(() => staffMember(clamp(c.staff[role].lv - 1 + Math.floor(rnd(0, 3.4)), 1, 5)));
+  const cur = c.staff[role];
+  openSheet('<h2>' + STAFF[role].n + '</h2><p>' + STAFF[role].d + '. Ora: <b>' + esc(cur.n) + '</b> ' + stars(cur.lv) + ' · ' + staffSal(cur.lv) + ' a GP.</p><h3>Candidati</h3>' +
+    c.staffMkt[role].map((x, k) => '<button class="prod" data-hire="' + k + '"' + (c.credits < 200 * x.lv ? ' disabled' : '') + '><span class="pi">' + STAFF[role].ico + '</span><div><b>' + esc(x.n) + ' ' + stars(x.lv) + '</b><span>Stipendio ' + staffSal(x.lv) + ' a GP' + (x.lv > cur.lv ? ' · meglio dell’attuale' : x.lv < cur.lv ? ' · peggio dell’attuale' : '') + '</span></div><span class="p">' + fmtCr(200 * x.lv) + '</span></button>').join('') +
+    '<p class="legal">L’ingaggio si paga una volta. I candidati cambiano a ogni stagione.</p>');
+  document.querySelectorAll('[data-hire]').forEach(b => b.onclick = () => hireStaff(role, +b.dataset.hire));
+}
+function renameInWeekend(oldId, newId) {
+  const c = C(), w = c.weekend;
+  if (w && w.quali) { const g = w.quali.grid, i = g.indexOf(oldId); if (i >= 0) g[i] = newId; if (w.quali.times[oldId] != null) { w.quali.times[newId] = w.quali.times[oldId]; } }
+  if (c.planBy && c.planBy[oldId] != null) { c.planBy[newId] = c.planBy[oldId]; delete c.planBy[oldId]; }
+  if (c.engines[oldId]) { c.engines[newId] = c.engines[oldId]; delete c.engines[oldId]; }
+  if (c.driveId === oldId) c.driveId = newId;
+}
+function buyout(d) { const t = rankOf(d.team), my = rankOf('aurora'); return Math.round((1200 + Math.max(0, avgOf(d) - 75) * 200) * (1 + .4 * Math.max(0, my - t)) / 50) * 50; }
+function signDriver(src, id, outId) {
+  const c = C(), out = drvOf(outId);
+  if (src === 'free') {
+    const i = c.free.findIndex(d => d.id === id), d = c.free[i], fee = d.sal * 3; if (c.credits < fee) return toast('Crediti insufficienti');
+    c.credits -= fee; c.free.splice(i, 1); d.team = 'aurora'; d.mor = 72; d.con = 2; c.drivers.push(d);
+    c.drivers.splice(c.drivers.indexOf(out), 1); out.team = null; out.con = 1; c.free.push(out);
+    renameInWeekend(outId, d.id); c.standings.d[d.id] = c.standings.d[d.id] || 0;
+  } else if (src === 'rival') {
+    const d = drvOf(id), fee = buyout(d); if (c.credits < fee) return toast('Crediti insufficienti');
+    c.credits -= fee; const t = d.team; d.team = 'aurora'; d.con = 2; d.mor = 74; out.team = t; out.mor = Math.max(40, out.mor - 10);
+    const w = c.weekend; if (w && w.quali) { const g = w.quali.grid, a = g.indexOf(id), b = g.indexOf(outId); if (a >= 0 && b >= 0) { g[a] = outId; g[b] = id; } }
+    if (c.planBy && c.planBy[outId] != null) { c.planBy[id] = c.planBy[outId]; delete c.planBy[outId]; }
+    if (c.engines[outId]) { c.engines[id] = c.engines[outId]; delete c.engines[outId]; }
+    if (c.driveId === outId) c.driveId = id;
+  } else {
+    const i = c.academy.findIndex(d => d.id === id), d = c.academy[i]; c.academy.splice(i, 1);
+    d.team = 'aurora'; d.sal = Math.max(60, salaryFor(d) - 40); d.con = 3; d.mor = 80; delete d.est; c.drivers.push(d);
+    c.drivers.splice(c.drivers.indexOf(out), 1); out.team = null; out.con = 1; c.free.push(out);
+    renameInWeekend(outId, d.id); c.standings.d[d.id] = 0;
+  }
+  track('sign_driver', { src }); save(); closeSheet(); toast('Contratto firmato'); renderBox();
+}
+function openSign(src, id) {
+  const c = C(), d = src === 'free' ? c.free.find(x => x.id === id) : src === 'rival' ? drvOf(id) : c.academy.find(x => x.id === id);
+  const fee = src === 'free' ? d.sal * 3 : src === 'rival' ? buyout(d) : 0;
+  openSheet('<h2>' + esc(d.n) + '</h2><p>' + driverLine(d) + '</p><p>' + (src === 'rival' ? 'Clausola di uscita da ' + esc(teamOf(d.team).name) + ': <b>' + fmtCr(fee) + '</b>. Il pilota che lasci va al suo posto.' : src === 'free' ? 'Ingaggio <b>' + fmtCr(fee) + '</b>, stipendio ' + fmtCr(d.sal) + ' a GP, 2 stagioni. Il pilota che lasci diventa svincolato.' : 'Promozione dall’accademia: stipendio basso, contratto di 3 stagioni.') + '</p><h3>Al posto di</h3>' +
+    mineDrivers().map(o => '<button class="prod" data-out="' + o.id + '"' + (c.credits < fee ? ' disabled' : '') + '><span class="pi">' + o.no + '</span><div><b>' + esc(o.n) + '</b><span>' + driverLine(o) + '</span></div><span class="p">' + (fee ? fmtCr(fee) : 'Promuovi') + '</span></button>').join(''));
+  document.querySelectorAll('[data-out]').forEach(b => b.onclick = () => signDriver(src, id, b.dataset.out));
+}
+const driverLine = d => 'Età ' + d.age + ' · media ' + Math.round(avgOf(d)) + ' · potenziale ' + stars(potStars(d.pot)) + (d.sal ? ' · ' + fmtCr(d.sal) + ' a GP' : '');
+function doScout() {
+  const c = C(); if (c.credits < 400) { toast('Crediti insufficienti'); return; }
+  c.credits -= 400; c.scout = [genJunior(), genJunior(), genJunior()]; track('scout', {}); save(); renderBox();
+}
+function takeJunior(id) {
+  const c = C(); if (c.academy.length >= 2) { toast('L’accademia ha 2 posti'); return; }
+  const i = c.scout.findIndex(x => x.id === id); c.academy.push(c.scout[i]); c.scout = null; track('academy_join', {}); save(); toast('In accademia'); renderBox();
+}
+function signSponsor(slot, k) {
+  const c = C(), sp = c.offers[slot][k]; c.sponsors = c.sponsors.filter(s => s.slot !== slot); c.sponsors.push(sp); c.offers[slot] = null;
+  c.news = c.news.filter(n => !n.startsWith('Benvenuto'));
+  track('sponsor_sign', { tier:sp.tier, slot }); save(); toast('Firmato con ' + sp.n); renderBox();
+}
+// fine stagione: età, crescita, contratti, mercato
+function seasonRollover(c) {
+  c.drivers.forEach(d => {
+    d.age = (d.age || 27) + 1;
+    if (d.age <= 25) ['vel', 'cos', 'gom'].forEach(k => { d[k] = Math.min(d.pot + 2, d[k] + Math.round(rnd(0, 3))); });
+    else if (d.age >= 33) ['vel', 'cos', 'gom'].forEach(k => { d[k] = Math.max(66, d[k] - Math.round(rnd(0, 2.4))); });
+    d.vel = clamp(d.vel, 60, 97); if (d.team === 'aurora') d.con = Math.max(0, (d.con || 1) - 1);
+    if (d.team !== 'aurora') d.sal = salaryFor(d);
+  });
+  c.free = c.free.filter(() => Math.random() < .5).concat(genFree(3)).slice(-5);
+  c.free.forEach(d => { d.age++; });
+  c.staffMkt = {}; c.engines = {}; c.fin.dev = 0; c.fin.inc = 0; c.fin.exp = 0; c.scout = null;
+  for (const t of ['td', 'strat', 'mech', 'coach']) if (!c.staff[t]) c.staff[t] = staffMember(1);
+  const tm = c.teams.find(t => t.id === 'aurora'), b = nextCarBonus(c);
+  if (b) { tm.power += b; tm.corner += b; c.news.push('L’auto nuova è nata dal progetto dell’anno scorso: +' + Math.round(b / .003) + ' passi di prestazione.'); }
+  c.nextCar = 0;
+}
+function renewCost(d) { const c = C(), pts = c.standings.d[d.id] || 0, base = salaryFor(d) + Math.round(pts / Math.max(1, c.seasonLen) * 4); return Math.round(base * (d.mor < 45 ? 1.4 : 1) / 5) * 5; }
+
+/* ---------- interfaccia: schede del box ---------- */
+function mgrTabs(c) {
+  const dot = { s:c.academy.some(j => avgOf(j) >= 75) || mineDrivers().some(d => d.con <= 1 && c.round > c.seasonLen - 2), f:mineDrivers().some(d => engOf(d.id).w > .85) || (c.projects.length < c.fac.fact.lv && PARTS.some(p => c.parts[p.k] < 5 && c.credits >= PART_COST[c.parts[p.k]])), e:[0, 1].some(s => !c.sponsors.some(x => x.slot === s)) };
+  return '<nav class="mtabs" role="tablist" aria-label="Sezioni della scuderia">' + [['w', 'Weekend'], ['s', 'Squadra'], ['f', 'Fabbrica'], ['e', 'Finanze']].map(([k, n]) => '<button role="tab" data-mtab="' + k + '" aria-selected="' + (c.tab === k) + '">' + n + (dot[k] ? '<i class="dot"></i>' : '') + '</button>').join('') + '</nav>';
+}
+function newsCard(c) {
+  if (!c.news || !c.news.length) return '';
+  return '<div class="card news"><b>Dal box</b><ul>' + c.news.slice(-5).map(n => '<li>' + esc(n) + '</li>').join('') + '</ul><button class="linkbtn" id="newsOk">Letto</button></div>';
+}
+function tabSquadra(c) {
+  const mine = mineDrivers();
+  let h = '<h3 class="h2">Piloti</h3><div class="drivers">' + mine.map(d => '<div class="card drv"><div class="nm"><span class="no">' + d.no + '</span><b>' + esc(d.n.split(' ').slice(1).join(' ')) + '</b></div><p>' + esc(first(d.n)) + ' · ' + d.age + ' anni' + (d.trait ? ' · ' + d.trait : '') + '</p>' +
+    [['Velocità', d.vel], ['Costanza', d.cos], ['Gomme', d.gom]].map(([l, v]) => '<div class="stat"><span>' + l + '</span><span class="bar"><i style="width:' + v + '%"></i></span><span class="mono">' + v + '</span></div>').join('') +
+    '<div class="stat mor"><span>Morale</span><span class="bar"><i style="width:' + d.mor + '%"></i></span><span class="mono">' + d.mor + '</span></div>' +
+    '<p>Potenziale ' + stars(potStars(d.pot)) + '<br>' + fmtCr(d.sal) + ' a GP · contratto ' + (d.con <= 1 ? '<b class="warnc">scade a fine stagione</b>' : d.con + ' stagioni') + '</p></div>').join('') + '</div>';
+  h += '<h3 class="h2">Staff</h3><div class="card list">' + Object.entries(STAFF).map(([k, s]) => '<div class="lrow"><span class="ico">' + s.ico + '</span><div><b>' + s.n + ' ' + stars(c.staff[k].lv) + '</b><small>' + esc(c.staff[k].n) + ' · ' + s.d + ' · ' + staffSal(c.staff[k].lv) + ' a GP</small></div><button class="btn sm" data-staff="' + k + '">Cambia</button></div>').join('') + '</div>';
+  const rivals = c.drivers.filter(d => d.team && d.team !== 'aurora').sort((a, b) => avgOf(b) - avgOf(a));
+  h += '<h3 class="h2">Mercato piloti</h3><div class="card list">' +
+    c.free.map(d => '<div class="lrow"><span class="ico sw2">S</span><div><b>' + esc(d.n) + '</b><small>Svincolato · ' + driverLine(d) + '</small></div><button class="btn sm" data-sign="free:' + d.id + '">' + fmtCr(d.sal * 3) + '</button></div>').join('') +
+    rivals.map(d => '<div class="lrow"><span class="ico sw2" style="background:' + teamOf(d.team).color + '"></span><div><b>' + esc(d.n) + '</b><small>' + esc(teamOf(d.team).name) + ' · ' + driverLine(d) + '</small></div><button class="btn sm" data-sign="rival:' + d.id + '">' + fmtCr(buyout(d)) + '</button></div>').join('') +
+    '<p class="legal" style="margin:8px 0 0">Gli svincolati costano tre stipendi. Per un pilota di un’altra squadra paghi la clausola, più alta se la sua squadra è più forte della tua.</p></div>';
+  h += '<h3 class="h2">Accademia giovani</h3><div class="card list">' + (c.academy.length ? c.academy.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' (vel ' + j.vel + ', cos ' + j.cos + ', gom ' + j.gom + ') · potenziale ' + stars(potStars(j.pot)) + ' · 30 a GP</small></div>' + (avgOf(j) >= 75 ? '<button class="btn sm go2" data-sign="acad:' + j.id + '">Promuovi</button>' : '<span class="chip">Cresce</span>') + '</div>').join('') : '<p style="margin:0">Nessun giovane. Lo scouting trova tre talenti tra i 17 e i 19 anni: crescono a ogni GP e a media 75 possono correre.</p>') +
+    (c.scout ? '<h4 class="sub2">Rapporto degli osservatori</h4>' + c.scout.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' · potenziale stimato ' + j.est[0] + '–' + j.est[1] + '</small></div><button class="btn sm" data-junior="' + j.id + '"' + (c.academy.length >= 2 ? ' disabled' : '') + '>Prendi</button></div>').join('')
+      : '<div class="lrow"><span class="ico">⌕</span><div><b>Scouting</b><small>Tre giovani da valutare</small></div><button class="btn sm" id="scoutB"' + (c.credits < 400 ? ' disabled' : '') + '>400</button></div>') + '</div>';
+  return h;
+}
+function tabFabbrica(c) {
+  const costMul = hasRule('budget') ? 1.3 : 1, slots = c.fac.fact.lv;
+  let h = '<h3 class="h2">Sviluppo · ' + c.projects.length + '/' + slots + ' progetti</h3><div class="card parts">' + PARTS.map(p => {
+    const lv = c.parts[p.k], pr = c.projects.find(x => x.part === p.k), cost = Math.round(PART_COST[lv] * costMul * (c.focus === p.k ? .7 : 1));
+    const right = lv >= 5 ? '<span class="chip">Al massimo</span>' : pr ? (pr.gp > 1 ? '<button class="btn sm gold" data-rush="' + p.k + '">Accelera · ' + fmtCr(Math.round(pr.cost * .5)) + '</button>' : '<span class="chip">Pronto al prossimo GP</span>')
+      : '<button class="btn sm" data-proj="' + p.k + '"' + (canSpendDev(c, cost) && c.projects.length < slots ? '' : ' disabled') + '>Avvia · ' + fmtCr(cost) + '</button>';
+    return '<div class="part"><div><b>' + p.n + (c.focus === p.k ? ' <span class="chip hot">Priorità −30%</span>' : '') + '</b><small>' + p.d + '</small><div class="lv">' + [1, 2, 3, 4, 5].map(k => '<i class="' + (k <= lv ? 'on' : pr && k === lv + 1 ? 'wip' : '') + '"></i>').join('') + '</div>' +
+      '<small>' + (pr ? 'In sviluppo: ' + pr.gp + ' GP · riuscita ' + Math.round(pr.odds * 100) + '%' : lv < 5 ? projTime(c, p.k) + ' GP · riuscita ' + Math.round(projOdds(c, p.k) * 100) + '%' : '') + '</small></div>' + right + '</div>';
+  }).join('') + (hasRule('budget') ? '<div class="meter"><span>Tetto di spesa: ' + fmtCr(c.fin.dev) + ' di ' + fmtCr(devCap(c)) + '</span><i style="--f:' + Math.min(1, c.fin.dev / devCap(c)) + '"></i></div>' : '') + '</div>';
+  const allow = engAllow(c);
+  h += '<h3 class="h2">Motori · ' + allow + ' a stagione per auto</h3><div class="card list">' + mineDrivers().map(d => {
+    const e = engOf(d.id), w = Math.round(e.w * 100), pen = (weekend().engPen || []).includes(d.id);
+    return '<div class="lrow"><span class="ico">' + e.n + '</span><div><b>' + esc(first(d.n)) + ' · motore ' + e.n + ' di ' + allow + '</b><small><span class="wbar2"><i style="width:' + Math.min(100, w) + '%;background:' + (w > 85 ? 'var(--warn)' : w > 60 ? 'var(--gold)' : 'var(--good)') + '"></i></span> usura ' + w + '%' + (w > 75 ? ' · rischio di guasto in gara' : '') + (pen ? ' · penalità in griglia' : '') + '</small></div>' +
+      '<button class="btn sm" data-eng="' + d.id + '"' + (e.w < .3 ? ' disabled' : '') + '>' + (e.n >= allow ? 'Nuovo · −5 pos.' : 'Nuovo') + '</button></div>';
+  }).join('') + '<p class="legal" style="margin:8px 0 0">La modalità Grassa consuma di più il motore. Oltre il limite stagionale ogni motore nuovo costa 5 posizioni in griglia.</p></div>';
+  const half = c.round > c.seasonLen / 2;
+  h += '<h3 class="h2">Auto della stagione ' + (c.season + 1) + '</h3><div class="card">' + (half
+    ? '<p style="margin:0 0 10px">Ogni credito messo qui non va sull’auto di quest’anno. Investiti: <b>' + fmtCr(c.nextCar) + '</b> → +' + Math.round(nextCarBonus(c) / .003) + ' passi di prestazione l’anno prossimo' + ((c.season + 1) % 2 === 1 ? ' e la rivoluzione tecnica ti toglie un solo livello di aerodinamica se arrivi a 1.500' : '') + '.</p><button class="btn sm" id="nextB"' + (canSpendDev(c, 500) && nextCarBonus(c) < .012 ? '' : ' disabled') + '>Investi 500</button>'
+    : '<p style="margin:0">Dalla seconda metà della stagione puoi spostare il lavoro sull’auto dell’anno prossimo.</p>') + '</div>';
+  h += '<h3 class="h2">Strutture</h3><div class="card list">' + Object.entries(FAC).map(([k, f]) => {
+    const x = c.fac[k];
+    return '<div class="lrow"><span class="ico">' + x.lv + '</span><div><b>' + f.n + ' ' + stars(x.lv, 3) + '</b><small>' + (x.lv === 1 ? 'Base' : f.d(x.lv)) + (x.lv < 3 ? ' · al livello ' + (x.lv + 1) + ': ' + f.d(x.lv + 1) : '') + '</small></div>' +
+      (x.b ? '<span class="chip">Lavori: ' + x.b + ' GP</span>' : x.lv >= 3 ? '<span class="chip">Massimo</span>' : '<button class="btn sm" data-fac="' + k + '"' + (c.credits < FAC_COST[x.lv + 1] ? ' disabled' : '') + '>' + fmtCr(FAC_COST[x.lv + 1]) + '</button>') + '</div>';
+  }).join('') + '<p class="legal" style="margin:8px 0 0">Ogni livello costa 15 crediti a GP di manutenzione.</p></div>';
+  return h;
+}
+function tabFinanze(c) {
+  const fc = fixedCosts(c), L = c.fin.last, inc = c.sponsors.reduce((s, x) => s + x.fee, 0);
+  let h = '<h3 class="h2">Bilancio</h3><div class="card earn"><div><span>Crediti in cassa</span><span class="mono">' + fmtCr(c.credits) + '</span></div>' +
+    '<div><span>Quote sponsor a GP</span><span class="mono" style="color:var(--good)">+' + fmtCr(inc) + '</span></div>' +
+    '<div><span>Costi fissi a GP (piloti ' + fmtCr(fc.drv) + ', staff ' + fmtCr(fc.st) + ', strutture ' + fmtCr(fc.fac) + (fc.ac ? ', accademia ' + fmtCr(fc.ac) : '') + ')</span><span class="mono" style="color:var(--warn)">−' + fmtCr(fc.tot) + '</span></div>' +
+    '<div class="tot"><span>Stagione: entrate ' + fmtCr(c.fin.inc) + ' · uscite ' + fmtCr(c.fin.exp) + '</span><span class="mono">' + (c.fin.inc - c.fin.exp >= 0 ? '+' : '−') + fmtCr(Math.abs(c.fin.inc - c.fin.exp)) + '</span></div></div>';
+  if (L) h += '<h3 class="h2">Ultimo GP · ' + esc(L.gp) + '</h3><div class="card earn">' + ledgerRows(L) + '</div>';
+  h += '<h3 class="h2">Sponsor</h3>';
+  for (const slot of [0, 1]) {
+    const sp = c.sponsors.find(s => s.slot === slot);
+    if (sp) h += '<div class="card sponsor"><div class="logo">' + sp.mark + '</div><b>' + esc(sp.n) + ' · ' + (slot ? 'secondario' : 'principale') + ' · ' + TIER[sp.tier].n + '</b><span>' + fmtCr(sp.fee) + ' a GP · obiettivo: ' + goalTxt(sp.goal) + ' → +' + fmtCr(sp.bonus) + ' · ancora ' + sp.gp + ' GP</span>' +
+      '<div class="meter" style="grid-column:1/-1"><span>Soddisfazione ' + sp.sat + '%' + (sp.sat < 30 ? ' · rischio di rescissione' : '') + '</span><i style="--f:' + sp.sat / 100 + '"></i></div></div>';
+    else {
+      if (!c.offers[slot]) c.offers[slot] = sponsorOffers(slot);
+      h += '<div class="card"><b>Posto da sponsor ' + (slot ? 'secondario' : 'principale') + ' libero</b><p class="legal" style="margin:4px 0 10px">Tre offerte. Sicuro paga di più ogni GP; Ambizioso paga molto solo se centri l’obiettivo. Gli obiettivi mancati abbassano la soddisfazione.</p>' +
+        c.offers[slot].map((o, k) => '<button class="prod" data-spon="' + slot + ':' + k + '"><span class="pi">' + o.mark + '</span><div><b>' + esc(o.n) + ' · ' + TIER[o.tier].n + '</b><span>' + fmtCr(o.fee) + ' a GP · ' + goalTxt(o.goal) + ' → +' + fmtCr(o.bonus) + ' · 6 GP</span></div><span class="p">Firma</span></button>').join('') + '</div>';
+    }
+  }
+  return h;
+}
+function ledgerRows(L) { return L.rows.map(r => '<div><span>' + esc(r[0]) + '</span><span class="mono" style="color:' + (r[1] >= 0 ? 'var(--good)' : 'var(--warn)') + '">' + (r[1] >= 0 ? '+' : '−') + fmtCr(Math.abs(r[1])) + '</span></div>').join('') + '<div class="tot"><span>Saldo del GP</span><span class="mono">' + (L.net >= 0 ? '+' : '−') + fmtCr(Math.abs(L.net)) + '</span></div>'; }
+function bindMgr(c) {
+  app.querySelectorAll('[data-mtab]').forEach(b => b.onclick = () => { c.tab = b.dataset.mtab; save(); renderBox(); window.scrollTo(0, 0); track('hub_tab', { tab:c.tab }); });
+  const nk = $('#newsOk'); if (nk) nk.onclick = () => { c.news = []; save(); renderBox(); };
+  app.querySelectorAll('[data-staff]').forEach(b => b.onclick = () => openStaff(b.dataset.staff));
+  app.querySelectorAll('[data-sign]').forEach(b => b.onclick = () => { const [src, id] = b.dataset.sign.split(':'); openSign(src, id); });
+  app.querySelectorAll('[data-junior]').forEach(b => b.onclick = () => takeJunior(b.dataset.junior));
+  const sc = $('#scoutB'); if (sc) sc.onclick = doScout;
+  app.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => startProject(b.dataset.proj));
+  app.querySelectorAll('[data-rush]').forEach(b => b.onclick = () => rushProject(b.dataset.rush));
+  app.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => newEngine(b.dataset.eng));
+  app.querySelectorAll('[data-fac]').forEach(b => b.onclick = () => buildFac(b.dataset.fac));
+  const nb = $('#nextB'); if (nb) nb.onclick = investNext;
+  app.querySelectorAll('[data-spon]').forEach(b => b.onclick = () => { const [s, k] = b.dataset.spon.split(':').map(Number); signSponsor(s, k); });
+}
+
 /* =====================  Box (hub)  ===================== */
-function weekend() { const c = C(); if (!c.weekend || c.weekend.round !== c.round) c.weekend = { round:c.round, fp:null, quali:null, setup:'medio', know:0 }; return c.weekend; }
+const myCarsN = () => C().role === 'driver' ? 1 : 2;
+const useSet = (w, k) => { w.sets[k] = Math.max(0, w.sets[k] - myCarsN()); };
+function weekend() { const W = weekend0(); if (!W.sets) { const n = myCarsN(); W.sets = { S:3 * n, M:2 * n, H:2 * n }; } return W; }
+function weekend0() { const c = C(); if (!c.weekend || c.weekend.round !== c.round) c.weekend = { round:c.round, fp:null, quali:null, setup:'medio', know:baseKnow(c) }; return c.weekend; }
 function renderBox() {
   screen = 'box'; stopRace(); closeSheet();
   const c = C(); if (!c) return renderStart();
+  ensureMgr(c);
   if (c.round > c.seasonLen) return renderSeasonEnd();
   if (!RACE_LEN[c.laps]) c.laps = 12;
   const w = weekend(), gp = gpOf(c.round), mt = teamOf(myTeamId()), isDrv = c.role === 'driver';
   const me = isDrv ? drvOf('me') : null, mine = c.drivers.filter(d => d.team === myTeamId());
   const live = S.starterAt && !S.starterBought && Date.now() < S.starterAt + 48 * 3600e3;
   const svg = trackSvg(gp);
-  const plans = plansFor(c.laps); if (c.planIdx == null || c.planIdx >= plans.length) c.planIdx = 0; c.startComp = plans[c.planIdx].st[0];
+  const plans = plansFor(c.laps);
   const sets = Object.entries(SETUPS).map(([k, v]) => '<button data-setup="' + k + '" aria-pressed="' + (w.setup === k) + '"><b>' + v.n + '</b><small>' + v.d + (w.fp && w.fp.reveal && STYLE[gp.style].setup === k ? ' · ideale qui' : '') + '</small></button>').join('');
-  const fpTxt = w.fp ? 'Fatte' + (w.fp.best ? ' · miglior giro ' + lapStr(w.fp.best) : '') + ' · conoscenza pista ' + w.know + '%' : 'I piloti imparano la pista e l’ingegnere trova l’assetto giusto. Facoltative.';
-  const qTxt = w.quali ? 'Fatta · ' + (isDrv ? 'partirai P' + (w.quali.grid.indexOf('me') + 1) : mine.map(d => esc(first(d.n)) + ' P' + (w.quali.grid.indexOf(d.id) + 1)).join(', ')) : 'Un giro secco con le morbide. Giro sicuro, o al limite: più veloce ma rischi un errore.';
+  const fpTxt = w.fp ? 'Fatte' + (w.fp.best ? ' · miglior giro ' + lapStr(w.fp.best) : '') + ' · conoscenza pista ' + w.know + '%' : 'I piloti imparano la pista e l’ingegnere trova l’assetto giusto. Facoltative: usano un set di medie per auto.';
+  const qTxt = w.quali ? 'Fatta · ' + (isDrv ? 'partirai P' + (w.quali.grid.indexOf('me') + 1) : mine.map(d => esc(first(d.n)) + ' P' + (w.quali.grid.indexOf(d.id) + 1)).join(', ')) : 'Un giro secco con le morbide (un set per auto). Giro sicuro, o al limite: più veloce ma rischi un errore.';
   const sess = (n, title, txt, state, acts) => '<div class="sess ' + state + '"><span class="ix">' + (state === 'done' ? '✓' : n) + '</span><div><b>' + title + '</b><small>' + txt + '</small></div><div class="acts">' + acts + '</div></div>';
   const stTable = () => standTab === 'd'
     ? c.drivers.map(d => [d, c.standings.d[d.id] || 0]).sort((a, b) => b[1] - a[1]).map(([d, p], i) => '<tr class="' + (d.team === myTeamId() && (!isDrv || d.id === 'me') ? 'me' : '') + '"><td class="p">' + (i + 1) + '</td><td><span class="sw" style="--c:' + teamOf(d.team).color + '"></span>' + esc(d.n) + '</td><td class="pt">' + p + '</td></tr>').join('')
     : c.teams.map(t => [t, c.standings.t[t.id] || 0]).sort((a, b) => b[1] - a[1]).map(([t, p], i) => '<tr class="' + (t.id === myTeamId() ? 'me' : '') + '"><td class="p">' + (i + 1) + '</td><td><span class="sw" style="--c:' + t.color + '"></span>' + esc(t.name) + '</td><td class="pt">' + p + '</td></tr>').join('');
   const rl = RULES.find(r => r.id === c.rules[0]);
   const mate = isDrv ? c.drivers.find(d => d.team === mt.id && d.id !== 'me') : null;
-  let h = '<div class="page" style="--team:' + mt.color + '">' +
+  const head = '<div class="page" style="--team:' + mt.color + '">' +
     '<header class="mast"><div class="wrap"><div><p class="kicker">Stagione ' + c.season + ' · GP ' + c.round + ' di ' + c.seasonLen + ' · ' + (isDrv ? 'Pilota' : 'Manager') + '</p><h1>' + esc(isDrv ? me.n : mt.name) + '</h1><p class="sub">' + (isDrv ? esc(mt.name) + ' · compagno: ' + esc(mate.n) : 'Piloti: ' + mine.map(d => esc(d.n)).join(' e ')) + '</p></div>' +
       '<div class="mright"><button class="cr" id="shop" aria-label="Crediti, apri il negozio"><i></i>' + fmtCr(c.credits) + '<span class="plus">+</span></button></div></div><div class="stripe"></div></header>' +
-    '<div class="wrap sect">' +
-    (live ? '<button class="prod feature" id="starterB"><span class="pi">★</span><div><b>' + SKU.starter.n + '</b><span>' + SKU.starter.d + ' · scade tra ' + Math.max(1, Math.round((S.starterAt + 48 * 3600e3 - Date.now()) / 3600e3)) + ' h</span></div><span class="p">' + eur(SKU.starter.price) + '</span></button>' : '') +
+    '<div class="wrap sect">' + (isDrv ? '' : mgrTabs(c) + (c.tab === 'w' ? newsCard(c) : ''));
+  const wk = (live ? '<button class="prod feature" id="starterB"><span class="pi">★</span><div><b>' + SKU.starter.n + '</b><span>' + SKU.starter.d + ' · scade tra ' + Math.max(1, Math.round((S.starterAt + 48 * 3600e3 - Date.now()) / 3600e3)) + ' h</span></div><span class="p">' + eur(SKU.starter.price) + '</span></button>' : '') +
     '<div class="card"><div class="gp"><div><p class="kicker" style="color:var(--muted);opacity:1">Prossimo weekend</p><h2>GP ' + esc(gp.n) + '</h2>' +
       '<div class="meta">' + (gp.ctrl ? '<span class="chip hot">Ispirato all’originale</span>' : '') + '<span class="chip">' + STYLE[gp.style].label + '</span><span class="chip">' + c.laps + ' giri</span><span class="chip">Pioggia ' + Math.round(gp.rain * 100) + '%</span></div></div>' + svg + '</div>' +
       '<div class="sessions">' +
         sess(1, 'Prove libere', fpTxt, w.fp ? 'done' : 'now', w.fp ? '' : '<button class="btn sm go2" id="fpGo">Fai le prove</button><button class="btn sm" id="fpSim">Salta</button>') +
         sess(2, 'Qualifica', qTxt, w.quali ? 'done' : (w.fp ? 'now' : ''), w.quali ? '' : '<button class="btn sm go2" id="qGo">Giro sicuro</button><button class="btn sm" id="qSim">Al limite</button>') +
         sess(3, 'Gara', c.laps + ' giri. ' + (isDrv ? 'DRS, carburante, gomme e radio con l’ingegnere.' : c.mode === 'drive' ? 'Segui ' + esc(first(drvOf(c.driveId).n)) + ' da vicino: DRS, carburante, gomme e radio.' : 'Dal muretto: strategia per entrambe le auto.'), w.quali ? 'now' : '', '') +
-      '</div></div>' +
+      '</div></div>' + (isDrv ? '' : mineDrivers().filter(d => engOf(d.id).w > .75).map(d => '<div class="card news"><b>Motore di ' + esc(first(d.n)) + ' al ' + Math.round(engOf(d.id).w * 100) + '%</b><p class="legal" style="margin:4px 0 0">Rischio di guasto in gara. Puoi montarne uno nuovo nella scheda Fabbrica.</p></div>').join('')) + (isDrv || !c.sponsors.length ? '' : '<div class="card"><b>Obiettivi sponsor</b>' + c.sponsors.map(sp => '<div class="lrow"><span class="ico">' + sp.mark + '</span><div><b>' + goalTxt(sp.goal) + '</b><small>' + esc(sp.n) + ' · +' + fmtCr(sp.bonus) + ' se riesce · soddisfazione ' + sp.sat + '%</small></div></div>').join('') + '</div>') +
     '<h3 class="h2">Assetto</h3><div class="seg three" role="group" aria-label="Assetto">' + sets + '</div>' +
     '<div class="card">' +
       (!isDrv ? '<div class="opt col"><span class="lab">In gara</span><div class="seg"><button data-mode="drive" aria-pressed="' + (c.mode === 'drive') + '"><b>Con il pilota</b><small>Segui un pilota da vicino: DRS, carburante, gomme, radio</small></button><button data-mode="wall" aria-pressed="' + (c.mode === 'wall') + '"><b>Dal muretto</b><small>Ritmo, pit stop e ordini di scuderia</small></button></div></div>' +
         (c.mode === 'drive' ? '<div class="opt"><span class="lab">Segui</span><span class="pills">' + mine.map(d => '<button data-drv="' + d.id + '" aria-pressed="' + (c.driveId === d.id) + '">' + esc(first(d.n)) + '</button>').join('') + '</span></div>' : '') : '') +
-      '<div class="opt col"><span class="lab">Strategia di gara<small>Il piano che segue il box. In gara puoi sempre cambiarlo.</small></span><div class="plans">' + plans.map((p, k) => '<button class="plan" data-plan="' + k + '" aria-pressed="' + (c.planIdx === k) + '"><b>' + planName(p) + '</b><span class="stints">' + p.st.map(tyreIco).join('<i>→</i>') + '</span><small>' + (p.box.length ? 'Box al giro ' + p.box.join(' e ') : 'Nessun pit stop') + ' · ' + (k === 0 ? 'la più veloce' : p.d < .5 ? 'stesso tempo' : '+' + p.d.toFixed(1) + ' s') + '</small></button>').join('') + '</div></div>' +
+      '<div class="opt col"><span class="lab">Strategia di gara<small>Il piano che segue il box. In gara puoi sempre cambiarlo.</small></span>' + planPicker(c, w, plans) + '</div>' +
       '<div class="opt col"><span class="lab">Durata delle gare</span><span class="pills">' + Object.entries(RACE_LEN).map(([k, v]) => '<button data-laps="' + k + '" aria-pressed="' + (c.laps == k) + '">' + v + '</button>').join('') + '</span></div></div>' +
     '<h3 class="h2">Regolamento stagione ' + c.season + '</h3><div class="card rule"><span class="ico">' + rl.ico + '</span><b>' + rl.n + (c.revolution ? ' + rivoluzione tecnica' : '') + '</b><span>' + rl.d + (c.revolution ? ' Nuove regole aerodinamiche: le squadre sono più vicine.' : '') + '</span></div>';
+  let h = head;
   if (isDrv) {
+    h += wk;
     const tc = a => 150 + Math.max(0, me[a] - 70) * 25;
     const rank = c.teams.slice().sort((a, b) => teamStrength(b) - teamStrength(a)).indexOf(mt);
     h += '<h3 class="h2">Il tuo pilota</h3><div class="card">' + [['vel','Velocità'], ['cos','Costanza'], ['gom','Gomme']].map(([k, n]) =>
@@ -788,20 +1171,11 @@ function renderBox() {
       '<h3 class="h2">La tua squadra</h3><div class="card"><div class="opt"><span class="lab">' + esc(mt.name) + '<small>Monoposto ' + (rank + 1) + 'ª su ' + c.teams.length + ' per prestazioni</small></span><span class="sw" style="--c:' + mt.color + ';height:26px;width:10px"></span></div>' +
       '<p class="legal" style="margin:0">A fine stagione i team guardano la classifica e il confronto con il compagno. Più in alto arrivi, migliori sono le offerte.</p></div>';
   } else {
-    const costMul = hasRule('budget') ? 1.3 : 1;
-    h += '<h3 class="h2">Piloti</h3><div class="drivers">' + mine.map(d => '<div class="card drv"><div class="nm"><span class="no">' + d.no + '</span><b>' + esc(d.n.split(' ').slice(1).join(' ')) + '</b></div><p>' + esc(first(d.n)) + (d.trait ? ' · ' + d.trait : '') + '</p>' +
-      [['Velocità', d.vel], ['Costanza', d.cos], ['Gomme', d.gom]].map(([l, v]) => '<div class="stat"><span>' + l + '</span><span class="bar"><i style="width:' + v + '%"></i></span><span class="mono">' + v + '</span></div>').join('') +
-      '<div class="stat mor"><span>Morale</span><span class="bar"><i style="width:' + d.mor + '%"></i></span><span class="mono">' + d.mor + '</span></div></div>').join('') + '</div>' +
-      '<h3 class="h2">Monoposto</h3><div class="card parts">' + PARTS.map(p => {
-        const lv = c.parts[p.k], cost = Math.round(PART_COST[lv] * costMul * (c.focus === p.k ? .7 : 1));
-        return '<div class="part"><div><b>' + p.n + (c.focus === p.k ? ' <span class="chip hot">Priorità −30%</span>' : '') + '</b><small>' + p.d + '</small><div class="lv">' + [1,2,3,4,5].map(k => '<i class="' + (k <= lv ? 'on' : '') + '"></i>').join('') + '</div></div>' +
-          (lv >= 5 ? '<span class="chip">Al massimo</span>' : '<button class="btn sm" data-up="' + p.k + '" data-cost="' + cost + '"' + (c.credits >= cost ? '' : ' disabled') + '>Migliora · ' + fmtCr(cost) + '</button>') + '</div>';
-      }).join('') + '</div>' +
-      '<h3 class="h2">Sponsor</h3><div class="card sponsor"><div class="logo">' + SPONSOR.mark + '</div><b>' + SPONSOR.n + ' · obiettivo del GP</b><span>' + OBJECTIVES[(c.round - 1) % 3].t + ' → +' + fmtCr(OBJECTIVES[(c.round - 1) % 3].r) + ' crediti</span></div>' +
-      '<h3 class="h2">Livrea</h3><div class="card"><div class="livery" role="group" aria-label="Colore livrea">' + LIVERIES.map(l => '<button data-liv="' + l.c + '" class="' + (l.p && !S.unlocked.includes(l.c) ? 'locked' : '') + '" style="--c:' + l.c + '" aria-pressed="' + (mt.color === l.c) + '" aria-label="' + (l.n || 'Colore') + (l.p ? ' (pass stagionale)' : '') + '"></button>').join('') + '</div><p class="legal" style="margin:10px 0 0">★ Livree esclusive del pass stagionale.</p></div>';
+    const livrea = '<h3 class="h2">Livrea</h3><div class="card"><div class="livery" role="group" aria-label="Colore livrea">' + LIVERIES.map(l => '<button data-liv="' + l.c + '" class="' + (l.p && !S.unlocked.includes(l.c) ? 'locked' : '') + '" style="--c:' + l.c + '" aria-pressed="' + (mt.color === l.c) + '" aria-label="' + (l.n || 'Colore') + (l.p ? ' (pass stagionale)' : '') + '"></button>').join('') + '</div><p class="legal" style="margin:10px 0 0">★ Livree esclusive del pass stagionale.</p></div>';
+    h += c.tab === 's' ? tabSquadra(c) + livrea : c.tab === 'f' ? tabFabbrica(c) : c.tab === 'e' ? tabFinanze(c) : wk;
   }
-  h += '<h3 class="h2">Classifiche</h3><div class="card"><div class="tabs"><button data-tab="d" aria-pressed="' + (standTab === 'd') + '">Piloti</button><button data-tab="t" aria-pressed="' + (standTab === 't') + '">Costruttori</button></div><table class="std"><tbody>' + stTable() + '</tbody></table></div>' +
-    '<button class="linkbtn" id="reset">Ricomincia una nuova carriera</button><div class="foot"></div></div>' +
+  h += (isDrv || c.tab === 'w' ? '<h3 class="h2">Classifiche</h3><div class="card"><div class="tabs"><button data-tab="d" aria-pressed="' + (standTab === 'd') + '">Piloti</button><button data-tab="t" aria-pressed="' + (standTab === 't') + '">Costruttori</button></div><table class="std"><tbody>' + stTable() + '</tbody></table></div>' +
+    '<button class="linkbtn" id="reset">Ricomincia una nuova carriera</button>' : '') + '<div class="foot"></div></div>' +
     '<div class="go"><div class="wrap"><button class="btn primary wide" id="next">' + (!w.fp ? 'Prove libere' : !w.quali ? 'Qualifica' : 'Gara') + '</button></div></div></div>';
   app.innerHTML = h;
   $('#shop').onclick = () => openShop('topbar');
@@ -809,29 +1183,43 @@ function renderBox() {
   app.querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { w.setup = b.dataset.setup; save(); renderBox(); });
   app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { c.mode = b.dataset.mode; save(); renderBox(); });
   app.querySelectorAll('[data-drv]').forEach(b => b.onclick = () => { c.driveId = b.dataset.drv; save(); renderBox(); });
-  app.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => { c.planIdx = +b.dataset.plan; track('plan', { stops:plans[c.planIdx].st.length - 1 }); save(); renderBox(); });
+  app.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => { const [id, k] = b.dataset.plan.split(':'); c.planBy[id] = +k; track('plan', { stops:plans[+k].st.length - 1 }); save(); renderBox(); });
+  if (!isDrv) bindMgr(c);
   app.querySelectorAll('[data-laps]').forEach(b => b.onclick = () => { c.laps = +b.dataset.laps; track('race_length', { laps:c.laps }); save(); renderBox(); });
   app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { standTab = b.dataset.tab; renderBox(); });
   app.querySelectorAll('[data-train]').forEach(b => b.onclick = () => { const k = b.dataset.train, cost = 150 + Math.max(0, me[k] - 70) * 25; if (c.credits < cost) return; c.credits -= cost; me[k]++; track('train', { attr:k, value:me[k] }); save(); toast('Allenamento fatto: ' + me[k]); renderBox(); });
   app.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const k = b.dataset.up, cost = +b.dataset.cost; if (c.credits < cost) return; c.credits -= cost; c.parts[k]++; track('upgrade', { part:k, level:c.parts[k] }); save(); toast(PARTS.find(p => p.k === k).n + ' al livello ' + c.parts[k]); renderBox(); });
   app.querySelectorAll('[data-liv]').forEach(b => b.onclick = () => { const l = LIVERIES.find(x => x.c === b.dataset.liv); if (l.p && !S.unlocked.includes(l.c)) { openShop('livery'); return; } mt.color = l.c; save(); renderBox(); });
   const fg = $('#fpGo'); if (fg) fg.onclick = () => doPractice();
-  const fs = $('#fpSim'); if (fs) fs.onclick = () => { w.fp = { best:0, reveal:false }; w.know = 20; save(); renderBox(); };
+  const fs = $('#fpSim'); if (fs) fs.onclick = () => { w.fp = { best:0, reveal:false }; w.know = Math.max(20, baseKnow(c)); save(); renderBox(); };
   const qg = $('#qGo'); if (qg) qg.onclick = () => doQuali('safe');
   const qs = $('#qSim'); if (qs) qs.onclick = () => doQuali('limit');
   $('#next').onclick = () => { if (!w.fp) doPractice(); else if (!w.quali) doQuali('safe'); else startSession('race'); };
-  $('#reset').onclick = e => { if (e.target.dataset.armed) { S.career = null; save(); renderStart(); return; } e.target.dataset.armed = 1; e.target.textContent = 'Tocca ancora: perderai la carriera attuale'; };
+  if ($('#reset')) $('#reset').onclick = e => { if (e.target.dataset.armed) { S.career = null; save(); renderStart(); return; } e.target.dataset.armed = 1; e.target.textContent = 'Tocca ancora: perderai la carriera attuale'; };
+}
+function setsOf(st) { const n = { S:0, M:0, H:0 }; st.forEach(k => n[k]++); return n; }
+function planPicker(c, w, plans) {
+  const ids = c.role === 'driver' ? ['me'] : mineDrivers().map(d => d.id);
+  c.planBy = c.planBy || {};
+  ids.forEach(id => { if (c.planBy[id] == null || c.planBy[id] >= plans.length) c.planBy[id] = 0; });
+  const fits = (id, k) => { const tot = { S:0, M:0, H:0 }; ids.forEach(x => { const n = setsOf(plans[x === id ? k : c.planBy[x]].st); for (const q in n) tot[q] += n[q]; }); return ['S', 'M', 'H'].every(q => tot[q] <= w.sets[q]); };
+  ids.forEach(id => { if (!fits(id, c.planBy[id])) { const k = plans.findIndex((p, j) => fits(id, j)); if (k >= 0) c.planBy[id] = k; } });
+  return '<div class="setsrow">Gomme nuove del weekend: ' + ['S', 'M', 'H'].map(k => tyreIco(k) + ' ' + w.sets[k]).join(' ') + '</div>' +
+    ids.map(id => (ids.length > 1 ? '<span class="lab2">' + esc(first(drvOf(id).n)) + '</span>' : '') + '<div class="plans">' + plans.map((p, k) => {
+      const ok = fits(id, k);
+      return '<button class="plan" data-plan="' + id + ':' + k + '" aria-pressed="' + (c.planBy[id] === k) + '"' + (ok ? '' : ' disabled') + '><b>' + planName(p) + '</b><span class="stints">' + p.st.map(tyreIco).join('<i>→</i>') + '</span><small>' + (p.box.length ? 'Box al giro ' + p.box.join(' e ') : 'Nessun pit stop') + ' · ' + (!ok ? 'set di gomme insufficienti' : k === 0 ? 'la più veloce' : p.d < .5 ? 'stesso tempo' : '+' + p.d.toFixed(1) + ' s') + '</small></button>';
+    }).join('') + '</div>').join('');
 }
 function doPractice() {
-  const w = weekend(); w.fp = { best:0, reveal:true }; w.know = 100; save(); track('fp_done', {});
+  const w = weekend(); w.fp = { best:0, reveal:true }; w.know = 100; useSet(w, 'M'); save(); track('fp_done', {});
   loadTrack(gpOf(C().round));
   const ideal = STYLE[GP.style].setup;
   renderPage('Prove libere finite', '<p>I piloti conoscono la pista al 100%: qualche decimo in più in qualifica e in gara.</p><p style="margin:0">L’ingegnere ha capito l’assetto giusto per ' + esc(GP.n) + ': <b>' + SETUPS[ideal].n + '</b>. ' + (weekend().setup === ideal ? 'È già quello che hai scelto.' : 'Puoi cambiarlo dal box prima della qualifica.') + '</p>', [{ t:'Torna al box', primary:true, fn:renderBox }]);
 }
 function doQuali(risk) {
   const c = C(), w = weekend();
-  if (!w.fp) { w.fp = { best:0, reveal:false }; w.know = 20; }
-  const q = simQuali(null, risk); save();
+  if (!w.fp) { w.fp = { best:0, reveal:false }; w.know = Math.max(20, baseKnow(c)); }
+  const q = simQuali(null, risk); useSet(w, 'S'); save();
   const ids = c.role === 'driver' ? ['me'] : c.drivers.filter(d => d.team === 'aurora').map(d => d.id);
   const best = Math.min(...ids.map(id => q.grid.indexOf(id) + 1)), pole = q.times[q.grid[0]];
   const rows = q.grid.map((id, p) => { const d = drvOf(id), t = teamOf(d.team); return '<tr class="' + (ids.includes(id) ? 'me' : '') + '"><td class="p">' + (p + 1) + '</td><td class="n"><span class="sw" style="--c:' + t.color + '"></span>' + esc(d.n) + '</td><td class="t">' + (p ? '+' + ((q.times[id] - pole) * TS).toFixed(3) : lapStr(pole)) + '</td></tr>'; }).join('');
@@ -916,9 +1304,10 @@ function startSession(kind) {
   const mode = kind === 'race' ? (c.role === 'driver' ? 'drive' : c.mode) : 'drive';
   let cars;
   if (kind === 'race') {
-    const grid = (w.quali && w.quali.grid) || simQuali(null).grid;
-    const plans = plansFor(c.laps), plan = plans[c.planIdx || 0] || plans[0];
-    cars = grid.map((id, p) => { const d = drvOf(id), car = makeCar(d, teamOf(d.team), p); car.grid = p + 1; car.d = p % 2 ? -10 : 10; car.dist = -14 - p * 24; car.s = (car.dist % T.L + T.L) % T.L; car.comp = car.mine ? plan.st[0] : (Math.random() < .3 ? 'S' : Math.random() < .8 ? 'M' : 'H'); if (car.id === drivenId) car.plan = { st:plan.st.slice(), box:plan.box.slice(), next:0 }; return car; });
+    const grid = ((w.quali && w.quali.grid) || simQuali(null).grid).slice();
+    for (const id of (w.engPen || [])) { const i = grid.indexOf(id); if (i >= 0) { grid.splice(i, 1); grid.splice(Math.min(grid.length, i + 5), 0, id); } }
+    const plans = plansFor(c.laps), planOf = id => plans[(c.planBy || {})[id] || 0] || plans[0];
+    cars = grid.map((id, p) => { const d = drvOf(id), car = makeCar(d, teamOf(d.team), p); car.grid = p + 1; car.d = p % 2 ? -10 : 10; car.dist = -14 - p * 24; car.s = (car.dist % T.L + T.L) % T.L; if (car.mine) { const pl = planOf(car.id); car.comp = pl.st[0]; car.plan = { st:pl.st.slice(), box:pl.box.slice(), next:0 }; } else car.comp = Math.random() < .3 ? 'S' : Math.random() < .8 ? 'M' : 'H'; return car; });
     if (mode === 'drive') cars.find(x => x.id === drivenId).driven = true;
   } else {
     const d = drvOf(drivenId), car = makeCar(d, teamOf(d.team), 0);
@@ -933,6 +1322,10 @@ function startSession(kind) {
         coach:mode === 'drive' && !S.coach3, fast:null, feed:[], feedV:0, adv:{}, guide:false, slipMul:hasRule('scia') ? 1.14 : 1.11, drsMul:hasRule('scia') ? 1.13 : 1.1, wearMul:hasRule('gomme') ? .75 : 1 };
   if (me) { R.dcal = 1; R.input.dT = me.d; }
   R.scPlan = kind === 'race' && Math.random() < { cittadino:.55, misto:.4, veloce:.3 }[gp.style] ? rnd(.25, .65) * laps * T.L : null;
+  if (kind === 'race') {
+    R.sets = Object.assign({ S:0, M:0, H:0 }, w.sets); R.cars.filter(x => x.mine).forEach(x => { R.sets[x.comp] = Math.max(0, R.sets[x.comp] - 1); });
+    if (c.mgr) R.cars.filter(x => x.mine).forEach(x => { const e = engOf(x.id), pf = clamp((e.w - .7) * .9, 0, .6) * (1 - .1 * (c.staff.mech.lv - 1)); if (Math.random() < pf) x.failAt = rnd(.2, .85) * laps * T.L; });
+  }
   R.tutor = kind === 'race' && mode === 'drive' && !S.firstDone; if (me && kind === 'race') me.bat = 3;
   track('session_start', { kind, gp:gp.n, mode, laps, rain:!!rain });
   renderSession();
@@ -948,7 +1341,7 @@ const drivenPace = c => Math.min(1, .956 + c.vel * .0005 + (c.mor - 70) * .0002)
 function aiPace(c) {
   const base = .95 + c.vel * .0005 + (c.mor - 70) * .0002;
   const fuelF = c.fuel <= 0 ? .78 : [.988, 1, 1.012][c.fmode ?? 1];   // magra / normale / grassa
-  return Math.min(1.01, base * [.985, 1, 1.012][c.mode]) * fuelF * (1 - .1 * (c.dmg || 0)) + c.jit;
+  return Math.min(1.01, base * [.985, 1, 1.012][c.mode]) * fuelF * (1 - .1 * (c.dmg || 0)) * (c.engPen || 1) + c.jit;
 }
 function wearPerLap(c) {
   if (R.kind !== 'race') return .08;
@@ -973,6 +1366,7 @@ function radio(msg, who) { if (R.mode === 'drive') { eng(msg, 'info'); return; }
 function maybeAiPit(c) {
   const left = R.laps - c.dist / T.L;
   if (left < .6 || c.pitReq) return;
+  if (c.mine && c.plan && c.plan.next < c.plan.box.length && R.wet <= .35) { if (R.sc && c.wear > .3) c.pitReq = c.plan.st[c.plan.next + 1]; else if (c.dist / T.L >= c.plan.box[c.plan.next] - .35) c.pitReq = c.plan.st[c.plan.next + 1]; return; }
   if (R.sc && c.wear > .3 && left > 2) { c.pitReq = left > R.laps * .5 ? 'M' : 'S'; return; }
   if (R.wet > .35 && c.comp !== 'I') { c.pitReq = 'I'; return; }
   const must = hasRule('pit') && !c.pits && left < 1.5;
@@ -995,6 +1389,10 @@ function step(dt) {
   R.ord = order();
   if (race && R.scPlan && !R.sc && lead.dist >= R.scPlan) { R.scPlan = null; R.sc = { until:lead.dist + rnd(.8, 1.1) * T.L }; safetyCar(); }
   if (R.sc && lead.dist >= R.sc.until) { R.sc = null; R.flash = 'restart'; R.flashT = 2; const me = R.cars.find(c => c.driven); if (me) { me.bat = Math.min(3, me.bat + 1); eng('Ripartenza! Ti ho dato una tacca di batteria in più: attacca!', 'go'); } else radio('Ripartenza: si torna a correre.', 'Direzione gara'); }
+  if (race) for (const c of R.cars) {
+    if (c.failAt && c.dist >= c.failAt) { c.failAt = 0; c.engPen = .955; c.engBroke = true; radio(c.driven ? 'Problema al motore: è in protezione, perdiamo potenza. Portiamola a casa.' : 'Motore in protezione: perdo potenza.', c.driven ? 'Ingegnere' : first(c.n)); }
+    if (c.mine && c.fmode === 2) c.richT = (c.richT || 0) + dt;
+  }
   if (race) battles(dt);
   if (R.input.kl) R.input.dT = clamp(R.input.dT + 60 * dt, -HALF - 8, HALF + 8);
   if (R.input.kr) R.input.dT = clamp(R.input.dT - 60 * dt, -HALF - 8, HALF + 8);
@@ -1081,8 +1479,8 @@ function step(dt) {
         if (c.pitReq && prevS < entry && c.s >= entry && c.dist < R.laps * T.L - T.L * .3) { c.inPit = true; c.pitPhase = 'in'; if (!c.driven) rivalPitted(c); }
       } else if (c.inPit) {
         const rel = c.s > T.L / 2 ? c.s - T.L : c.s;
-        if (c.pitPhase === 'in' && rel >= 0) { c.pitPhase = 'stop'; c.pitT = (c.mine && C().role === 'manager' ? 2.6 - .25 * (C().parts.crew - 1) : 2.4) + rnd(0, .5) + (c.dmg ? 1.5 : 0); }
-        else if (c.pitPhase === 'stop') { c.pitT -= dt; if (c.pitT <= 0) { c.comp = c.pitReq; c.wear = 0; if (c.dmg) { c.dmg = 0; if (c.driven) eng('Muso nuovo montato, danno riparato.', 'info'); } c.pits++; c.pitReq = null; c.pitPhase = 'out'; if (c.plan) c.plan.next = Math.min(c.plan.box.length, c.plan.next + 1); if (c.mine) track('pit', { comp:c.comp }); } }
+        if (c.pitPhase === 'in' && rel >= 0) { c.pitPhase = 'stop'; c.pitT = (c.mine && C().role === 'manager' ? 2.6 - .25 * (C().parts.crew - 1) - (C().mgr ? .08 * (C().staff.mech.lv - 1) : 0) : 2.4) + rnd(0, .5) + (c.dmg ? 1.5 : 0); }
+        else if (c.pitPhase === 'stop') { c.pitT -= dt; if (c.pitT <= 0) { c.comp = c.pitReq; c.wear = 0; if (c.mine && R.sets && c.comp !== 'I') { if (R.sets[c.comp] > 0) R.sets[c.comp]--; else { c.wear = .35; radio('Set nuovi finiti: montate ' + COMP[c.comp].n.toLowerCase() + ' già usate.', c.driven ? 'Ingegnere' : first(c.n)); } } if (c.dmg) { c.dmg = 0; if (c.driven) eng('Muso nuovo montato, danno riparato.', 'info'); } c.pits++; c.pitReq = null; c.pitPhase = 'out'; if (c.plan) c.plan.next = Math.min(c.plan.box.length, c.plan.next + 1); if (c.mine) track('pit', { comp:c.comp }); } }
         else if (c.pitPhase === 'out' && rel >= PIT_HALF) { c.inPit = false; if (c.driven) { c.d = -HALF + 8; R.input.dT = c.d; } }
       }
     }
@@ -1117,7 +1515,7 @@ function traffic(dt) {
         if (R.sc) { c.v = Math.min(c.v, o.v * (g < 30 ? .95 : 1)); continue; }   // in fila dietro la safety car, senza toccarsi
         if ((c.driven || o.driven) && g < 22 && R.contactCd <= 0) {
           R.contactCd = 2; R.flash = 'contact'; R.flashT = .9; const [sx, sy] = posAt(c.s + 11, c.d); fx('spark', sx, sy, 8); R.shake = Math.max(R.shake || 0, 3);
-          if (c.driven && !R.tutor && c.lapN >= 1 && Math.random() < .4) { c.dmg = Math.min(1, c.dmg + .25); eng('Contatto con ' + o.code + ': ala anteriore danneggiata.', 'warn'); }
+          if (c.driven && !R.tutor && c.lapN >= 1 && Math.random() < .4) { c.dmg = Math.min(1, c.dmg + .25); c.hadDmg = true; eng('Contatto con ' + o.code + ': ala anteriore danneggiata.', 'warn'); }
         }
       }
       // ruota a ruota: ci si spinge di lato con dolcezza
@@ -1159,7 +1557,7 @@ function decisions() {
     if (R.mode === 'drive' && !c.driven) continue;
     const left = R.laps - c.dist / T.L;
     if (R.wet > .25 && c.comp !== 'I' && !c.askedWet && left > .4) { c.askedWet = true; ask(tyrePrompt(c, 'wet')); }
-    else if (c.plan && c.plan.next < c.plan.box.length) continue;   // c'è già una sosta nel piano: ci pensa la finestra box
+    else if (c.plan && c.plan.next < c.plan.box.length) { if (!c.driven) planWindow(c); continue; }   // c'è già una sosta nel piano: ci pensa la finestra box
     else if (((c.wear > .5 && c.wear + left * wearPerLap(c) > .95) || (hasRule('pit') && !c.pits && left < 1.6)) && left > .6 && c.askedWear !== c.pits) { c.askedWear = c.pits; ask(tyrePrompt(c, 'wear')); }
   }
   if (R.mode === 'wall' && !R.orderAsked) {
@@ -1207,7 +1605,7 @@ function engineer(c) {
 // Il resto lo chiedi tu con il pulsante Radio.
 const mePilot = () => R && R.mode === 'drive' ? R.cars.find(c => c.driven) : null;
 const otherComp = k => k === 'S' ? 'M' : 'S';
-function boxOpt(c, k, sub) { return { label:'Box · ' + COMP[k].n, comp:k, sub, fn:() => { c.pitReq = k; eng('Box, box. Montiamo le ' + COMP[k].n.toLowerCase() + '.', 'info'); track('pit_call', { comp:k }); } }; }
+function boxOpt(c, k, sub) { return { label:'Box · ' + COMP[k].n, comp:k, sub:sub + (c.mine && R.sets && R.sets[k] === 0 ? ' · solo set usati' : ''), fn:() => { c.pitReq = k; radio('Box, box. Montiamo le ' + COMP[k].n.toLowerCase() + '.', c.driven ? 'Ingegnere' : first(c.n)); track('pit_call', { comp:k }); } }; }
 function nextComp(c) { const pl = c.plan; return pl && pl.next < pl.box.length ? pl.st[pl.next + 1] : (R.laps - c.dist / T.L > R.laps * .45 ? 'M' : 'S'); }
 function safetyCar() {
   const me = mePilot();
@@ -1236,11 +1634,12 @@ function rivalPitted(o) {
 }
 function planWindow(c) {
   const pl = c.plan; if (!pl || pl.next >= pl.box.length || c.pitReq || R.prompt || R.sc) return false;
-  const lapNow = c.dist / T.L, due = pl.box[pl.next], key = pl.next + ':' + Math.floor(lapNow + .25);
-  if (lapNow < due - .75 || R.adv.planAsk === key) return false;
-  R.adv.planAsk = key;
+  const lapNow = c.dist / T.L, due = pl.box[pl.next], key = c.id + ':' + pl.next + ':' + Math.floor(lapNow + .25);
+  R.adv.planAsk = R.adv.planAsk || {};
+  if (lapNow < due - .75 || R.adv.planAsk[key]) return false;
+  R.adv.planAsk[key] = 1;
   const k = pl.st[pl.next + 1];
-  ask({ title:'Finestra box', text:'Siamo al giro previsto dal piano (gomme al ' + Math.round((1 - c.wear) * 100) + '%). Montiamo le ' + COMP[k].n.toLowerCase() + '?', def:0, time:8, options:[
+  ask({ title:(c.driven ? '' : esc(first(c.n)) + ': ') + 'Finestra box', text:'Siamo al giro previsto dal piano (gomme al ' + Math.round((1 - c.wear) * 100) + '%). Montiamo le ' + COMP[k].n.toLowerCase() + '?', def:0, time:8, options:[
     boxOpt(c, k, 'Come da piano'),
     { label:'Resta fuori un altro giro', sub:'Allunghi lo stint: te lo richiedo al prossimo giro', fn:() => track('plan_stay', {}) },
     boxOpt(c, otherComp(k), 'Cambi piano') ] });
@@ -1263,7 +1662,7 @@ function radioCall(k) {
     if (!ah || ah.pits > me.pits || left < 1.5 || me.pitReq) { eng(!ah ? 'Sei in testa: niente undercut da fare.' : 'Adesso non conviene: ' + (left < 1.5 ? 'mancano troppo pochi giri.' : 'ha già le gomme più fresche delle tue.'), 'info'); return; }
     const kk = nextComp(me), fresh = Math.sqrt(COMP[kk].grip), his = Math.sqrt(gripOf(ah));
     const gainLap = (fresh / his - 1) * lapT * TS, lapsTo = clamp((.75 - ah.wear) / Math.max(.01, wearPerLap(ah)), 1, 3);
-    const gain = gainLap * lapsTo, gap = gapAhead(me, ah), pct = Math.round(clamp(.5 + (gain - gap) / 4, .08, .92) * 100);
+    const gain = gainLap * lapsTo, gap = gapAhead(me, ah), pct = Math.round(clamp(.5 + (gain - gap) / 4 + (C().mgr ? rnd(-1, 1) * (5 - C().staff.strat.lv) * .05 : 0), .05, .95) * 100);
     ask({ title:'Undercut su ' + ah.code, text:'Con le ' + COMP[kk].n.toLowerCase() + ' nuove guadagni circa ' + gainLap.toFixed(1) + ' s al giro. Probabilità di trovarti davanti dopo la sua sosta: ' + pct + '%.', def:1, time:8, options:[
       boxOpt(me, kk, 'Rientri adesso'), { label:'No, aspettiamo', sub:'Restiamo fuori', fn:() => {} } ] });
   } else if (k === 3) {
@@ -1876,7 +2275,7 @@ function endSession() {
   const w = weekend(), kind = R.kind, me = R.cars.find(x => x.driven);
   if (kind === 'fp') {
     w.know = Math.min(100, (me.best ? 55 : 30) + (me.offs === 0 ? 45 : 15));
-    w.fp = { best:me.best, reveal:true };
+    w.fp = { best:me.best, reveal:true }; useSet(w, 'M');
     track('fp_done', { offs:me.offs });
     R = null; save();
     const ideal = STYLE[GP.style].setup;
@@ -1884,7 +2283,7 @@ function endSession() {
     return;
   }
   if (kind === 'quali') {
-    const q = simQuali({ id:me.id, t:me.best || 999 });
+    const q = simQuali({ id:me.id, t:me.best || 999 }); useSet(w, 'S');
     const pos = q.grid.indexOf(me.id) + 1, pole = q.times[q.grid[0]];
     R = null; save();
     const rows = q.grid.map((id, p) => { const d = drvOf(id), t = teamOf(d.team); return '<tr class="' + (id === me.id ? 'me' : '') + '"><td class="p">' + (p + 1) + '</td><td class="n"><span class="sw" style="--c:' + t.color + '"></span>' + esc(d.n) + '</td><td class="t">' + (p ? '+' + ((q.times[id] - pole) * TS).toFixed(3) : lapStr(pole)) + '</td></tr>'; }).join('');
@@ -1916,11 +2315,12 @@ function finishRace() {
     const row = { c:x, pos:p + 1, pts, grid:x.grid }; res.pos.push(row); if (x.mine) res.mine.push(row);
   });
   let prize, obj = null, objOk = false;
-  if (c.role === 'manager') { prize = res.mine.reduce((s, r) => s + 80 + r.pts * 15, 0); obj = OBJECTIVES[(c.round - 1) % 3]; objOk = obj.test(res); }
+  if (c.role === 'manager') { prize = res.mine.reduce((s, r) => s + (c.mgr ? 120 + r.pts * 18 : 80 + r.pts * 15), 0); if (!c.mgr) { obj = OBJECTIVES[(c.round - 1) % 3]; objOk = obj.test(res); } }
   else { const r = res.mine[0], rank = c.teams.slice().sort((a, b) => teamStrength(b) - teamStrength(a)).indexOf(teamOf(myTeamId())); prize = salaryOfRank(rank) + r.pts * 20 + Math.max(0, r.grid - r.pos) * 15; }
   if (c.pass) prize = Math.round(prize * 1.5);
-  const total = prize + (objOk ? obj.r : 0);
-  c.credits += total;
+  let total = prize + (objOk ? obj.r : 0), led = null;
+  if (c.mgr) { obj = null; R.cars.forEach(x => { x.richF = x.richT ? x.richT / Math.max(1, R.t) : 0; }); led = settleGP(c, res, prize, { gp:GP.n }); total = led.net; }
+  else c.credits += total;
   // le squadre rivali sviluppano la macchina
   const dev = hasRule('budget') ? .6 : 1;
   c.teams.forEach(t => { if (!(t.id === 'aurora' && c.role === 'manager')) { t.power += rnd(0, .0016) * dev; t.corner += rnd(0, .0016) * dev; } });
@@ -1929,7 +2329,7 @@ function finishRace() {
   c.history.push({ s:c.season, r:raceNo, gp:GP.n, pos:res.mine.map(r => r.pos) });
   const drv = R.cars.find(x => x.driven);
   track('race_finish', { gp:GP.n, laps:R.laps, mode:R.mode, pos:res.mine.map(r => r.pos).join(','), grid:res.mine.map(r => r.grid).join(','), credits:total, passes:drv ? drv.passes : 0 });
-  const cx = { order:R.orderUsed, wet:R.wet > .3, fast:R.fast };
+  const cx = { order:R.orderUsed, wet:R.wet > .3, fast:R.fast, led };
   R = null; save();
   renderResults(res, raceNo, prize, obj, objOk, total, cx);
 }
@@ -1947,6 +2347,15 @@ function pressEvent(res, cx) {
     return { who:'Social', q:'«La tua gara di oggi gira sui social. Rispondi ai tifosi?»', ch:[
       { t:'Video di ringraziamento ai tifosi.', s:'+150 crediti da uno sponsor personale', f:() => { c.credits += 150; } },
       { t:'Resto concentrato.', s:'Morale +3', f:() => { D('me').mor += 3; } } ]};
+  }
+  if (c.mgr) {
+    const top = Object.entries(c.staff).filter(([k, x]) => x.lv >= 4);
+    if (top.length && Math.random() < .22) {
+      const [k, x] = pick(top), riv = pick(c.teams.filter(t => t.id !== 'aurora'));
+      return { who:'Mercato dello staff', q:'«' + esc(riv.name) + ' offre il doppio a ' + esc(x.n) + ', il tuo ' + STAFF[k].n.toLowerCase() + '. Rilanci?»', ch:[
+        { t:'Rilancio: resta con noi.', s:'Bonus di ' + fmtCr(150 * x.lv) + ' crediti', f:() => { c.credits -= 150 * x.lv; } },
+        { t:'Lo lascio andare.', s:'Al suo posto il vice: un livello in meno', f:() => { c.staff[k] = staffMember(Math.max(1, x.lv - 1)); } } ]};
+    }
   }
   if (cx.order) {
     const y = D(cx.order.yielded), g = D(cx.order.gained);
@@ -1972,12 +2381,13 @@ function renderResults(res, raceNo, prize, obj, objOk, total, cx) {
   const lead = res.pos[0].c, ev = pressEvent(res, cx);
   app.innerHTML = '<div class="page" style="--team:' + mt.color + '"><header class="mast"><div class="wrap"><div><p class="kicker">GP ' + esc(GP.n) + ' · gara ' + raceNo + ' di ' + c.seasonLen + (cx.wet ? ' · bagnato' : '') + '</p><h1>' + title + '</h1></div><span class="cr"><i></i>' + fmtCr(c.credits) + '</span></div><div class="stripe"></div></header>' +
     '<div class="wrap sect"><div class="card"><table class="cls"><tbody>' + res.pos.map(r => '<tr class="' + (r.c.mine ? 'me' : '') + '"><td class="p">' + r.pos + '</td><td class="n"><span class="sw" style="--c:' + r.c.color + '"></span>' + esc(r.c.n) + (r.c.mine ? ' <span class="chip">' + (r.grid > r.pos ? '+' + (r.grid - r.pos) : r.grid < r.pos ? '−' + (r.pos - r.grid) : '=') + '</span>' : '') + (cx.fast && cx.fast.id === r.c.id ? ' <span class="chip">giro veloce</span>' : '') + (r.c.pen ? ' <span class="chip">+10 s</span>' : '') + '</td><td class="t">' + (r.c === lead ? lapStr(r.c.finT) : r.c.finished ? '+' + (TS * (r.c.finT - lead.finT)).toFixed(3) : 'non arrivato') + '</td><td class="pt">' + (r.pts ? '+' + r.pts : '') + '</td></tr>').join('') + '</tbody></table></div>' +
+    (cx.led ? '<div class="card earn">' + ledgerRows(cx.led).replace('<span class="mono">' + (cx.led.net >= 0 ? '+' : '−'), '<span class="mono" id="tot">' + (cx.led.net >= 0 ? '+' : '−')) + '<button class="btn gold wide" id="dbl">▶ Raddoppia i premi gara con un annuncio</button></div>' + (cx.led.news.length ? '<div class="card news"><b>Dal box</b><ul>' + cx.led.news.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' : '') :
     '<div class="card earn"><div><span>' + (c.role === 'driver' ? 'Stipendio e premi' : 'Premi gara') + (c.pass ? ' (pass +50%)' : '') + '</span><span class="mono">+' + fmtCr(prize) + '</span></div>' + (obj ? '<div><span>' + SPONSOR.n + ': ' + obj.t + '</span><span class="mono" style="color:' + (objOk ? 'var(--good)' : 'var(--muted)') + '">' + (objOk ? '+' + fmtCr(obj.r) : 'mancato') + '</span></div>' : '') +
-      '<div class="tot"><span>Totale</span><span class="mono" id="tot">+' + fmtCr(total) + '</span></div><button class="btn gold wide" id="dbl">▶ Raddoppia i premi con un annuncio</button></div>' +
+      '<div class="tot"><span>Totale</span><span class="mono" id="tot">+' + fmtCr(total) + '</span></div><button class="btn gold wide" id="dbl">▶ Raddoppia i premi con un annuncio</button></div>') +
     '<div class="card press"><span class="who">' + esc(ev.who) + '</span><p class="q">' + ev.q + '</p><div class="choices" id="choices">' + ev.ch.map((x, k) => '<button data-ch="' + k + '">' + x.t + '<small>' + x.s + '</small></button>').join('') + '</div></div><div class="foot"></div></div>' +
     '<div class="go"><div class="wrap"><button class="btn primary wide" id="back">' + (c.round > c.seasonLen ? 'Fine stagione' : 'Prossimo GP') + '</button></div></div></div>';
   document.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => { const x = ev.ch[+b.dataset.ch]; x.f(); c.drivers.forEach(d => d.mor = clamp(d.mor || 70, 30, 100)); save(); track('press_choice', { who:ev.who, k:+b.dataset.ch }); $('#choices').outerHTML = '<p class="outcome">' + x.s + '</p>'; });
-  $('#dbl').onclick = async e => { const b = e.currentTarget; b.disabled = true; if (await rewarded('double_prize')) { c.credits += prize; save(); $('#tot').textContent = '+' + fmtCr(total + prize); b.textContent = 'Premi raddoppiati'; document.querySelector('.mast .cr').innerHTML = '<i></i>' + fmtCr(c.credits); } else b.disabled = false; };
+  $('#dbl').onclick = async e => { const b = e.currentTarget; b.disabled = true; if (await rewarded('double_prize')) { c.credits += prize; save(); $('#tot').textContent = (total + prize >= 0 ? '+' : '−') + fmtCr(Math.abs(total + prize)); b.textContent = 'Premi raddoppiati'; document.querySelector('.mast .cr').innerHTML = '<i></i>' + fmtCr(c.credits); } else b.disabled = false; };
   $('#back').onclick = async () => { if (!S.noAds && S.races % 2 === 0) await adOverlay('inter'); renderBox(); };
 }
 
@@ -2002,12 +2412,24 @@ function renderSeasonEnd() {
       list.map(t => '<button class="offer" data-offer="' + t.id + '" style="--c:' + t.color + '"><span class="bar"></span><div><b>' + esc(t.name) + '</b><span>Monoposto ' + (ranked.indexOf(t) + 1) + 'ª per prestazioni · stipendio ' + fmtCr(salaryOfRank(ranked.indexOf(t))) + ' a GP</span></div><span class="chip hot">Firma</span></button>').join('') +
       '<button class="offer" data-offer="' + me.team + '" style="--c:' + teamOf(me.team).color + '"><span class="bar"></span><div><b>Resta in ' + esc(teamOf(me.team).name) + '</b><span>Rinnovo del contratto' + (beatMate ? '' : ' · hai perso il confronto con ' + esc(first(mate.n))) + '</span></div><span class="chip">Rinnova</span></button></div>';
   }
+  if (c.mgr) {
+    const exp = mineDrivers().filter(d => d.con <= 1);
+    offers = '<h3 class="h2">Contratti in scadenza</h3><div class="card list">' + (exp.length ? exp.map(d => '<div class="lrow"><span class="ico">' + d.no + '</span><div><b>' + esc(d.n) + '</b><small>' + driverLine(d) + (d.mor < 45 ? ' · scontento: chiede il 40% in più' : '') + '</small></div><span style="display:flex;flex-direction:column;gap:6px"><button class="btn sm go2" data-renew="' + d.id + '">Rinnova · ' + fmtCr(renewCost(d)) + '</button><button class="btn sm" data-repl="' + d.id + '">Sostituisci</button></span></div>').join('') + '<p class="legal" style="margin:8px 0 0">Se non decidi, il contratto si rinnova da solo (2 stagioni).</p>'
+      : '<p style="margin:0">Nessun contratto in scadenza. Il mercato è nella scheda Squadra.</p>') + '</div>';
+  }
   app.innerHTML = '<div class="page" style="--team:' + mt.color + '"><header class="mast"><div class="wrap"><div><p class="kicker">Fine stagione ' + c.season + '</p><h1>' + (myPos === 1 ? 'Campioni del mondo!' : (c.role === 'driver' ? 'Chiudi ' + myPos + '°' : 'Squadra ' + myPos + 'ª')) + '</h1><p class="sub">Campione piloti: ' + esc(dRows[0][0].n) + ' · Costruttori: ' + esc(tRows[0][0].name) + '</p></div></div><div class="stripe"></div></header>' +
     '<div class="wrap sect"><div class="card earn"><div class="tot"><span>Premio di fine stagione</span><span class="mono">+' + fmtCr(bonus) + '</span></div></div>' + offers +
     '<h3 class="h2">Classifica piloti</h3><div class="card"><table class="std"><tbody>' + dRows.map(([d, p], i) => '<tr class="' + ((c.role === 'driver' ? d.id === 'me' : d.team === 'aurora') ? 'me' : '') + '"><td class="p">' + (i + 1) + '</td><td><span class="sw" style="--c:' + teamOf(d.team).color + '"></span>' + esc(d.n) + '</td><td class="pt">' + p + '</td></tr>').join('') + '</tbody></table></div><div class="foot"></div></div>' +
     (c.role === 'driver' ? '' : '<div class="go"><div class="wrap"><button class="btn primary wide" id="nextS">Stagione ' + (c.season + 1) + '</button></div></div>') + '</div>';
   app.querySelectorAll('[data-offer]').forEach(b => b.onclick = () => { signWith(b.dataset.offer); startNextSeason(); });
   const ns = $('#nextS'); if (ns) ns.onclick = startNextSeason;
+  app.querySelectorAll('[data-renew]').forEach(b => b.onclick = () => { const d = drvOf(b.dataset.renew); d.sal = renewCost(d); d.con = 3; track('renew', {}); save(); toast(first(d.n) + ' rinnova'); renderSeasonEnd(); });
+  app.querySelectorAll('[data-repl]').forEach(b => b.onclick = () => {
+    const out = b.dataset.repl, ready = c.academy.filter(j => avgOf(j) >= 75);
+    openSheet('<h2>Sostituisci ' + esc(first(drvOf(out).n)) + '</h2><h3>Svincolati</h3>' + c.free.map(d => '<button class="prod" data-pick="free:' + d.id + '"' + (c.credits < d.sal * 3 ? ' disabled' : '') + '><span class="pi">' + Math.round(avgOf(d)) + '</span><div><b>' + esc(d.n) + '</b><span>' + driverLine(d) + '</span></div><span class="p">' + fmtCr(d.sal * 3) + '</span></button>').join('') +
+      (ready.length ? '<h3>Accademia</h3>' + ready.map(d => '<button class="prod" data-pick="acad:' + d.id + '"><span class="pi">' + Math.round(avgOf(d)) + '</span><div><b>' + esc(d.n) + '</b><span>' + driverLine(d) + '</span></div><span class="p">Promuovi</span></button>').join('') : ''));
+    document.querySelectorAll('[data-pick]').forEach(x => x.onclick = () => { const [src, id] = x.dataset.pick.split(':'); signDriver(src, id, out); });
+  });
 }
 function signWith(teamId) {
   const c = C(), me = drvOf('me');
@@ -2021,8 +2443,14 @@ function startNextSeason() {
   const c = C();
   c.season++; c.round = 1; c.standings = { d:{}, t:{} }; c.weekend = null; c.seasonPaid = false; c.pass = false; c.hype = 0;
   c.calendar = pickCalendar(c.seasonLen);
-  c.drivers.forEach(d => { if (d.id !== 'me') d.vel = clamp(d.vel + Math.round(rnd(-1, 2)), 70, 96); d.mor = 70; });
-  newSeasonRules();
+  if (c.mgr) {
+    mineDrivers().forEach(d => { if (d.con <= 1) { d.sal = renewCost(d); d.con = 3; c.news.push(first(d.n) + ' ha rinnovato per 2 stagioni a ' + fmtCr(d.sal) + ' a GP.'); } });
+    c.drivers.forEach(d => { d.mor = 70; });
+    newSeasonRules(); seasonRollover(c);
+  } else {
+    c.drivers.forEach(d => { if (d.id !== 'me') d.vel = clamp(d.vel + Math.round(rnd(-1, 2)), 70, 96); d.mor = 70; });
+    newSeasonRules();
+  }
   save(); renderBox(); setTimeout(showRuleSheet, 300);
 }
 function showRuleSheet() {
@@ -2100,7 +2528,7 @@ async function rewarded(placement) {
   return ok;
 }
 
-window.__muretto = { plansFor:L => plansFor(L), aiPaceOf:c => aiPace(c), attack:() => attack(), defend:() => defend(), canAttack:c => canAttack(c), openDrs:() => openDrs(), CWv:i => CW[i], carH:c => carXYH(c)[2], get R() { return R; }, get T() { return T; }, get IDEAL() { return IDEAL; }, get PROFI() { return PROFI; }, get KS() { return KS; }, get BZ() { return BZ; },
+window.__muretto = { plansFor:L => plansFor(L), ensureMgr:c => ensureMgr(c), settleGP:(c, r, p) => settleGP(c, r, p, { gp:'test' }), renderBox:() => renderBox(), startNextSeason:() => startNextSeason(), renderSeasonEnd:() => renderSeasonEnd(), aiPaceOf:c => aiPace(c), attack:() => attack(), defend:() => defend(), canAttack:c => canAttack(c), openDrs:() => openDrs(), CWv:i => CW[i], carH:c => carXYH(c)[2], get R() { return R; }, get T() { return T; }, get IDEAL() { return IDEAL; }, get PROFI() { return PROFI; }, get KS() { return KS; }, get BZ() { return BZ; },
   step:dt => step(dt), order:() => order(), startSession, closePrompt:k => closePrompt(k), boost, lateBrake, S:() => S, newCareer, draft, loadTrack, CALENDAR, refLap, simQuali, renderBox, endSession };
 if (S.career) renderBox(); else renderStart();
 })();
