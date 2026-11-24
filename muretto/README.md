@@ -1,6 +1,8 @@
 # Muretto
 
-Gioco di corse e carriera in un campionato inventato di monoposto. All'inizio scegli se essere **pilota** o **manager**, quanto dura la stagione (6, 12 o 24 GP) e quanto durano le gare (sprint 8 giri, gara 12, lunga 20: si cambia in qualsiasi momento).
+Gioco manageriale e di corse in un campionato inventato di monoposto. Dirigi una scuderia: piloti, staff, sviluppo, sponsor e strategia. Scegli quanto dura la stagione (6, 12 o 24 GP) e quanto durano le gare (sprint 8 giri, gara 12, lunga 20: si cambia in qualsiasi momento). In gara comandi dal muretto o segui da vicino uno dei tuoi piloti.
+
+La carriera da pilota è nascosta dal menu iniziale (`CAREER_DRIVER = false` in `index.html`): il codice resta e i salvataggi già esistenti continuano a funzionare. Basta rimettere `true` per riattivarla.
 
 Tutto è in un solo file: `muretto/index.html`.
 

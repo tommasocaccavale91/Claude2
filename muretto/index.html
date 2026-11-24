@@ -715,13 +715,15 @@ const salaryOfRank = r => [600, 480, 380, 300, 240][r] || 240;
 
 /* =====================  Nuova carriera  ===================== */
 let screen = 'start', standTab = 'd';
+const CAREER_DRIVER = false;   // carriera pilota nascosta dal menu: i salvataggi esistenti continuano a funzionare
 const draft = { role:'manager', name:'', team:'Scuderia Aurora', season:12, laps:12 };
 function renderStart() {
   screen = 'start'; stopRace();
-  app.innerHTML = '<div class="page"><header class="hero"><div class="wrap"><p class="kicker">Campionato Mondiale Gran Turismo</p><h1>Muretto</h1><p>Corse e strategia: guida in pista o comanda la squadra dal muretto box.</p></div><div class="stripe"></div></header>' +
-    '<div class="wrap sect"><h3 class="h2">Chi vuoi essere</h3><div class="role" role="group" aria-label="Ruolo">' +
+  if (!CAREER_DRIVER) draft.role = 'manager';
+  app.innerHTML = '<div class="page"><header class="hero"><div class="wrap"><p class="kicker">Campionato Mondiale Gran Turismo</p><h1>Muretto</h1><p>Dirigi una scuderia: piloti, staff, sviluppo, sponsor e strategia. In gara comandi dal muretto o segui da vicino uno dei tuoi piloti.</p></div><div class="stripe"></div></header>' +
+    '<div class="wrap sect">' + (!CAREER_DRIVER ? '<h3 class="h2">La tua scuderia</h3>' : '<h3 class="h2">Chi vuoi essere</h3><div class="role" role="group" aria-label="Ruolo">' +
       '<button data-role="manager" aria-pressed="' + (draft.role === 'manager') + '"><b>Manager</b><span>Guidi una scuderia: due piloti, sviluppo della monoposto, sponsor e strategia. In gara scegli se guidare tu o comandare dal muretto.</span></button>' +
-      '<button data-role="driver" aria-pressed="' + (draft.role === 'driver') + '"><b>Pilota</b><span>Parti dalla squadra più debole. In gara gestisci DRS, carburante e gomme con il tuo ingegnere. Batti il compagno e a fine stagione arrivano le offerte dei team migliori.</span></button></div>' +
+      '<button data-role="driver" aria-pressed="' + (draft.role === 'driver') + '"><b>Pilota</b><span>Parti dalla squadra più debole. In gara gestisci DRS, carburante e gomme con il tuo ingegnere. Batti il compagno e a fine stagione arrivano le offerte dei team migliori.</span></button></div>') +
     '<div class="card"><div class="opt col"><label class="lab" for="nm">' + (draft.role === 'driver' ? 'Nome e cognome del pilota' : 'Nome della scuderia') + '</label><input class="field" id="nm" maxlength="26" value="' + esc(draft.role === 'driver' ? draft.name : draft.team) + '" placeholder="' + (draft.role === 'driver' ? 'Es. Marco Bellini' : 'Scuderia Aurora') + '"></div>' +
       '<div class="opt col"><span class="lab">Stagione</span><div class="seg three">' + Object.entries(SEASON_LEN).map(([k, v]) => '<button data-season="' + k + '" aria-pressed="' + (draft.season == k) + '"><b>' + v.split(' · ')[0] + '</b><small>' + v.split(' · ')[1] + '</small></button>').join('') + '</div></div>' +
       '<div class="opt col"><span class="lab">Durata delle gare<small>Si può cambiare in ogni momento</small></span><div class="seg three">' + Object.entries(RACE_LEN).map(([k, v]) => '<button data-laps="' + k + '" aria-pressed="' + (draft.laps == k) + '"><b>' + v.split(' · ')[0] + '</b><small>' + v.split(' · ')[1] + ', circa ' + Math.max(2, Math.round(k * .4)) + ' min</small></button>').join('') + '</div></div></div>' +
