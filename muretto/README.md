@@ -1,6 +1,6 @@
 # Muretto
 
-Gioco manageriale e di corse in un campionato inventato di monoposto. Dirigi una scuderia: piloti, staff, sviluppo, sponsor e strategia. Scegli quanto dura la stagione (6, 12 o 24 GP) e quanto durano le gare (sprint 8 giri, gara 12, lunga 20: si cambia in qualsiasi momento). In gara comandi dal muretto o segui da vicino uno dei tuoi piloti.
+Gioco manageriale e di corse in campionati inventati di monoposto. Dirigi una scuderia partendo dalla Formula Regionale fino al Campionato Mondiale: piloti, staff, sviluppo, sponsor e strategia. Scegli quanto dura la stagione (6, 12 o 24 GP) e quanto durano le gare (sprint 8 giri, gara 12, lunga 20: si cambia in qualsiasi momento). In gara comandi dal muretto o segui da vicino uno dei tuoi piloti.
 
 La carriera da pilota è nascosta dal menu iniziale (`CAREER_DRIVER = false` in `index.html`): il codice resta e i salvataggi già esistenti continuano a funzionare. Basta rimettere `true` per riattivarla.
 
@@ -54,6 +54,20 @@ La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e c
 - Le squadre rivali sviluppano la macchina durante la stagione.
 - Dopo ogni gara c'è una scelta (stampa, sponsor, ingegnere, social) che cambia morale, crediti o attributi.
 
+## Serie, difficoltà e rivali
+
+- **Tre campionati a scalare**: Formula Regionale → Formula Cadetti → Campionato Mondiale. Si sale chiudendo tra i primi due costruttori. Ogni serie ha rivali, piloti e mercato propri; premi, sponsor e costi crescono salendo (×0,55 / ×0,75 / ×1 per i ricavi, ×0,6 / ×0,8 / ×1 per i costi). Dopo una promozione l'auto perde due livelli per parte e riparte dietro alle nuove rivali.
+- **Difficoltà** scelta all'inizio: Facile (più crediti, rivali più lente, sorpassi più facili, meno guasti), Normale, Difficile (il contrario).
+- **Rivali vive**: sviluppano di più quando sono dietro di te in classifica, a volte portano un grosso aggiornamento, ingaggiano svincolati migliori dei loro piloti e corteggiano i tuoi piloti in scadenza (rinnovi subito con un aumento o lo perdi a fine stagione).
+
+Nelle prove con il bot (gestione semplice, stagioni da 6 GP) la promozione dalla Formula Regionale arriva dopo 3-4 stagioni; giocando bene, prima.
+
+## Sfida del giorno, obiettivi, traguardi
+
+- **Sfida del giorno**: stessa gara per tutti (scelta dalla data), 8 giri, parti indietro e devi rimontare fino a una posizione. Premio una volta al giorno, serie di giorni consecutivi. Non conta per il campionato. Con il pass stagionale hai un secondo tentativo.
+- **Obiettivi della settimana**: tre per settimana (GP corsi, podi, sorpassi, obiettivi sponsor, progetti, pit stop da piano, sfide del giorno), con premio da ritirare.
+- **Traguardi**: 12 traguardi una tantum (primo podio, doppietta, promozioni, titoli, struttura al massimo, giovane promosso…) con premio, più i record della carriera.
+
 ## Gestione della scuderia (manager)
 
 Il box del manager ha quattro schede: **Weekend**, **Squadra**, **Fabbrica**, **Finanze**. Un pallino segnala cosa richiede attenzione.
@@ -86,9 +100,10 @@ Il box del manager ha quattro schede: **Weekend**, **Squadra**, **Fabbrica**, **
 
 | Prodotto | Prezzo |
 |---|---|
-| Pacchetto di benvenuto (5.000 crediti + livrea Oro), per 48 ore dopo la seconda gara | 1,99 € |
+| Pacchetto di benvenuto (3.000 crediti + livrea Oro), per 48 ore dopo la seconda gara | 1,99 € |
 | Crediti: 1.200 / 7.000 / 16.000 / 36.000 | 0,99 / 4,99 / 9,99 / 19,99 € |
-| Pass stagionale: +50% crediti a ogni GP della stagione + 4 livree esclusive | 4,99 € |
+| Pass stagionale: +30% premi gara, secondo tentativo alla sfida del giorno, 4 livree esclusive | 4,99 € |
+| Muretto Pro: niente pubblicità, 3 posti in accademia, uno scouting gratis a ogni stagione | 4,99 € |
 | Rimuovi la pubblicità | 3,99 € |
 
 Video con premio: raddoppio dei premi gara, secondo tentativo in qualifica, +250 crediti (3 al giorno). Un annuncio tra le gare ogni due GP, mai con "Rimuovi la pubblicità".
@@ -99,7 +114,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 
