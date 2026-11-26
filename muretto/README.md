@@ -15,7 +15,7 @@ Ogni GP ha il nome di una località (GP Monza, GP Spa, GP Suzuka…) e un circui
 
 I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine dei punti = senso di marcia, `start` = punto sul rettilineo dei box). Prima di pubblicare l'app conviene una verifica legale: alcuni autodromi hanno registrato la sagoma della pista come marchio.
 
-1. **Prove libere: l'assetto.** Tre regolazioni da 1 a 5: carico aerodinamico, sospensioni, rapporti. Ogni pista ha un assetto ideale nascosto (le piste veloci vogliono poco carico e rapporti lunghi, le cittadine il contrario). Hai 5 uscite: il **giro di assetto** dà il tempo e il parere del pilota ("sul dritto siamo lenti: togliamo carico"), più affidabile se il pilota è costante e lo stratega è bravo; il **passo gara** misura l'usura delle gomme su quella pista (da bassa ad alta). Un buon assetto vale fino a qualche decimo al giro. Dopo la qualifica l'assetto non si cambia più (parco chiuso).
+1. **Prove libere: l'assetto.** Tre regolazioni, ognuna nella sua unità: **ala** in numeri interi, **rigidità delle sospensioni** in percentuale, **rapporto finale del cambio** con i decimali (da 3.00 lungo a 4.00 corto). La scala si fa più fine salendo di serie: 10 passi in Formula Regionale (ala 0-10, sospensioni a scatti del 10%, cambio 3.00-4.00 a 0,10), 20 in Formula Cadetti (ala 0-20, 5%, 0,05), 40 nel Mondiale (ala 0-40, 2,5%, 0,025). Ogni pista ha un assetto ideale nascosto, mai al centro della scala. Si regola con cursore e tasti − e +. Hai 5 uscite: il **giro di assetto** dà il tempo e il parere del pilota ("sul dritto siamo lenti: togliamo un po' di ala", "ma siamo vicini"), più affidabile se il pilota è costante e lo stratega è bravo; il **passo gara** misura l'usura delle gomme. L'ingegnere stima il bilanciamento a decine di punti percentuali. Dopo la qualifica l'assetto non si cambia più (parco chiuso).
 2. **Qualifica.** Per ogni pilota scegli quando esce (subito, oppure all'ultimo: pista più veloce ma 18% di rischio di traffico) e come guida (pulito, oppure al limite: più veloce ma 22% di errore). I tempi arrivano uno alla volta come in TV, con il migliore in viola. Con un video si ripete.
 3. **Strategia e via.** Prima della gara: pioggia, usura gomme (misurata o stimata), probabilità di safety car, set rimasti e piano gomme per ogni pilota. Senza il passo gara il piano può sbagliare i giri di sosta. Qui scegli anche se seguire un pilota da vicino o comandare dal muretto.
 
@@ -46,7 +46,7 @@ Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In
 
 | Aiuto | Dove | Effetto | Prezzo (Mondiale; ×0,6 Regionale, ×0,8 Cadetti) |
 |---|---|---|---|
-| Assetto dell'ingegnere capo | Prove libere | Monta subito l'assetto ideale della pista | 250 crediti o un video |
+| Finestra dell'ingegnere capo | Prove libere | Segna in verde, su ogni regolazione, un intervallo di circa un quinto della scala che contiene il valore giusto. Il valore esatto resta da trovare | 250 crediti o un video |
 | Finestra perfetta | Qualifica, per pilota | Esce all'ultimo senza rischio di traffico, pista al massimo | 120 crediti o un video |
 | Mappa motore da qualifica | Gara, menu Radio | Circa mezzo secondo al giro per 2 giri, una volta per gara | 120 crediti o un video |
 | Pit stop perfetto | Gara, menu Radio | La prossima sosta dura 1,9 s, anche con l'ala da cambiare; una volta per gara | 80 crediti o un video |
