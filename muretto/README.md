@@ -49,6 +49,12 @@ Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In
 | Assetto dell'ingegnere capo | Prove libere | Monta subito l'assetto ideale della pista | 250 crediti o un video |
 | Finestra perfetta | Qualifica, per pilota | Esce all'ultimo senza rischio di traffico, pista al massimo | 120 crediti o un video |
 | Mappa motore da qualifica | Gara, menu Radio | Circa mezzo secondo al giro per 2 giri, una volta per gara | 120 crediti o un video |
+| Pit stop perfetto | Gara, menu Radio | La prossima sosta dura 1,9 s, anche con l'ala da cambiare; una volta per gara | 80 crediti o un video |
+| Previsioni precise | Strategia | Dice se pioverà e verso quale giro (la pioggia del weekend è decisa in anticipo) | 60 crediti o un video |
+| Rapporto completo dello scout | Accademia | Potenziale esatto di un giovane invece della stima | 60 crediti o un video |
+| Rifai il progetto | Fabbrica, dopo un pezzo fallito | Riparte subito, pronto dopo un GP, con il 10% di riuscita in più | 150 crediti o un video |
+
+**Video premio** (Finanze e negozio): 5 video al giorno con premi crescenti, proporzionati alla serie. Formula Regionale 55 / 85 / 110 / 140 / 220 (610 al giorno), Formula Cadetti 75 / 110 / 150 / 190 / 300 (825), Campionato Mondiale 100 / 150 / 200 / 250 / 400 (1.100). Sono separati dai 6 video al giorno per accelerare lavori e aiuti.
 
 ## Suono e vibrazione
 
@@ -129,13 +135,14 @@ Il box del manager ha quattro schede: **Weekend**, **Squadra**, **Fabbrica**, **
 
 | Prodotto | Prezzo |
 |---|---|
+| Video premio: vedi sopra | gratis |
 | Pacchetto di benvenuto (3.000 crediti + livrea Oro), per 48 ore dopo la seconda gara | 1,99 € |
 | Crediti: 1.200 / 7.000 / 16.000 / 36.000 | 0,99 / 4,99 / 9,99 / 19,99 € |
 | Pass stagionale: +30% premi gara, secondo tentativo alla sfida del giorno, 4 livree esclusive | 4,99 € |
 | Muretto Pro: niente pubblicità, 3 posti in accademia, uno scouting gratis a ogni stagione | 4,99 € |
 | Rimuovi la pubblicità | 3,99 € |
 
-Video con premio: raddoppio dei premi gara, secondo tentativo in qualifica, +250 crediti (3 al giorno). Un annuncio tra le gare ogni due GP, mai con "Rimuovi la pubblicità".
+Video con premio: raddoppio dei premi gara, secondo tentativo in qualifica, video premio (5 al giorno), acceleratori e aiuti (6 al giorno). Un annuncio tra le gare ogni due GP, mai con "Rimuovi la pubblicità".
 
 Nel browser annunci e acquisti sono simulati. Nell'app passano da `window.NATIVE` (`rewarded`, `buy`, `track`), lo stesso ponte di `native/native.js`.
 
@@ -143,7 +150,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `help_buy`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `video_center`, `help_buy`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 

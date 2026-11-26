@@ -135,6 +135,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .warnc{color:var(--warn)}
 .setsrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700;font-size:13px}
 .plan[disabled]{opacity:.4}
+.vcard{display:flex;flex-direction:column;gap:12px;background:linear-gradient(135deg,rgba(255,200,61,.16),transparent 60%),var(--surface)}
+.vhead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}.vhead b{display:block;font-family:var(--f-display);font-style:italic;font-weight:900;font-size:22px;text-transform:uppercase}.vhead small{color:var(--muted);font-size:13px}
+.vleft{font-size:20px;font-weight:700;color:var(--gold)}
+.vsteps{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.vsteps span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border-radius:8px;background:var(--surface2);font-family:var(--f-label);font-weight:700;font-size:14px;color:var(--muted)}
+.vsteps span i{font-style:normal;font-size:12px}.vsteps span.ok{color:var(--good)}.vsteps span.next{color:#1E1503;background:var(--gold)}
 .buyrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:linear-gradient(90deg,rgba(255,200,61,.12),transparent 70%),var(--surface)}.buyrow b{display:block;font-weight:800}.buyrow small{display:block;color:var(--muted);font-size:12px;line-height:1.35}.buyrow.done{background:var(--surface)}
 .radmenu .tbtns{justify-content:flex-start}.radmenu .tbtns .btn{text-align:center}
 .sudial{display:grid;grid-template-columns:auto repeat(5,1fr) auto;gap:6px;align-items:center}
@@ -1031,7 +1037,7 @@ function baseKnow(c) { return c.role === 'manager' && c.mgr ? Math.min(60, 10 * 
 function finishProject(c, p) {
   const P = PARTS.find(x => x.k === p.part);
   if (Math.random() < p.odds) { c.parts[p.part] = Math.min(5, c.parts[p.part] + 1); progress('proj'); track('project_ok', { part:p.part }); return P.n + ': il nuovo pezzo funziona. Livello ' + c.parts[p.part] + '.'; }
-  const back = Math.round(p.cost * .4); c.credits += back; track('project_fail', { part:p.part }); return P.n + ': il pezzo non ha reso in pista. Recuperati ' + fmtCr(back) + ' crediti, si può ritentare.';
+  const back = Math.round(p.cost * .4); c.credits += back; c.failed = { part:p.part, cost:p.cost, odds:p.odds }; track('project_fail', { part:p.part }); return P.n + ': il pezzo non ha reso in pista. Recuperati ' + fmtCr(back) + ' crediti. In Fabbrica puoi rifarlo subito.';
 }
 function finishFac(c, k) { const f = c.fac[k]; f.b = 0; f.lv++; if (f.lv >= 3) unlock('facmax'); return FAC[k].n + ' pronta: livello ' + f.lv + '.'; }
 // Acceleratori: con i crediti o con un video si taglia un GP di attesa. Gratis si arriva comunque, solo più piano.
@@ -1199,15 +1205,15 @@ function tabSquadra(c) {
     rivals.map(d => '<div class="lrow"><span class="ico sw2" style="background:' + teamOf(d.team).color + '"></span><div><b>' + esc(d.n) + '</b><small>' + esc(teamOf(d.team).name) + ' · ' + driverLine(d) + '</small></div><button class="btn sm" data-sign="rival:' + d.id + '">' + fmtCr(buyout(d)) + '</button></div>').join('') +
     '<p class="legal" style="margin:8px 0 0">Gli svincolati costano tre stipendi. Per un pilota di un’altra squadra paghi la clausola, più alta se la sua squadra è più forte della tua.</p></div>';
   h += '<h3 class="h2">Accademia giovani</h3><div class="card list">' + (c.academy.length ? c.academy.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' (vel ' + j.vel + ', cos ' + j.cos + ', gom ' + j.gom + ') · potenziale ' + stars(potStars(j.pot)) + ' · 30 a GP</small></div>' + (avgOf(j) >= readyAvg(c) ? '<button class="btn sm go2" data-sign="acad:' + j.id + '">Promuovi</button>' : trainBtns(c, j)) + '</div>').join('') : '<p style="margin:0">Nessun giovane. Lo scouting trova tre talenti tra i 17 e i 19 anni: crescono a ogni GP e a media ' + readyAvg(c) + ' possono correre in questa serie.</p>') +
-    (c.scout ? '<h4 class="sub2">Rapporto degli osservatori</h4>' + c.scout.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' · potenziale stimato ' + j.est[0] + '–' + j.est[1] + '</small></div><button class="btn sm" data-junior="' + j.id + '"' + (c.academy.length >= acadMax() ? ' disabled' : '') + '>Prendi</button></div>').join('')
+    (c.scout ? '<h4 class="sub2">Rapporto degli osservatori</h4>' + c.scout.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' · potenziale ' + (j.exact ? '<b class="tgood">' + j.pot + '</b> (rapporto completo)' : 'stimato ' + j.est[0] + '–' + j.est[1]) + '</small></div><span class="tbtns">' + (j.exact ? '' : '<button class="btn sm gold" data-rep="' + j.id + ':cr"' + (c.credits < helpCost(c, 60) ? ' disabled' : '') + '>Rapporto · ' + fmtCr(helpCost(c, 60)) + '</button><button class="btn sm" data-rep="' + j.id + ':vid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶</button>') + '<button class="btn sm" data-junior="' + j.id + '"' + (c.academy.length >= acadMax() ? ' disabled' : '') + '>Prendi</button></span></div>').join('')
       : '<div class="lrow"><span class="ico">⌕</span><div><b>Scouting</b><small>Tre giovani da valutare</small></div><button class="btn sm" id="scoutB"' + (!c.freeScout && c.credits < scoutCost() ? ' disabled' : '') + '>' + (c.freeScout ? 'Gratis' : fmtCr(scoutCost())) + '</button></div>') + '</div>';
   return h;
 }
 function tabFabbrica(c) {
   const slots = c.fac.fact.lv;
   let h = '<h3 class="h2">Sviluppo · ' + c.projects.length + '/' + slots + ' progetti</h3><div class="card parts">' + PARTS.map(p => {
-    const lv = c.parts[p.k], pr = c.projects.find(x => x.part === p.k), cost = lv < 5 ? partCost(c, p.k) : 0;
-    const right = lv >= 5 ? '<span class="chip">Al massimo</span>' : pr ? speedBtns('proj', p.k, projStepCost(pr))
+    const lv = c.parts[p.k], pr = c.projects.find(x => x.part === p.k), cost = lv < 5 ? partCost(c, p.k) : 0, fl = !pr && lv < 5 && c.failed && c.failed.part === p.k;
+    const right = lv >= 5 ? '<span class="chip">Al massimo</span>' : pr ? speedBtns('proj', p.k, projStepCost(pr)) : fl ? '<span class="tbtns"><button class="btn sm gold" data-retry="cr"' + (c.credits < helpCost(c, 150) ? ' disabled' : '') + '>Rifai · ' + fmtCr(helpCost(c, 150)) + '</button><button class="btn sm" data-retry="vid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Rifai</button></span>'
       : '<button class="btn sm" data-proj="' + p.k + '"' + (canSpendDev(c, cost) && c.projects.length < slots ? '' : ' disabled') + '>Avvia · ' + fmtCr(cost) + '</button>';
     return '<div class="part"><div><b>' + p.n + (c.focus === p.k ? ' <span class="chip hot">Priorità −30%</span>' : '') + '</b><small>' + p.d + '</small><div class="lv">' + [1, 2, 3, 4, 5].map(k => '<i class="' + (k <= lv ? 'on' : pr && k === lv + 1 ? 'wip' : '') + '"></i>').join('') + '</div>' +
       '<small>' + (pr ? 'In sviluppo: ' + pr.gp + ' GP · riuscita ' + Math.round(pr.odds * 100) + '%' : lv < 5 ? projTime(c, p.k) + ' GP · riuscita ' + Math.round(projOdds(c, p.k) * 100) + '%' : '') + '</small></div>' + right + '</div>';
@@ -1231,7 +1237,7 @@ function tabFabbrica(c) {
 }
 function tabFinanze(c) {
   const fc = fixedCosts(c), L = c.fin.last, inc = c.sponsors.reduce((s, x) => s + x.fee, 0);
-  let h = '<h3 class="h2">Bilancio</h3><div class="card earn"><div><span>Crediti in cassa</span><span class="mono">' + fmtCr(c.credits) + '</span></div>' +
+  let h = '<h3 class="h2">Crediti gratis</h3>' + videoCard(c) + '<h3 class="h2">Bilancio</h3><div class="card earn"><div><span>Crediti in cassa</span><span class="mono">' + fmtCr(c.credits) + '</span></div>' +
     '<div><span>Quote sponsor a GP</span><span class="mono" style="color:var(--good)">+' + fmtCr(inc) + '</span></div>' +
     '<div><span>Costi fissi a GP (piloti ' + fmtCr(fc.drv) + ', staff ' + fmtCr(fc.st) + ', strutture ' + fmtCr(fc.fac) + (fc.ac ? ', accademia ' + fmtCr(fc.ac) : '') + ')</span><span class="mono" style="color:var(--warn)">−' + fmtCr(fc.tot) + '</span></div>' +
     '<div class="tot"><span>Stagione: entrate ' + fmtCr(c.fin.inc) + ' · uscite ' + fmtCr(c.fin.exp) + '</span><span class="mono">' + (c.fin.inc - c.fin.exp >= 0 ? '+' : '−') + fmtCr(Math.abs(c.fin.inc - c.fin.exp)) + '</span></div></div>';
@@ -1256,14 +1262,17 @@ function bindMgr(c) {
   app.querySelectorAll('[data-staff]').forEach(b => b.onclick = () => openStaff(b.dataset.staff));
   app.querySelectorAll('[data-sign]').forEach(b => b.onclick = () => { const [src, id] = b.dataset.sign.split(':'); openSign(src, id); });
   app.querySelectorAll('[data-junior]').forEach(b => b.onclick = () => takeJunior(b.dataset.junior));
+  app.querySelectorAll('[data-rep]').forEach(b => b.onclick = async () => { const [id, how] = b.dataset.rep.split(':'), j = c.scout.find(x => x.id === id); if (!j || !(await payHelp(c, 60, how, 'scout_report'))) return; j.exact = true; j.est = [j.pot, j.pot]; save(); renderBox(); });
   const sc = $('#scoutB'); if (sc) sc.onclick = doScout;
   app.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => startProject(b.dataset.proj));
+  app.querySelectorAll('[data-retry]').forEach(b => b.onclick = async () => { const f = c.failed; if (!f || !(await payHelp(c, 150, b.dataset.retry, 'project_retry'))) return; c.projects.push({ part:f.part, cost:f.cost, gp:1, odds:Math.min(.97, f.odds + .1) }); c.failed = null; save(); toast('Si rifà: pronto dopo il prossimo GP'); renderBox(); });
   app.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { const [k, key, how] = b.dataset.sp.split(':'); speedUp(k, key, how); });
   app.querySelectorAll('[data-mtrain]').forEach(b => b.onclick = () => trainDriver(b.dataset.mtrain, 'cr'));
   app.querySelectorAll('[data-trainv]').forEach(b => b.onclick = () => trainDriver(b.dataset.trainv, 'vid'));
   app.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => newEngine(b.dataset.eng));
   app.querySelectorAll('[data-fac]').forEach(b => b.onclick = () => buildFac(b.dataset.fac));
   const nb = $('#nextB'); if (nb) nb.onclick = investNext;
+  bindVC(renderBox);
   app.querySelectorAll('[data-spon]').forEach(b => b.onclick = () => { const [s, k] = b.dataset.spon.split(':').map(Number); signSponsor(s, k); });
 }
 
@@ -1434,6 +1443,22 @@ const SU_DEF = [
   { k:'gear', n:'Rapporti del cambio', lo:'Corti', hi:'Lunghi', w:.1 }
 ];
 const FP_RUNS = 5;
+// Video premio: 5 al giorno, premi crescenti, proporzionati alla serie in cui corri.
+const VC_BASE = [100, 150, 200, 250, 400];
+const vcState = () => { const d = dayKey(); if (!S.vc || S.vc.day !== d) S.vc = { day:d, n:0 }; return S.vc; };
+const vcReward = (c, i) => Math.round(VC_BASE[i] * ecoMul(c) / 5) * 5;
+function videoCard(c) {
+  const st = vcState(), left = VC_BASE.length - st.n, tot = VC_BASE.reduce((a, _, i) => a + vcReward(c, i), 0);
+  return '<div class="card vcard"><div class="vhead"><div><b>Video premio</b><small>' + VC_BASE.length + ' video al giorno, ogni video vale di più del precedente. Fino a ' + fmtCr(tot) + ' crediti oggi.</small></div><span class="vleft mono">' + st.n + '/' + VC_BASE.length + '</span></div>' +
+    '<div class="vsteps">' + VC_BASE.map((_, i) => '<span class="' + (i < st.n ? 'ok' : i === st.n ? 'next' : '') + '"><i>' + (i < st.n ? '✓' : '▶') + '</i>+' + fmtCr(vcReward(c, i)) + '</span>').join('') + '</div>' +
+    (left > 0 ? '<button class="btn gold wide" data-vc="1">▶ Guarda un video · +' + fmtCr(vcReward(c, st.n)) + ' crediti</button>' : '<button class="btn wide" disabled>Video finiti: torna domani</button>') + '</div>';
+}
+async function watchVC() {
+  const c = C(), st = vcState(); if (st.n >= VC_BASE.length) return;
+  if (!(await rewarded('video_center'))) return;
+  const r = vcReward(c, st.n); st.n++; c.credits += r; track('video_center', { n:st.n, credits:r }); save(); toast('+' + fmtCr(r) + ' crediti');
+}
+function bindVC(after) { document.querySelectorAll('[data-vc]').forEach(b => b.onclick = async () => { b.disabled = true; await watchVC(); after(); }); }
 // Aiuti del weekend: si pagano in crediti (guadagnati o comprati) oppure con un video. Mai acquisti in euro a gara in corso.
 const helpCost = (c, base) => Math.max(30, Math.round(base * costMul(c) / 10) * 10);
 async function payHelp(c, base, how, tag) {
@@ -1449,6 +1474,7 @@ const trackWear = gp => +(.82 + mulberry(hashStr(gp.n + 'usura'))() * .45).toFix
 const wsu = w => w.su || (w.su = { aero:3, susp:3, gear:3 });
 const suQ = (su, id) => clamp(1 - SU_DEF.reduce((s, p) => s + Math.abs(su[p.k] - id[p.k]) * p.w, 0), 0, 1);
 const wearFor = (c, w, gp) => w.wearKnown ? trackWear(gp) : 1;
+const weekendWx = (w, gp) => w.wx || (w.wx = { rain:Math.random() < gp.rain, at:rnd(.25, .7) });
 const myIds = c => c.role === 'driver' ? ['me'] : mineDrivers().map(d => d.id);
 // Tempo sul giro della tua auto con l'assetto attuale: lo stesso calcolo della qualifica, senza errori.
 function fpLap(c, w, id) {
@@ -1556,6 +1582,8 @@ function renderStrategy() {
   app.innerHTML = '<div class="page" style="--team:' + mt.color + '"><header class="mast"><div class="wrap"><div><p class="kicker">GP ' + esc(gp.n) + ' · ' + c.laps + ' giri</p><h1>Strategia</h1><p class="sub">Griglia: ' + myIds(c).map(id => esc(first(drvOf(id).n)) + ' P' + (w.quali.grid.indexOf(id) + 1)).join(' · ') + '</p></div></div><div class="stripe"></div></header><div class="wrap sect">' +
     '<div class="card stratinfo"><div><span class="lab">Pioggia</span><b class="mono">' + Math.round(gp.rain * 100) + '%</b></div><div><span class="lab">Usura gomme</span><b>' + (w.wearKnown ? (wf > 1.08 ? 'Alta' : wf < .95 ? 'Bassa' : 'Normale') : 'Stimata') + '</b></div><div><span class="lab">Safety car</span><b class="mono">' + Math.round({ cittadino:55, misto:40, veloce:30 }[gp.style]) + '%</b></div></div>' +
     '<p class="legal" style="margin:0">' + wTxt + '</p>' +
+    (w.wxKnown ? '<div class="card buyrow done"><div><b>Previsioni precise</b><small>' + (weekendWx(w, gp).rain ? 'Pioggia in arrivo verso il giro ' + Math.max(1, Math.round(weekendWx(w, gp).at * c.laps)) + ': tieni pronte le intermedie.' : 'Niente pioggia: gara asciutta dall’inizio alla fine.') + '</small></div><span class="chip">Meteo</span></div>'
+      : '<div class="card buyrow"><div><b>Previsioni precise</b><small>Sapere se e quando pioverà, prima di scegliere le gomme.</small></div><span class="tbtns"><button class="btn sm gold" id="wxCr"' + (c.credits < helpCost(c, 60) ? ' disabled' : '') + '>' + fmtCr(helpCost(c, 60)) + '</button><button class="btn sm" id="wxVid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span></div>') +
     '<div class="card"><div class="opt col"><span class="lab">Piano gomme<small>Il box lo segue; in gara puoi sempre cambiarlo dalla radio.</small></span>' + planPicker(c, w, plans) + '</div>' +
     (!isDrv ? '<div class="opt col"><span class="lab">In gara</span><div class="seg"><button data-mode="drive" aria-pressed="' + (c.mode === 'drive') + '"><b>Con il pilota</b><small>Segui un pilota da vicino: attacchi, difese, radio</small></button><button data-mode="wall" aria-pressed="' + (c.mode === 'wall') + '"><b>Dal muretto</b><small>Ritmo, pit stop e ordini di scuderia</small></button></div></div>' +
       (c.mode === 'drive' ? '<div class="opt"><span class="lab">Segui</span><span class="pills">' + mine.map(d => '<button data-drv="' + d.id + '" aria-pressed="' + (c.driveId === d.id) + '">' + esc(first(d.n)) + '</button>').join('') + '</span></div>' : '') : '') + '</div>' +
@@ -1563,6 +1591,8 @@ function renderStrategy() {
   app.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => { const [id, k] = b.dataset.plan.split(':'); c.planBy[id] = +k; track('plan', { stops:plans[+k].st.length - 1 }); save(); renderStrategy(); });
   app.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { c.mode = b.dataset.mode; save(); renderStrategy(); });
   app.querySelectorAll('[data-drv]').forEach(b => b.onclick = () => { c.driveId = b.dataset.drv; save(); renderStrategy(); });
+  const buyWx = async how => { if (!(await payHelp(c, 60, how, 'forecast'))) return; weekendWx(w, gp); w.wxKnown = true; save(); renderStrategy(); };
+  if ($('#wxCr')) { $('#wxCr').onclick = () => buyWx('cr'); $('#wxVid').onclick = () => buyWx('vid'); }
   $('#toGrid').onclick = () => startSession('race');
   $('#stBack').onclick = renderBox;
 }
@@ -1765,7 +1795,8 @@ function startSession(kind, ch) {
     cars = [car];
   }
   const laps = kind === 'race' ? L0 : kind === 'quali' ? 1 : 3;
-  const rain = kind === 'race' && Math.random() < gp.rain ? { at:rnd(.25, .7) * laps * T.L, fc:false } : null;
+  const wx = !ch && kind === 'race' ? weekendWx(w, gp) : null;
+  const rain = kind === 'race' && (wx ? wx.rain : Math.random() < gp.rain) ? { at:(wx ? wx.at : rnd(.25, .7)) * laps * T.L, fc:false } : null;
   const me = cars.find(x => x.driven);
   R = { kind, mode, laps, cars, t:kind === 'race' ? -4.2 : -1, go:false, wet:0, rain, marks:[], radio:null, radioT:0, over:false, endT:0, speed:1, orderUsed:false, orderAsked:false,
         input:{ steer:0, active:false, x0:null, y0:0, kl:false, kr:false, dT:0, dStart:0 }, cam:{ init:false }, assist:S.assist !== false, guide:S.guide !== false, skids:[], fx:[], shake:0, contactCd:0, paused:false, prompt:null, queue:[], flash:'', flashT:0, flashPos:0, lapFlash:0, lastPos:me ? me.grid : 0, lateOffer:null, lateSide:null,
@@ -1930,7 +1961,7 @@ function step(dt) {
         if (c.pitReq && prevS < entry && c.s >= entry && c.dist < R.laps * T.L - T.L * .3) { c.inPit = true; c.pitPhase = 'in'; if (!c.driven) rivalPitted(c); }
       } else if (c.inPit) {
         const rel = c.s > T.L / 2 ? c.s - T.L : c.s;
-        if (c.pitPhase === 'in' && rel >= 0) { c.pitPhase = 'stop'; c.pitT = (c.mine && C().role === 'manager' ? 2.6 - .25 * (C().parts.crew - 1) - (C().mgr ? .08 * (C().staff.mech.lv - 1) : 0) : 2.4) + rnd(0, .5) + (c.dmg ? 1.5 : 0); }
+        if (c.pitPhase === 'in' && rel >= 0) { c.pitPhase = 'stop'; c.pitT = c.perfectPit ? (c.perfectPit = false, 1.9) : (c.mine && C().role === 'manager' ? 2.6 - .25 * (C().parts.crew - 1) - (C().mgr ? .08 * (C().staff.mech.lv - 1) : 0) : 2.4) + rnd(0, .5) + (c.dmg ? 1.5 : 0); }
         else if (c.pitPhase === 'stop') { c.pitT -= dt; if (c.pitT <= 0) { c.comp = c.pitReq; c.wear = 0; if (c.mine && R.sets && c.comp !== 'I') { if (R.sets[c.comp] > 0) R.sets[c.comp]--; else { c.wear = .35; radio('Set nuovi finiti: montate ' + COMP[c.comp].n.toLowerCase() + ' già usate.', c.driven ? 'Ingegnere' : first(c.n)); } } if (c.dmg) { c.dmg = 0; if (c.driven) eng('Muso nuovo montato, danno riparato.', 'info'); } c.pits++; c.pitReq = null; c.pitPhase = 'out'; if (c.plan) c.plan.next = Math.min(c.plan.box.length, c.plan.next + 1); if (c.mine) track('pit', { comp:c.comp }); } }
         else if (c.pitPhase === 'out' && rel >= PIT_HALF) { c.inPit = false; if (c.driven) { c.d = -HALF + 8; R.input.dT = c.d; } }
       }
@@ -2138,9 +2169,17 @@ function renderRadio() {
   const me = mePilot(), ord = R.ord || order(), ah = me ? ord[ord.indexOf(me) - 1] : null;
   el.innerHTML = !R.radOpen ? '' : '<div class="radmenu" role="menu"><small>Chiama il box</small>' +
     ['Come sono messo?', 'Ritmo di chi ho davanti?', ah ? 'Undercut su ' + ah.code + '?' : 'Undercut?', me && me.pitReq ? 'Annulla il box' : 'Box questo giro', 'Meteo?'].map((t, k) => '<button data-r="' + k + '">' + t + '</button>').join('') +
+    (R.ch || R.kind !== 'race' ? '' : R.pitPerf ? '<small>Pit stop perfetto ' + (me && me.perfectPit ? 'pronto alla prossima sosta' : 'usato') + '</small>' : '<small>Pit stop perfetto · prossima sosta</small><span class="tbtns"><button class="btn sm gold" data-pp="cr"' + (C().credits < helpCost(C(), 80) ? ' disabled' : '') + '>🔧 ' + fmtCr(helpCost(C(), 80)) + ' crediti</button><button class="btn sm" data-pp="vid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span>') +
     (R.ch || R.kind !== 'race' ? '' : R.boostUsed ? '<small>Mappa motore usata in questa gara</small>' : '<small>Mappa motore da qualifica · 2 giri</small><span class="tbtns"><button class="btn sm gold" data-bst="cr"' + (C().credits < helpCost(C(), 120) ? ' disabled' : '') + '>⚡ ' + fmtCr(helpCost(C(), 120)) + ' crediti</button><button class="btn sm" data-bst="vid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span>') + '</div>';
   el.querySelectorAll('[data-r]').forEach(b => b.onclick = () => radioCall(+b.dataset.r));
   el.querySelectorAll('[data-bst]').forEach(b => b.onclick = () => buyBoost(b.dataset.bst));
+  el.querySelectorAll('[data-pp]').forEach(b => b.onclick = () => buyPerfectPit(b.dataset.pp));
+}
+async function buyPerfectPit(how) {
+  const me = mePilot(); if (!me || R.pitPerf || R.ch) return;
+  R.paused = true; const ok = await payHelp(C(), 80, how, 'perfect_pit'); if (!R) return; R.paused = false; last = performance.now(); if (!ok) return;
+  R.pitPerf = true; me.perfectPit = true; R.radOpen = false; renderRadio(); const rb = $('#radB'); if (rb) rb.setAttribute('aria-expanded', 'false');
+  eng('Squadra pronta per il pit stop perfetto: due secondi netti, anche con l’ala da cambiare.', 'go'); save();
 }
 // Boost: per due giri la mappa motore da qualifica (circa mezzo secondo al giro). Una volta per gara, mai nella sfida del giorno.
 async function buyBoost(how) {
@@ -3142,14 +3181,14 @@ function openShop(source) {
   const today = new Date().toDateString(); if (S.freeDay !== today) { S.freeDay = today; S.freeN = 0; }
   let h = '<h2>Negozio</h2><p>Hai ' + fmtCr(c.credits) + ' crediti.</p>';
   if (live) h += '<h3>Solo per poco</h3>' + prodRow('starter', '★', true);
-  h += '<h3>Gratis</h3><button class="prod" id="free"' + (S.freeN < 3 ? '' : ' disabled') + '><span class="pi">▶</span><div><b>+250 crediti</b><span>Guarda un annuncio · ' + (S.freeN < 3 ? 'ancora ' + (3 - S.freeN) + ' oggi' : 'torna domani') + '</span></div><span class="p free">Gratis</span></button>';
+  h += '<h3>Crediti gratis</h3>' + videoCard(c);
   h += '<h3>Stagione</h3>' + (c.pass ? '<p class="outcome">Pass stagionale attivo.</p>' : prodRow('pass', 'P', true));
   h += '<h3>Crediti</h3>' + prodRow('c1', '◆') + prodRow('c2', '◆') + prodRow('c3', '◆', true) + prodRow('c4', '◆');
   h += '<h3>Muretto Pro</h3>' + (S.pro ? '<p class="outcome">Muretto Pro attivo.</p>' : prodRow('pro', 'P+', true) + (S.noAds ? '' : prodRow('noads', '✕')));
   h += '<p class="legal">Prezzi IVA inclusa. Nessun acquisto casuale: sai sempre cosa compri. Nel browser gli acquisti sono simulati.</p>';
   openSheet(h);
   document.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => buy(b.dataset.buy, 'shop'));
-  const fr = $('#free'); if (fr && S.freeN < 3) fr.onclick = async () => { closeSheet(); if (await rewarded('free_credits')) { S.freeN++; c.credits += 250; save(); toast('+250 crediti'); } renderBox(); openShop(source); };
+  bindVC(() => { renderBox(); openShop(source); });
 }
 function buy(key, source) {
   const k = SKU[key], c = C();
