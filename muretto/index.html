@@ -1,46 +1,34 @@
 <title>Muretto</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#14213D">
+<meta name="theme-color" content="#070B16">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,700;0,800;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: one-screen phone app. Box (scrolling career hub) / Sessione (full-bleed canvas + HUD) / Risultati / Fine stagione.
-   Look: 1970s endurance-racing poster meets pit-wall timing screen — chalk paper, navy, signal orange, condensed caps. */
+/* Layout: app a schermo unico per telefono. Box (carriera a schede) / Sessione (pista a tutto schermo + HUD) / Risultati / Fine stagione.
+   Look: "notte di gara", grafica TV da corsa. Asfalto blu notte, carbonio, cordoli bianco-rossi, semafori di partenza,
+   colori del cronometraggio (verde = migliore personale, viola = più veloce). Un solo mondo scuro, scelto apposta. */
 :root{
-  --bg:#EFEDE7; --surface:#FFFFFF; --surface2:#E6E3DA; --ink:#121826; --muted:#59616F; --line:rgba(18,24,38,.13);
-  --navy:#14213D; --on-navy:#F4F2EC; --accent:#E8502A; --accent2:#B83A1B; --on-accent:#FFFFFF;
-  --good:#1D8A5A; --warn:#C33A2E; --gold:#E3A332;
-  --soft:#E23D3D; --med:#F2C230; --hard:#E9E9E9; --inter:#2FA35B;
-  --shadow:0 1px 0 rgba(18,24,38,.05),0 10px 26px -16px rgba(18,24,38,.5);
-  --scrim:rgba(10,14,24,.55);
-  --f-display:'Saira Condensed','Arial Narrow',Impact,sans-serif;
-  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#0A0E1A; --surface:#121A2C; --surface2:#1C2742; --ink:#F3F6FC; --muted:#97A3BE; --line:rgba(151,163,190,.16);
+  --navy:#060912; --on-navy:#F3F6FC; --accent:#FF4B2B; --accent2:#C2290F; --on-accent:#FFFFFF;
+  --cyan:#2FD4FF; --purple:#B26BFF; --kerb:#E8352A;
+  --good:#2EE59D; --warn:#FF5A5F; --gold:#FFC83D;
+  --soft:#FF3B3B; --med:#FFD02E; --hard:#EDEFF4; --inter:#2EC26A;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -18px rgba(0,0,0,.95);
+  --scrim:rgba(2,4,10,.72);
+  --f-display:'Exo 2','Arial Black',Impact,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-label:'Barlow Condensed','Arial Narrow',sans-serif;
   --f-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
-  --r:14px;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0D1220; --surface:#151C2E; --surface2:#1D2640; --ink:#EEF0F5; --muted:#9BA4B7; --line:rgba(238,240,245,.12);
-    --navy:#0A0F1C; --on-navy:#EEF0F5; --accent:#FF6B3D; --accent2:#C9461F; --on-accent:#14110F;
-    --good:#4CC28A; --warn:#FF6B5E; --gold:#F2B84B;
-    --shadow:0 1px 0 rgba(0,0,0,.25),0 12px 30px -16px rgba(0,0,0,.9);
-    --scrim:rgba(0,0,0,.65);
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0D1220; --surface:#151C2E; --surface2:#1D2640; --ink:#EEF0F5; --muted:#9BA4B7; --line:rgba(238,240,245,.12);
-  --navy:#0A0F1C; --on-navy:#EEF0F5; --accent:#FF6B3D; --accent2:#C9461F; --on-accent:#14110F;
-  --good:#4CC28A; --warn:#FF6B5E; --gold:#F2B84B;
-  --shadow:0 1px 0 rgba(0,0,0,.25),0 12px 30px -16px rgba(0,0,0,.9);
-  --scrim:rgba(0,0,0,.65);
+  --r:12px;
+  --carbon:repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 3px,transparent 3px 6px),repeating-linear-gradient(-45deg,rgba(0,0,0,.25) 0 3px,transparent 3px 6px);
+  --kerbs:repeating-linear-gradient(90deg,var(--kerb) 0 18px,#F3F6FC 18px 36px);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.4;overflow:hidden;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.4;overflow:hidden;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .num,.mono{font-variant-numeric:tabular-nums}
@@ -416,6 +404,98 @@ table.std tr.me td{font-weight:800}
 @keyframes throb{50%{transform:scale(1.06)}}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:380px){.drivers{grid-template-columns:1fr}.gp{grid-template-columns:1fr 90px}.gp svg{width:90px}.hero h1{font-size:52px}}
+
+/* =====================  Grafica "notte di gara"  ===================== */
+.page{background:radial-gradient(120% 60% at 100% 0%,rgba(47,212,255,.07),transparent 60%),radial-gradient(90% 50% at 0% 100%,rgba(255,75,43,.06),transparent 60%),var(--bg)}
+.kicker{font-family:var(--f-label);font-size:13px;font-weight:700;letter-spacing:.16em;opacity:.8}
+/* testata: carbonio, colore squadra in diagonale, cordolo */
+.mast{background:linear-gradient(105deg,transparent 0 62%,color-mix(in srgb,var(--team) 55%,transparent) 62% 66%,transparent 66% 69%,color-mix(in srgb,var(--team) 30%,transparent) 69% 71%,transparent 71%),var(--carbon),var(--navy)}
+.mast .stripe,.hero .stripe{height:7px;background:var(--kerbs);transform:skewX(-30deg);left:-10px;right:-10px}
+.mast h1{font-weight:900;letter-spacing:-.01em;font-size:34px;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.cr{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+/* titoli di sezione come sovrimpressioni TV */
+.h2{display:flex;align-items:center;gap:10px;font-family:var(--f-label);font-weight:700;font-size:15px;letter-spacing:.18em;color:var(--ink);margin-top:12px}
+.h2::before{content:"";width:16px;height:14px;background:var(--accent);transform:skewX(-20deg);flex:none}
+.h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+/* schede */
+.card{background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 40%),var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.gp h2,.mast h1,.hero h1,.role button b,.btn.primary,.cls td.p{font-family:var(--f-display);font-style:italic}
+.gp h2{font-weight:900;font-size:36px;letter-spacing:-.01em}
+.gp svg path,.gp svg polyline{stroke:var(--ink)}
+.chip{background:var(--surface2);font-family:var(--f-label);font-size:13px;letter-spacing:.03em;border-radius:6px}
+.chip.hot{background:var(--accent)}
+/* pulsanti: il principale è un cartello inclinato con le frecce */
+.btn{border-radius:10px;background:var(--surface2);border-color:var(--line);font-family:var(--f-label);font-weight:700;font-size:15px;letter-spacing:.03em}
+.btn.sm{font-size:14px}
+.btn.go2{background:var(--ink);color:var(--bg)}
+.btn.gold{background:linear-gradient(180deg,#FFD45C,#F0A91E);color:#1E1503;border-color:transparent}
+.btn.primary{position:relative;border:0;border-radius:0;clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);background:linear-gradient(180deg,#FF6A3D,var(--accent) 55%,var(--accent2));font-weight:900;font-size:24px;letter-spacing:.06em;box-shadow:none;min-height:58px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.btn.primary::after{content:"›››";margin-left:10px;letter-spacing:-.05em;opacity:.65;font-style:normal}
+.btn.primary:active{transform:translateY(2px);filter:brightness(.95)}
+.go{background:linear-gradient(to top,var(--bg) 62%,transparent)}
+/* scelte segmentate e schede del box */
+.seg{background:var(--surface2);border-radius:12px}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:inset 0 -3px 0 var(--accent),var(--shadow)}
+.seg button b{font-family:var(--f-label);font-size:17px;letter-spacing:.02em}
+.seg button[aria-pressed="true"] b{color:var(--ink)}
+.pills button{background:var(--surface2);border-color:var(--line);font-family:var(--f-label);font-size:14px}
+.pills button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.mtabs{top:env(safe-area-inset-top,0px);background:rgba(10,14,26,.86);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px var(--line)}
+.mtabs button{font-family:var(--f-label);font-size:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.mtabs button[aria-selected="true"]{background:var(--accent);color:#fff;box-shadow:0 6px 16px -8px var(--accent)}
+.mtabs .dot{background:var(--gold);box-shadow:0 0 0 2px var(--bg)}
+.sess{border-top-color:var(--line)}
+.sess .ix{font-family:var(--f-display);font-style:italic;border-radius:6px;transform:skewX(-8deg)}
+.sess.done .ix{background:var(--good);color:#04130C}
+/* piloti: numero di gara come sul muso */
+.no{border-radius:4px;transform:skewX(-10deg);font-family:var(--f-display);font-style:italic;font-weight:900;font-size:15px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.drv .nm b{font-family:var(--f-display);font-style:italic;font-weight:900;letter-spacing:-.01em}
+.stat .bar,.train .bar{background:rgba(255,255,255,.08)}
+.stat .bar i{background:linear-gradient(90deg,var(--cyan),#7DE6FF)}
+.stat.mor .bar i{background:linear-gradient(90deg,var(--good),#8CF5C6)}
+.stars{color:var(--gold)}.stars i{color:rgba(255,255,255,.14)}
+.lv i{background:rgba(255,255,255,.1);transform:skewX(-20deg)}
+.lv i.on{background:linear-gradient(90deg,var(--accent),#FF8A4C)}
+.meter i{background:linear-gradient(90deg,var(--cyan) calc(var(--f)*100%),rgba(255,255,255,.08) calc(var(--f)*100%))}
+.lrow .ico{background:var(--surface2);border-radius:8px;font-family:var(--f-label);font-size:15px}
+/* classifiche come la torre dei tempi */
+table.std td,.cls td{border-bottom-color:var(--line)}
+table.std td.p,.cls td.p{width:34px}
+table.std td.p{font-family:var(--f-display);font-style:italic;font-weight:900;color:var(--ink)}
+table.std tr:nth-child(-n+3) td.p,.cls tr:nth-child(-n+3) td.p{color:var(--gold)}
+table.std tr.me td,.cls tr.me td{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+table.std tr.me td:first-child,.cls tr.me td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.cls tr.me{background:none}
+.sw{width:4px;height:16px;border-radius:1px;transform:skewX(-15deg)}
+.tabs button{font-family:var(--f-label);font-size:14px;letter-spacing:.04em}
+.tabs button[aria-pressed="true"]{background:var(--accent);color:#fff}
+/* negozio, offerte, piani */
+.prod{background:var(--surface2);border-color:var(--line)}
+.prod .pi{background:var(--carbon),var(--navy);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);font-family:var(--f-display);font-style:italic}
+.prod .p{border-radius:8px;font-family:var(--f-label);font-size:16px}
+.prod.feature{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 10px 28px -16px var(--accent)}
+.plan{background:var(--surface2);border-color:transparent}
+.plan[aria-pressed="true"]{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 10%,var(--surface2))}
+.plan b{font-family:var(--f-label);font-size:17px}
+.sheet{background:var(--surface);box-shadow:0 -1px 0 var(--line),0 -20px 50px -20px #000}
+.sheet h2{font-family:var(--f-display);font-style:italic;font-weight:900;font-size:24px;text-wrap:balance}
+.field{background:var(--surface2);border-color:var(--line);font-size:17px}
+.news{border-left:0;box-shadow:inset 4px 0 0 var(--gold)}
+.daily{border-left:0;box-shadow:inset 4px 0 0 var(--cyan);background:linear-gradient(90deg,color-mix(in srgb,var(--cyan) 9%,transparent),transparent 60%),var(--surface)}
+.earn div.tot{font-family:var(--f-label);font-size:19px}
+.toast{background:var(--ink);color:var(--bg);font-weight:700}
+/* schermata iniziale: semafori di partenza */
+.hero{background:radial-gradient(70% 90% at 85% 10%,rgba(255,75,43,.28),transparent 60%),var(--carbon),var(--navy);margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px)}
+.hero .wrap{padding-block:26px 30px}
+.hero h1{font-weight:900;font-size:clamp(58px,17vw,84px);letter-spacing:-.02em;line-height:.85;background:linear-gradient(180deg,#fff 30%,#C9D3E8);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+.hero p{font-size:17px}
+.hero .flag{position:absolute;right:-30px;top:-30px;width:180px;height:180px;opacity:.12;background:conic-gradient(#fff 25%,transparent 0 50%,#fff 0 75%,transparent 0) 0 0/30px 30px;transform:rotate(-14deg);-webkit-mask:radial-gradient(circle at 70% 30%,#000 30%,transparent 72%);mask:radial-gradient(circle at 70% 30%,#000 30%,transparent 72%)}
+.slights{display:flex;gap:10px;margin:0 0 18px;padding:9px 12px;width:max-content;background:#05070D;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.slights i{width:22px;height:22px;border-radius:50%;background:#2A1414;box-shadow:inset 0 2px 4px rgba(0,0,0,.6);animation:slight 4.2s infinite}
+.slights i:nth-child(2){animation-delay:.35s}.slights i:nth-child(3){animation-delay:.7s}.slights i:nth-child(4){animation-delay:1.05s}.slights i:nth-child(5){animation-delay:1.4s}
+@keyframes slight{0%,8%{background:#2A1414;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}10%,62%{background:#FF2A1F;box-shadow:0 0 14px #FF2A1F,inset 0 -3px 6px rgba(0,0,0,.3)}64%,100%{background:#2A1414;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}}
+@media (prefers-reduced-motion: reduce){.slights i{animation:none;background:#FF2A1F}}
+.promo{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,200,61,.2),transparent 70%),var(--surface)}
 </style>
 
 <div id="app"></div>
@@ -724,7 +804,7 @@ const draft = { role:'manager', name:'', team:'Scuderia Aurora', season:12, laps
 function renderStart() {
   screen = 'start'; stopRace();
   if (!CAREER_DRIVER) draft.role = 'manager';
-  app.innerHTML = '<div class="page"><header class="hero"><div class="wrap"><p class="kicker">Campionato Mondiale Gran Turismo</p><h1>Muretto</h1><p>Parti dalla Formula Regionale con una piccola scuderia e scala fino al Campionato Mondiale: piloti, staff, sviluppo, sponsor e strategia.</p></div><div class="stripe"></div></header>' +
+  app.innerHTML = '<div class="page"><header class="hero"><span class="flag" aria-hidden="true"></span><div class="wrap"><div class="slights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><p class="kicker">Manager di monoposto</p><h1>Muretto</h1><p>Parti dalla Formula Regionale con una piccola scuderia e scala fino al Campionato Mondiale: piloti, staff, sviluppo, sponsor e strategia.</p></div><div class="stripe"></div></header>' +
     '<div class="wrap sect">' + (!CAREER_DRIVER ? '<h3 class="h2">La tua scuderia</h3>' : '<h3 class="h2">Chi vuoi essere</h3><div class="role" role="group" aria-label="Ruolo">' +
       '<button data-role="manager" aria-pressed="' + (draft.role === 'manager') + '"><b>Manager</b><span>Guidi una scuderia: due piloti, sviluppo della monoposto, sponsor e strategia. In gara scegli se guidare tu o comandare dal muretto.</span></button>' +
       '<button data-role="driver" aria-pressed="' + (draft.role === 'driver') + '"><b>Pilota</b><span>Parti dalla squadra più debole. In gara gestisci DRS, carburante e gomme con il tuo ingegnere. Batti il compagno e a fine stagione arrivano le offerte dei team migliori.</span></button></div>') +
