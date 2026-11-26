@@ -54,13 +54,26 @@ La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e c
 - Le squadre rivali sviluppano la macchina durante la stagione.
 - Dopo ogni gara c'è una scelta (stampa, sponsor, ingegnere, social) che cambia morale, crediti o attributi.
 
-## Serie, difficoltà e rivali
+## Serie e rivali
 
 - **Tre campionati a scalare**: Formula Regionale → Formula Cadetti → Campionato Mondiale. Si sale chiudendo tra i primi due costruttori. Ogni serie ha rivali, piloti e mercato propri; premi, sponsor e costi crescono salendo (×0,55 / ×0,75 / ×1 per i ricavi, ×0,6 / ×0,8 / ×1 per i costi). Dopo una promozione l'auto perde due livelli per parte e riparte dietro alle nuove rivali.
-- **Difficoltà** scelta all'inizio: Facile (più crediti, rivali più lente, sorpassi più facili, meno guasti), Normale, Difficile (il contrario).
+- **Nessun livello di difficoltà**: la sfida sta nelle serie, nello sviluppo dell'auto, nello staff e nei piloti.
 - **Rivali vive**: sviluppano di più quando sono dietro di te in classifica, a volte portano un grosso aggiornamento, ingaggiano svincolati migliori dei loro piloti e corteggiano i tuoi piloti in scadenza (rinnovi subito con un aumento o lo perdi a fine stagione).
 
-Nelle prove con il bot (gestione semplice, stagioni da 6 GP) la promozione dalla Formula Regionale arriva dopo 3-4 stagioni; giocando bene, prima.
+## Gratis si arriva, con crediti e video si arriva prima
+
+Tutto si può ottenere giocando gratis, ma richiede tempo:
+- **Progetti di sviluppo**: 3 GP (motore, aerodinamica), 2 GP (squadra box). **Strutture**: 4 GP per il livello 2, 6 GP per il 3.
+- **Acceleratori**: su ogni progetto e ogni cantiere, "−1 GP" con i crediti (circa il 30% del costo del progetto o il 12% della struttura) oppure "▶ −1 GP" con un video. Se il conto arriva a zero il lavoro si chiude subito.
+- **Allenamento** di piloti e giovani: +1 alla caratteristica più debole, fino al potenziale. Con i crediti quando vuoi, con un video una volta per pilota a ogni GP.
+- I video per accelerare sono al massimo 6 al giorno.
+
+Prove con il bot (stagioni da 6 GP, gestione attenta di allenamenti, strutture e staff):
+
+| | Promozione dalla Formula Regionale | Arrivo nel Campionato Mondiale |
+|---|---|---|
+| Gratis, senza acceleratori | dopo 5 stagioni | oltre la 6ª stagione |
+| Con video e crediti a ogni GP | dopo 2 stagioni | dalla 5ª stagione |
 
 ## Sfida del giorno, obiettivi, traguardi
 
@@ -114,7 +127,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 

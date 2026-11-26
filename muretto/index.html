@@ -147,6 +147,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .warnc{color:var(--warn)}
 .setsrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700;font-size:13px}
 .plan[disabled]{opacity:.4}
+.tbtns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.drv .tbtns{justify-content:flex-start}
 .daily{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border-left:4px solid var(--accent)}.daily b{display:block;font-weight:800}.daily small{display:block;color:var(--muted);font-size:12px;line-height:1.4;margin-top:2px}
 .promo{border:2px solid var(--gold);background:linear-gradient(135deg,rgba(242,184,75,.18),transparent)}.promo b{font-family:var(--f-display);font-size:22px;font-style:italic;text-transform:uppercase}
 .rule{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
@@ -719,7 +720,7 @@ const salaryOfRank = r => [600, 480, 380, 300, 240][r] || 240;
 /* =====================  Nuova carriera  ===================== */
 let screen = 'start', standTab = 'd';
 const CAREER_DRIVER = false;   // carriera pilota nascosta dal menu: i salvataggi esistenti continuano a funzionare
-const draft = { role:'manager', name:'', team:'Scuderia Aurora', season:12, laps:12, diff:1 };
+const draft = { role:'manager', name:'', team:'Scuderia Aurora', season:12, laps:12 };
 function renderStart() {
   screen = 'start'; stopRace();
   if (!CAREER_DRIVER) draft.role = 'manager';
@@ -729,12 +730,10 @@ function renderStart() {
       '<button data-role="driver" aria-pressed="' + (draft.role === 'driver') + '"><b>Pilota</b><span>Parti dalla squadra più debole. In gara gestisci DRS, carburante e gomme con il tuo ingegnere. Batti il compagno e a fine stagione arrivano le offerte dei team migliori.</span></button></div>') +
     '<div class="card"><div class="opt col"><label class="lab" for="nm">' + (draft.role === 'driver' ? 'Nome e cognome del pilota' : 'Nome della scuderia') + '</label><input class="field" id="nm" maxlength="26" value="' + esc(draft.role === 'driver' ? draft.name : draft.team) + '" placeholder="' + (draft.role === 'driver' ? 'Es. Marco Bellini' : 'Scuderia Aurora') + '"></div>' +
       '<div class="opt col"><span class="lab">Stagione</span><div class="seg three">' + Object.entries(SEASON_LEN).map(([k, v]) => '<button data-season="' + k + '" aria-pressed="' + (draft.season == k) + '"><b>' + v.split(' · ')[0] + '</b><small>' + v.split(' · ')[1] + '</small></button>').join('') + '</div></div>' +
-      '<div class="opt col"><span class="lab">Difficoltà</span><div class="seg three">' + DIFF.map((x, k) => '<button data-diff="' + k + '" aria-pressed="' + (draft.diff === k) + '"><b>' + x.n + '</b><small>' + x.d + '</small></button>').join('') + '</div></div>' +
       '<div class="opt col"><span class="lab">Durata delle gare<small>Si può cambiare in ogni momento</small></span><div class="seg three">' + Object.entries(RACE_LEN).map(([k, v]) => '<button data-laps="' + k + '" aria-pressed="' + (draft.laps == k) + '"><b>' + v.split(' · ')[0] + '</b><small>' + v.split(' · ')[1] + ', circa ' + Math.max(2, Math.round(k * .4)) + ' min</small></button>').join('') + '</div></div></div>' +
     '<div class="foot"></div></div><div class="go"><div class="wrap"><button class="btn primary wide" id="startC">Inizia la carriera</button></div></div></div>';
   app.querySelectorAll('[data-role]').forEach(b => b.onclick = () => { keepName(); draft.role = b.dataset.role; renderStart(); });
   app.querySelectorAll('[data-season]').forEach(b => b.onclick = () => { keepName(); draft.season = +b.dataset.season; renderStart(); });
-  app.querySelectorAll('[data-diff]').forEach(b => b.onclick = () => { keepName(); draft.diff = +b.dataset.diff; renderStart(); });
   app.querySelectorAll('[data-laps]').forEach(b => b.onclick = () => { keepName(); draft.laps = +b.dataset.laps; renderStart(); });
   $('#startC').onclick = () => { keepName(); newCareer(); };
 }
@@ -753,7 +752,7 @@ function newCareer() {
   S.career = c;
   newSeasonRules();
   if (c.role === 'manager') {
-    c.tier = 3; c.diff = draft.diff; ensureMgr(c); buildTier(c, 3, true); c.credits = Math.round(900 * DF(c).eco);
+    c.tier = 3; ensureMgr(c); buildTier(c, 3, true); c.credits = 900;
     const set = (id, v, co, g) => { const d = drvOf(id); Object.assign(d, { vel:v, cos:co, gom:g }); d.sal = salaryFor(d); };
     set('rin', 74, 64, 68); set('mar', 71, 78, 77);
     c.sponsors = []; const sp = makeSponsor(0, 'mid'); sp.n = 'Lumen Energy'; sp.mark = 'LE'; c.sponsors.push(sp); c.offers = { 1:sponsorOffers(1) };
@@ -797,11 +796,11 @@ const scoutCost = () => Math.round(400 * costMul(C()) / 10) * 10;
 const partCost = (c, k) => Math.round(PART_COST[c.parts[k]] * costMul(c) * (hasRule('budget') ? 1.3 : 1) * (c.focus === k ? .7 : 1));
 const acadMax = () => S.pro ? 3 : 2;
 const FAC = {
-  wind:{ n:'Galleria del vento', d:lv => 'Progetti aerodinamici riusciti +' + (lv - 1) * 6 + '%' + (lv >= 3 ? ', in 1 GP' : '') },
+  wind:{ n:'Galleria del vento', d:lv => 'Progetti aerodinamici riusciti +' + (lv - 1) * 6 + '%' + (lv >= 3 ? ', un GP più rapidi' : '') },
   sim: { n:'Simulatore',          d:lv => 'Conoscenza pista di partenza +' + (lv - 1) * 15 + '%, giovani più rapidi' },
   fact:{ n:'Fabbrica',            d:lv => lv + (lv > 1 ? ' progetti' : ' progetto') + ' alla volta, ricambi −' + (lv - 1) * 15 + '%' }
 };
-const FAC_COST = [0, 0, 2500, 5000], FAC_TIME = [0, 0, 3, 4];
+const FAC_COST = [0, 0, 2500, 5000], FAC_TIME = [0, 0, 4, 6];
 const SPONSORS = [['Lumen Energy','LE'],['Vela Telecom','VT'],['Orsa Assicurazioni','OA'],['Brillo Bevande','BB'],['Ferro Logistica','FL'],['Nimbus Cloud','NC'],['Corallo Moda','CM'],['Pietra Banca','PB'],['Astro Orologi','AO'],['Maestrale Nautica','MN']];
 const TIER = {
   safe:{ n:'Sicuro',      fee:300, bonus:150, miss:6 },
@@ -858,7 +857,7 @@ const mineDrivers = () => C().drivers.filter(d => d.team === 'aurora');
 const devCap = c => hasRule('budget') ? c.seasonLen * 400 : Infinity;
 const canSpendDev = (c, x) => c.credits >= x && c.fin.dev + x <= devCap(c);
 const projOdds = (c, part) => clamp(.6 + .06 * c.staff.td.lv + (part === 'aero' ? .06 * (c.fac.wind.lv - 1) : 0) - (part === 'engine' && hasRule('motori') ? .05 : 0), .4, .96);
-const projTime = (c, part) => part === 'crew' ? 1 : part === 'aero' && c.fac.wind.lv >= 3 ? 1 : 2;
+const projTime = (c, part) => part === 'crew' ? 2 : part === 'aero' && c.fac.wind.lv >= 3 ? 2 : 3;
 function ensureMgr(c) {
   if (!c || c.role !== 'manager' || c.mgr) return;
   const AGES = { and:29, bra:26, kel:31, rou:24, tan:27, kow:30, rin:21, mar:34, pra:28, oka:23 }, POT = { rin:93, rou:89, oka:88, bra:89 };
@@ -906,15 +905,9 @@ function settleGP(c, res, prize, info) {
     return true;
   });
   // progetti di sviluppo
-  c.projects = c.projects.filter(p => {
-    if (--p.gp > 0) return true;
-    const P = PARTS.find(x => x.k === p.part);
-    if (Math.random() < p.odds) { c.parts[p.part] = Math.min(5, c.parts[p.part] + 1); progress('proj'); news.push(P.n + ': il nuovo pezzo funziona. Livello ' + c.parts[p.part] + '.'); track('project_ok', { part:p.part }); }
-    else { const back = Math.round(p.cost * .4); c.credits += back; news.push(P.n + ': il pezzo non ha reso in pista. Recuperati ' + fmtCr(back) + ' crediti, si può ritentare.'); track('project_fail', { part:p.part }); }
-    return false;
-  });
+  c.projects = c.projects.filter(p => { if (--p.gp > 0) return true; news.push(finishProject(c, p)); return false; });
   // strutture in costruzione
-  for (const [k, f] of Object.entries(c.fac)) if (f.b > 0 && --f.b === 0) { f.lv++; news.push(FAC[k].n + ' pronta: livello ' + f.lv + '.'); if (f.lv >= 3) unlock('facmax'); }
+  for (const [k, f] of Object.entries(c.fac)) if (f.b > 0 && --f.b === 0) news.push(finishFac(c, k));
   news.push(...rivalTurn(c, res));
   // motori
   const life = c.seasonLen / engAllow(c);
@@ -933,6 +926,41 @@ function settleGP(c, res, prize, info) {
 function baseKnow(c) { return c.role === 'manager' && c.mgr ? Math.min(60, 10 * (c.staff.strat.lv - 1) + 15 * (c.fac.sim.lv - 1)) : 0; }
 
 /* ---------- azioni ---------- */
+function finishProject(c, p) {
+  const P = PARTS.find(x => x.k === p.part);
+  if (Math.random() < p.odds) { c.parts[p.part] = Math.min(5, c.parts[p.part] + 1); progress('proj'); track('project_ok', { part:p.part }); return P.n + ': il nuovo pezzo funziona. Livello ' + c.parts[p.part] + '.'; }
+  const back = Math.round(p.cost * .4); c.credits += back; track('project_fail', { part:p.part }); return P.n + ': il pezzo non ha reso in pista. Recuperati ' + fmtCr(back) + ' crediti, si può ritentare.';
+}
+function finishFac(c, k) { const f = c.fac[k]; f.b = 0; f.lv++; if (f.lv >= 3) unlock('facmax'); return FAC[k].n + ' pronta: livello ' + f.lv + '.'; }
+// Acceleratori: con i crediti o con un video si taglia un GP di attesa. Gratis si arriva comunque, solo più piano.
+const VID_MAX = 6;
+function vidLeft() { const d = dayKey(); if (S.vday !== d) { S.vday = d; S.vn = 0; } return VID_MAX - S.vn; }
+const projStepCost = p => Math.max(20, Math.round(p.cost * .3 / 10) * 10);
+const facStepCost = (c, k) => Math.max(50, Math.round(FAC_COST[c.fac[k].lv + 1] * costMul(c) * .12 / 10) * 10);
+async function speedUp(kind, key, how) {
+  const c = C(), p = kind === 'proj' ? c.projects.find(x => x.part === key) : null, f = kind === 'fac' ? c.fac[key] : null;
+  if ((p && p.gp <= 0) || (f && !f.b)) return;
+  if (how === 'cr') { const cost = p ? projStepCost(p) : facStepCost(c, key); if (c.credits < cost) { openShop('speedup'); return; } c.credits -= cost; }
+  else { if (vidLeft() <= 0) { toast('Video finiti per oggi'); return; } if (!(await rewarded(kind + '_speedup'))) return; S.vn++; }
+  track('speedup', { kind, how });
+  let msg;
+  if (p) { p.gp--; if (p.gp <= 0) { c.projects = c.projects.filter(x => x !== p); msg = finishProject(c, p); } else msg = 'Un GP in meno: ' + (p.gp === 1 ? 'manca 1 GP.' : 'mancano ' + p.gp + ' GP.'); }
+  else { f.b--; msg = f.b <= 0 ? finishFac(c, key) : 'Un GP in meno: ' + (f.b === 1 ? 'manca 1 GP.' : 'mancano ' + f.b + ' GP.'); }
+  save(); toast(msg); renderBox();
+}
+// Allenamento dei piloti e dei giovani: +1 alla caratteristica più bassa, fino al potenziale.
+const trainCost = (c, d) => Math.round((80 + Math.max(0, avgOf(d) - SER(c).lo) * 15) * costMul(c) / 10) * 10;
+async function trainDriver(id, how) {
+  const c = C(), d = drvOf(id) || c.academy.find(x => x.id === id); if (!d) return;
+  const k = ['vel', 'cos', 'gom'].sort((a, b) => d[a] - d[b])[0]; if (d[k] >= d.pot + 1) { toast(first(d.n) + ' è al suo potenziale'); return; }
+  const tag = c.season + ':' + c.round;
+  if (how === 'cr') { const cost = trainCost(c, d); if (c.credits < cost) { openShop('train'); return; } c.credits -= cost; }
+  else { if (d.vidT === tag) return; if (vidLeft() <= 0) { toast('Video finiti per oggi'); return; } if (!(await rewarded('train'))) return; S.vn++; d.vidT = tag; }
+  d[k]++; track('train', { how, attr:k }); save(); toast(first(d.n) + ': ' + { vel:'velocità', cos:'costanza', gom:'gomme' }[k] + ' ' + d[k]); renderBox();
+}
+const trainBtns = (c, d) => { const atPot = Math.min(d.vel, d.cos, d.gom) >= d.pot + 1;
+  return atPot ? '<span class="chip">Al potenziale</span>' : '<span class="tbtns"><button class="btn sm" data-mtrain="' + d.id + '"' + (c.credits < trainCost(c, d) ? ' disabled' : '') + '>Allena · ' + fmtCr(trainCost(c, d)) + '</button><button class="btn sm gold" data-trainv="' + d.id + '"' + (d.vidT === c.season + ':' + c.round || vidLeft() <= 0 ? ' disabled' : '') + '>▶ Allena</button></span>'; };
+const speedBtns = (kind, key, cost) => '<span class="tbtns"><button class="btn sm gold" data-sp="' + kind + ':' + key + ':cr">−1 GP · ' + fmtCr(cost) + '</button><button class="btn sm" data-sp="' + kind + ':' + key + ':vid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ −1 GP</button></span>';
 function startProject(part) {
   const c = C(), lv = c.parts[part]; if (lv >= 5 || c.projects.some(p => p.part === part) || c.projects.length >= c.fac.fact.lv) return;
   const cost = partCost(c, part);
@@ -941,7 +969,7 @@ function startProject(part) {
   c.projects.push({ part, cost, gp:projTime(c, part), odds:projOdds(c, part) });
   track('project_start', { part, level:lv + 1 }); save(); toast('Progetto avviato'); renderBox();
 }
-function rushProject(part) {
+function rushProject_old(part) {
   const c = C(), p = c.projects.find(x => x.part === part); if (!p || p.gp <= 1) return;
   const cost = Math.round(p.cost * .5); if (c.credits < cost) { openShop('rush'); return; }
   c.credits -= cost; p.gp = 1; track('project_rush', { part }); save(); toast('Progetto accelerato: pronto dopo il prossimo GP'); renderBox();
@@ -1061,14 +1089,14 @@ function tabSquadra(c) {
   let h = '<h3 class="h2">Piloti</h3><div class="drivers">' + mine.map(d => '<div class="card drv"><div class="nm"><span class="no">' + d.no + '</span><b>' + esc(d.n.split(' ').slice(1).join(' ')) + '</b></div><p>' + esc(first(d.n)) + ' · ' + d.age + ' anni' + (d.trait ? ' · ' + d.trait : '') + '</p>' +
     [['Velocità', d.vel], ['Costanza', d.cos], ['Gomme', d.gom]].map(([l, v]) => '<div class="stat"><span>' + l + '</span><span class="bar"><i style="width:' + v + '%"></i></span><span class="mono">' + v + '</span></div>').join('') +
     '<div class="stat mor"><span>Morale</span><span class="bar"><i style="width:' + d.mor + '%"></i></span><span class="mono">' + d.mor + '</span></div>' +
-    '<p>Potenziale ' + stars(potStars(d.pot)) + '<br>' + fmtCr(d.sal) + ' a GP · contratto ' + (d.con <= 1 ? '<b class="warnc">scade a fine stagione</b>' : d.con + ' stagioni') + '</p></div>').join('') + '</div>';
+    '<p>Potenziale ' + stars(potStars(d.pot)) + '<br>' + fmtCr(d.sal) + ' a GP · contratto ' + (d.con <= 1 ? '<b class="warnc">scade a fine stagione</b>' : d.con + ' stagioni') + '</p>' + trainBtns(c, d) + '</div>').join('') + '</div>';
   h += '<h3 class="h2">Staff</h3><div class="card list">' + Object.entries(STAFF).map(([k, s]) => '<div class="lrow"><span class="ico">' + s.ico + '</span><div><b>' + s.n + ' ' + stars(c.staff[k].lv) + '</b><small>' + esc(c.staff[k].n) + ' · ' + s.d + ' · ' + staffSal(c.staff[k].lv) + ' a GP</small></div><button class="btn sm" data-staff="' + k + '">Cambia</button></div>').join('') + '</div>';
   const rivals = c.drivers.filter(d => d.team && d.team !== 'aurora').sort((a, b) => avgOf(b) - avgOf(a));
   h += '<h3 class="h2">Mercato piloti</h3><div class="card list">' +
     c.free.map(d => '<div class="lrow"><span class="ico sw2">S</span><div><b>' + esc(d.n) + '</b><small>Svincolato · ' + driverLine(d) + '</small></div><button class="btn sm" data-sign="free:' + d.id + '">' + fmtCr(d.sal * 3) + '</button></div>').join('') +
     rivals.map(d => '<div class="lrow"><span class="ico sw2" style="background:' + teamOf(d.team).color + '"></span><div><b>' + esc(d.n) + '</b><small>' + esc(teamOf(d.team).name) + ' · ' + driverLine(d) + '</small></div><button class="btn sm" data-sign="rival:' + d.id + '">' + fmtCr(buyout(d)) + '</button></div>').join('') +
     '<p class="legal" style="margin:8px 0 0">Gli svincolati costano tre stipendi. Per un pilota di un’altra squadra paghi la clausola, più alta se la sua squadra è più forte della tua.</p></div>';
-  h += '<h3 class="h2">Accademia giovani</h3><div class="card list">' + (c.academy.length ? c.academy.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' (vel ' + j.vel + ', cos ' + j.cos + ', gom ' + j.gom + ') · potenziale ' + stars(potStars(j.pot)) + ' · 30 a GP</small></div>' + (avgOf(j) >= readyAvg(c) ? '<button class="btn sm go2" data-sign="acad:' + j.id + '">Promuovi</button>' : '<span class="chip">Cresce</span>') + '</div>').join('') : '<p style="margin:0">Nessun giovane. Lo scouting trova tre talenti tra i 17 e i 19 anni: crescono a ogni GP e a media ' + readyAvg(c) + ' possono correre in questa serie.</p>') +
+  h += '<h3 class="h2">Accademia giovani</h3><div class="card list">' + (c.academy.length ? c.academy.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' (vel ' + j.vel + ', cos ' + j.cos + ', gom ' + j.gom + ') · potenziale ' + stars(potStars(j.pot)) + ' · 30 a GP</small></div>' + (avgOf(j) >= readyAvg(c) ? '<button class="btn sm go2" data-sign="acad:' + j.id + '">Promuovi</button>' : trainBtns(c, j)) + '</div>').join('') : '<p style="margin:0">Nessun giovane. Lo scouting trova tre talenti tra i 17 e i 19 anni: crescono a ogni GP e a media ' + readyAvg(c) + ' possono correre in questa serie.</p>') +
     (c.scout ? '<h4 class="sub2">Rapporto degli osservatori</h4>' + c.scout.map(j => '<div class="lrow"><span class="ico">' + j.age + '</span><div><b>' + esc(j.n) + '</b><small>Media ' + Math.round(avgOf(j)) + ' · potenziale stimato ' + j.est[0] + '–' + j.est[1] + '</small></div><button class="btn sm" data-junior="' + j.id + '"' + (c.academy.length >= acadMax() ? ' disabled' : '') + '>Prendi</button></div>').join('')
       : '<div class="lrow"><span class="ico">⌕</span><div><b>Scouting</b><small>Tre giovani da valutare</small></div><button class="btn sm" id="scoutB"' + (!c.freeScout && c.credits < scoutCost() ? ' disabled' : '') + '>' + (c.freeScout ? 'Gratis' : fmtCr(scoutCost())) + '</button></div>') + '</div>';
   return h;
@@ -1077,7 +1105,7 @@ function tabFabbrica(c) {
   const slots = c.fac.fact.lv;
   let h = '<h3 class="h2">Sviluppo · ' + c.projects.length + '/' + slots + ' progetti</h3><div class="card parts">' + PARTS.map(p => {
     const lv = c.parts[p.k], pr = c.projects.find(x => x.part === p.k), cost = lv < 5 ? partCost(c, p.k) : 0;
-    const right = lv >= 5 ? '<span class="chip">Al massimo</span>' : pr ? (pr.gp > 1 ? '<button class="btn sm gold" data-rush="' + p.k + '">Accelera · ' + fmtCr(Math.round(pr.cost * .5)) + '</button>' : '<span class="chip">Pronto al prossimo GP</span>')
+    const right = lv >= 5 ? '<span class="chip">Al massimo</span>' : pr ? speedBtns('proj', p.k, projStepCost(pr))
       : '<button class="btn sm" data-proj="' + p.k + '"' + (canSpendDev(c, cost) && c.projects.length < slots ? '' : ' disabled') + '>Avvia · ' + fmtCr(cost) + '</button>';
     return '<div class="part"><div><b>' + p.n + (c.focus === p.k ? ' <span class="chip hot">Priorità −30%</span>' : '') + '</b><small>' + p.d + '</small><div class="lv">' + [1, 2, 3, 4, 5].map(k => '<i class="' + (k <= lv ? 'on' : pr && k === lv + 1 ? 'wip' : '') + '"></i>').join('') + '</div>' +
       '<small>' + (pr ? 'In sviluppo: ' + pr.gp + ' GP · riuscita ' + Math.round(pr.odds * 100) + '%' : lv < 5 ? projTime(c, p.k) + ' GP · riuscita ' + Math.round(projOdds(c, p.k) * 100) + '%' : '') + '</small></div>' + right + '</div>';
@@ -1094,8 +1122,8 @@ function tabFabbrica(c) {
     : '<p style="margin:0">Dalla seconda metà della stagione puoi spostare il lavoro sull’auto dell’anno prossimo.</p>') + '</div>';
   h += '<h3 class="h2">Strutture</h3><div class="card list">' + Object.entries(FAC).map(([k, f]) => {
     const x = c.fac[k];
-    return '<div class="lrow"><span class="ico">' + x.lv + '</span><div><b>' + f.n + ' ' + stars(x.lv, 3) + '</b><small>' + (x.lv === 1 ? 'Base' : f.d(x.lv)) + (x.lv < 3 ? ' · al livello ' + (x.lv + 1) + ': ' + f.d(x.lv + 1) : '') + '</small></div>' +
-      (x.b ? '<span class="chip">Lavori: ' + x.b + ' GP</span>' : x.lv >= 3 ? '<span class="chip">Massimo</span>' : '<button class="btn sm" data-fac="' + k + '"' + (c.credits < facCost(x.lv + 1) ? ' disabled' : '') + '>' + fmtCr(facCost(x.lv + 1)) + '</button>') + '</div>';
+    return '<div class="lrow"><span class="ico">' + x.lv + '</span><div><b>' + f.n + ' ' + stars(x.lv, 3) + '</b><small>' + (x.lv === 1 ? 'Base' : f.d(x.lv)) + (x.lv < 3 ? ' · al livello ' + (x.lv + 1) + ': ' + f.d(x.lv + 1) : '') + (x.b ? ' · lavori: mancano ' + x.b + ' GP' : '') + '</small></div>' +
+      (x.b ? speedBtns('fac', k, facStepCost(c, k)) : x.lv >= 3 ? '<span class="chip">Massimo</span>' : '<button class="btn sm" data-fac="' + k + '"' + (c.credits < facCost(x.lv + 1) ? ' disabled' : '') + '>' + fmtCr(facCost(x.lv + 1)) + '</button>') + '</div>';
   }).join('') + '<p class="legal" style="margin:8px 0 0">Ogni livello costa ' + Math.round(15 * costMul(c)) + ' crediti a GP di manutenzione.</p></div>';
   return h;
 }
@@ -1128,14 +1156,16 @@ function bindMgr(c) {
   app.querySelectorAll('[data-junior]').forEach(b => b.onclick = () => takeJunior(b.dataset.junior));
   const sc = $('#scoutB'); if (sc) sc.onclick = doScout;
   app.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => startProject(b.dataset.proj));
-  app.querySelectorAll('[data-rush]').forEach(b => b.onclick = () => rushProject(b.dataset.rush));
+  app.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { const [k, key, how] = b.dataset.sp.split(':'); speedUp(k, key, how); });
+  app.querySelectorAll('[data-mtrain]').forEach(b => b.onclick = () => trainDriver(b.dataset.mtrain, 'cr'));
+  app.querySelectorAll('[data-trainv]').forEach(b => b.onclick = () => trainDriver(b.dataset.trainv, 'vid'));
   app.querySelectorAll('[data-eng]').forEach(b => b.onclick = () => newEngine(b.dataset.eng));
   app.querySelectorAll('[data-fac]').forEach(b => b.onclick = () => buildFac(b.dataset.fac));
   const nb = $('#nextB'); if (nb) nb.onclick = investNext;
   app.querySelectorAll('[data-spon]').forEach(b => b.onclick = () => { const [s, k] = b.dataset.spon.split(':').map(Number); signSponsor(s, k); });
 }
 
-/* =====================  Serie, rivali, difficoltà, obiettivi  ===================== */
+/* =====================  Serie, rivali, obiettivi  ===================== */
 // Tre campionati a scalare: si parte dalla Formula Regionale e si sale arrivando nei primi due tra i costruttori.
 const SERIES = {
   3:{ n:'Formula Regionale',   eco:.55, cost:.6, lo:66, hi:76 },
@@ -1147,14 +1177,11 @@ const TIER_TEAMS = {
   2:[ { id:'lince', name:'Lince Racing',        color:'#E63946' }, { id:'corsablu', name:'Corsa Blu', color:'#1D4ED8' }, { id:'vulcano', name:'Team Vulcano', color:'#F77F00' }, { id:'draghi', name:'Draghi GP', color:'#2A9D8F' } ]
 };
 const TEAM_STR = [1.0, .996, .991, .985];
-const DIFF = [
-  { n:'Facile',    d:'Più crediti, rivali più lente, sorpassi più facili', eco:1.2,  riv:-.004, dev:.7,  atk:.06,  fail:.5 },
-  { n:'Normale',   d:'L’esperienza pensata per il gioco',                  eco:1,    riv:0,     dev:1,   atk:0,    fail:1 },
-  { n:'Difficile', d:'Meno crediti, rivali più forti e più aggressive',    eco:.85,  riv:.004,  dev:1.3, atk:-.04, fail:1.4 }
-];
+// Nessun livello di difficoltà: la sfida sta nelle serie, nello sviluppo dell'auto, nello staff e nei piloti.
+const DIFF0 = { eco:1, riv:0, dev:1, atk:0, fail:1 };
 const tierOf = c => (c && c.tier) || 1;
 const SER = c => SERIES[tierOf(c)];
-const DF = c => DIFF[c && c.diff != null ? c.diff : 1];
+const DF = () => DIFF0;
 const ecoMul = c => c.role === 'manager' ? SER(c).eco * DF(c).eco : 1;
 const costMul = c => c.role === 'manager' ? SER(c).cost : 1;
 const readyAvg = c => SER(c).lo + 5;   // media con cui un giovane può correre in questa serie
