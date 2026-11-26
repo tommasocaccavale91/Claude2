@@ -41,6 +41,13 @@ La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e c
 
 **Durata delle gare**: 8, 12 (predefinita) o 20 giri. I salvataggi con le vecchie durate passano a 12.
 
+## Suono e vibrazione
+
+- **Motore sintetizzato** nel browser, senza file audio: segue la velocità della tua auto con 8 marce (9.000-15.000 giri) e alleggerisce il gas in frenata. Un secondo motore fa sentire l'auto più vicina, più forte quando ti è addosso.
+- **Effetti**: bip dei semafori e via, fruscio del sorpasso, botta del contatto, pistole del pit stop, segnale della radio.
+- **Vibrazione**: semafori, partenza, sorpassi, contatti, difese, safety car, pit stop. Nel browser usa `navigator.vibrate` (Android); nell'app passa da `window.NATIVE.haptic('light'|'medium'|'heavy')`, così su iPhone si usano gli impulsi del sistema.
+- Suono e vibrazione si spengono dal menu di pausa. L'audio parte solo dopo un tocco, come chiedono i browser.
+
 ## Carriera
 
 | | Pilota | Manager |
@@ -127,7 +134,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 
@@ -135,4 +142,3 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 2. Disegnare a mano anche gli altri GP (Suzuka richiede un ponte per l'incrocio).
 3. Trattative di contratto più ricche (durata, bonus, clausole) e mercato più vivo tra le squadre rivali.
 4. Sfida del giorno (giro secco con classifica) e obiettivi settimanali.
-5. Suono del motore e vibrazione nell'app.
