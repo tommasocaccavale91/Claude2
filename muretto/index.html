@@ -159,6 +159,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .sutrack input{position:relative;z-index:1;width:100%;margin:0;accent-color:var(--cyan);height:28px;background:transparent}
 .suband{position:absolute;top:50%;height:16px;transform:translateY(-50%);border-radius:4px;background:color-mix(in srgb,var(--good) 35%,transparent);box-shadow:inset 0 0 0 1px var(--good)}
 .suval{font-size:20px;font-weight:700;text-align:right;color:var(--cyan)}
+.sulock{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:14px;font-weight:700;color:var(--muted)}
+.suband2{position:relative;height:12px;border-radius:6px;background:rgba(255,255,255,.08)}.suband2 b{position:absolute;top:0;bottom:0;border-radius:6px;background:repeating-linear-gradient(45deg,var(--good) 0 6px,color-mix(in srgb,var(--good) 55%,transparent) 6px 12px)}
 .fpgo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fpgo .btn{min-height:64px;flex-direction:column;gap:2px;font-size:17px}
 .fpgo .btn small{font-family:var(--f-body);font-weight:500;font-size:12px;letter-spacing:0;opacity:.75}
@@ -1483,7 +1485,7 @@ async function payHelp(c, base, how, tag) {
   track('help_buy', { tag, how }); return true;
 }
 function idealSU(gp) {
-  const r = mulberry(hashStr(gp.n + 'assetto2')), b = { veloce:{ aero:.3, gear:.3 }, misto:{ aero:.5, gear:.5 }, cittadino:{ aero:.75, gear:.72 } }[gp.style] || { aero:.5, gear:.5 };
+  const c0 = C(), r = mulberry(hashStr(gp.n + 'assetto2' + (c0 ? c0.season + ':' + tierOf(c0) : ''))), b = { veloce:{ aero:.3, gear:.3 }, misto:{ aero:.5, gear:.5 }, cittadino:{ aero:.75, gear:.72 } }[gp.style] || { aero:.5, gear:.5 };
   const off = () => { const x = r() * 2 - 1; return Math.sign(x || 1) * (.08 + Math.abs(x) * .16); };   // mai esattamente al centro
   return { aero:clamp(b.aero + off(), .05, .95), susp:clamp(.5 + off() * 1.6, .08, .92), gear:clamp(b.gear + off(), .05, .95) };
 }
@@ -1518,13 +1520,16 @@ function renderFP() {
   const tester = drvOf(myIds(c).slice().sort((a, b) => drvOf(b).cos - drvOf(a).cos)[0]);
   const lastQ = w.fpRuns.length ? w.fpRuns[w.fpRuns.length - 1].q : null;
   app.innerHTML = '<div class="page" style="--team:' + mt.color + '"><header class="mast"><div class="wrap"><div><p class="kicker">GP ' + esc(gp.n) + ' · prove libere</p><h1>Assetto</h1><p class="sub">' + (left === 1 ? '1 uscita rimasta' : left + ' uscite rimaste') + ' · tester: ' + esc(tester.n) + '</p></div></div><div class="stripe"></div></header><div class="wrap sect">' +
-    '<div class="card">' + SU_DEF.map(p => { const rg = w.suRange && w.suRange[p.k];
+    (w.suPro ? '<div class="card">' + SU_DEF.map(p => { const rg = w.suRange[p.k];
+      return '<div class="opt col"><span class="lab">' + p.n + '<small>Regolata dall’ingegnere capo: <b class="tgood">tra ' + p.fmt(rg[0], N) + ' e ' + p.fmt(rg[1], N) + '</b>. Il valore esatto resta riservato.</small></span><div class="sulock"><span class="mono">' + p.fmt(0, N) + '</span><i class="suband2"><b style="left:' + rg[0] * 100 + '%;width:' + (rg[1] - rg[0]) * 100 + '%"></b></i><span class="mono">' + p.fmt(1, N) + '</span></div></div>'; }).join('') +
+      '<div class="meter"><span>Bilanciamento: perfetto</span><i style="--f:1"></i></div><button class="linkbtn" id="suManual">Torna all’assetto fatto a mano</button></div>'
+    : '<div class="card">' + SU_DEF.map(p => { const rg = null;
       return '<div class="opt col"><span class="lab">' + p.n + '<small>Da ' + p.fmt(0, N) + ' (' + p.lo + ') a ' + p.fmt(1, N) + ' (' + p.hi + ')' + (rg ? ' · <b class="tgood">finestra: ' + p.fmt(rg[0], N) + '–' + p.fmt(rg[1], N) + '</b>' : '') + '</small></span>' +
         '<div class="suctl"><button class="sustep" data-sud="' + p.k + ':-1" aria-label="Meno">−</button><div class="sutrack">' + (rg ? '<i class="suband" style="left:' + rg[0] * 100 + '%;width:' + (rg[1] - rg[0]) * 100 + '%"></i>' : '') +
         '<input type="range" id="su-' + p.k + '" min="0" max="' + N + '" step="1" value="' + Math.round(su[p.k] * N) + '" data-sur="' + p.k + '" aria-label="' + p.n + '"></div><button class="sustep" data-sud="' + p.k + ':1" aria-label="Più">+</button><b class="mono suval" id="sv-' + p.k + '">' + p.fmt(su[p.k], N) + '</b></div></div>'; }).join('') +
-      (lastQ != null ? '<div class="meter"><span>Bilanciamento stimato dall’ingegnere: ' + Math.round(lastQ * 10) * 10 + '%</span><i style="--f:' + lastQ + '"></i></div>' : '') + '</div>' +
-    (w.suPro ? '<div class="card buyrow done"><div><b>Finestra dell’ingegnere capo</b><small>Segnata in verde su ogni regolazione: il valore giusto è lì dentro.</small></div><span class="chip">Attiva</span></div>'
-      : '<div class="card buyrow"><div><b>Finestra dell’ingegnere capo</b><small>Ti segna in che intervallo stare per ogni regolazione. Il valore esatto lo trovi tu.</small></div><span class="tbtns"><button class="btn sm gold" id="suCr"' + (c.credits < helpCost(c, 250) ? ' disabled' : '') + '>' + fmtCr(helpCost(c, 250)) + '</button><button class="btn sm" id="suVid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span></div>') +
+      (lastQ != null ? '<div class="meter"><span>Bilanciamento stimato dall’ingegnere: ' + Math.round(lastQ * 10) * 10 + '%</span><i style="--f:' + lastQ + '"></i></div>' : '') + '</div>') +
+    (w.suPro ? ''
+      : '<div class="card buyrow"><div><b>Assetto dell’ingegnere capo</b><small>Monta l’assetto perfetto per questa pista. I valori restano riservati: vedrai solo gli intervalli.</small></div><span class="tbtns"><button class="btn sm gold" id="suCr"' + (c.credits < helpCost(c, 400) ? ' disabled' : '') + '>' + fmtCr(helpCost(c, 400)) + '</button><button class="btn sm" id="suVid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span></div>') +
     '<h3 class="h2">Programma</h3><div class="fpgo"><button class="btn go2" id="runSet"' + (left > 0 ? '' : ' disabled') + '>Giro di assetto<small>Tempo e parere del pilota</small></button><button class="btn" id="runLong"' + (left > 0 && !w.wearKnown ? '' : ' disabled') + '>Passo gara<small>' + (w.wearKnown ? 'Usura già misurata' : 'Misura l’usura delle gomme') + '</small></button></div>' +
     (w.fpRuns.length ? '<h3 class="h2">Uscite</h3><div class="card list">' + w.fpRuns.slice().reverse().map((r, i) => '<div class="lrow"><span class="ico">' + (w.fpRuns.length - i) + '</span><div><b>' + (r.t ? '<span class="mono ' + (r.t === best ? 'tbest' : '') + '">' + lapStr(r.t) + '</span>' + (r.d != null ? ' <span class="mono ' + (r.d < 0 ? 'tgood' : 'tbad') + '">' + (r.d < 0 ? '−' : '+') + Math.abs(r.d * TS).toFixed(3) + '</span>' : '') : 'Passo gara') + ' · <span class="sunote">' + r.su + '</span></b><small>' + esc(r.msg) + '</small></div></div>').join('') + '</div>' : '<div class="card"><p style="margin:0">Cambia l’assetto, fai un giro e ascolta il pilota: ti dice cosa non va. Ogni pista ha il suo assetto ideale. Il passo gara misura quanto durano qui le gomme, e la strategia diventa precisa.</p></div>') +
     '<p class="legal">Le prove usano un set di medie per auto. Dopo la qualifica l’assetto non si cambia più (parco chiuso).</p><div class="foot"></div></div>' +
@@ -1535,7 +1540,7 @@ function renderFP() {
   app.querySelectorAll('[data-sud]').forEach(b => b.onclick = () => { const [k, dv] = b.dataset.sud.split(':'); su[k] = clamp(Math.round(su[k] * N) + +dv, 0, N) / N; save(); renderFP(); });
   const run = long => {
     if (!w.fpRuns.length) useSet(w, 'M');
-    const q = suQ(su, idealSU(gp)), sTxt = suFmt(c, su);
+    const q = suQ(su, idealSU(gp)), sTxt = w.suPro ? 'assetto dell’ingegnere capo' : suFmt(c, su);
     if (long) {
       w.wearKnown = true; const wf = trackWear(gp), life = k => Math.max(1, Math.round(tyreLife(k, c.laps) / wf));
       w.fpRuns.push({ su:sTxt, q, msg:'Usura ' + (wf > 1.08 ? 'alta' : wf < .95 ? 'bassa' : 'normale') + ' su questa pista: morbide circa ' + life('S') + ' giri, medie ' + life('M') + ', dure ' + life('H') + '. Il piano di gara ora è preciso.' });
@@ -1546,7 +1551,13 @@ function renderFP() {
     w.know = Math.min(100, Math.max(w.know || 0, baseKnow(c)) + 20); track('fp_run', { long:!!long }); save(); renderFP();
   };
   $('#runSet').onclick = () => run(false); $('#runLong').onclick = () => run(true);
-  const buySu = async how => { if (!(await payHelp(c, 250, how, 'setup'))) return; const id = idealSU(gp); w.suRange = {}; SU_DEF.forEach(p => { const lo = clamp(suSnap(id[p.k], N) - rnd(.04, .16), 0, .8); w.suRange[p.k] = [Math.floor(lo * N) / N, Math.min(1, Math.ceil((lo + .2) * N) / N)]; }); w.suPro = true; save(); toast('Finestre segnate in verde'); renderFP(); };
+  const buySu = async how => {
+    if (!(await payHelp(c, 400, how, 'setup'))) return;
+    const id = idealSU(gp); w.suManual = Object.assign({}, su); w.suRange = {};
+    SU_DEF.forEach(p => { const v = suSnap(id[p.k], N), lo = clamp(v - rnd(.04, .16), 0, .8); w.suRange[p.k] = [Math.floor(lo * N) / N, Math.min(1, Math.ceil((lo + .2) * N) / N)]; su[p.k] = v; });
+    w.suPro = true; if (!w.fpRuns.length) useSet(w, 'M'); save(); toast('Assetto perfetto montato'); renderFP();
+  };
+  const sm = $('#suManual'); if (sm) sm.onclick = () => { Object.assign(su, w.suManual || { aero:.5, susp:.5, gear:.5 }); su.v2 = 1; w.suPro = false; w.suRange = null; save(); renderFP(); };
   if ($('#suCr')) { $('#suCr').onclick = () => buySu('cr'); $('#suVid').onclick = () => buySu('vid'); }
   $('#fpEnd').onclick = () => { if (w.fpRuns.length) { const ts = w.fpRuns.filter(r => r.t).map(r => r.t); w.fp = { best:ts.length ? Math.min(...ts) : 0, reveal:true }; track('fp_done', { runs:w.fpRuns.length }); } save(); renderBox(); };
 }
@@ -1740,7 +1751,7 @@ function renderBox() {
         sess(2, 'Qualifica', qTxt, w.quali ? 'done' : (w.fp ? 'now' : ''), w.quali ? '' : '<button class="btn sm go2" id="qGo">Qualifica</button>') +
         sess(3, 'Gara', c.laps + ' giri. ' + (isDrv ? 'DRS, carburante, gomme e radio con l’ingegnere.' : c.mode === 'drive' ? 'Segui ' + esc(first(drvOf(c.driveId).n)) + ' da vicino: DRS, carburante, gomme e radio.' : 'Dal muretto: strategia per entrambe le auto.'), w.quali ? 'now' : '', '') +
       '</div></div>' + (isDrv ? '' : mineDrivers().filter(d => engOf(d.id).w > .75).map(d => '<div class="card news"><b>Motore di ' + esc(first(d.n)) + ' al ' + Math.round(engOf(d.id).w * 100) + '%</b><p class="legal" style="margin:4px 0 0">Rischio di guasto in gara. Puoi montarne uno nuovo nella scheda Fabbrica.</p></div>').join('')) + (isDrv || !c.sponsors.length ? '' : '<div class="card"><b>Obiettivi sponsor</b>' + c.sponsors.map(sp => '<div class="lrow"><span class="ico">' + sp.mark + '</span><div><b>' + goalTxt(sp.goal) + '</b><small>' + esc(sp.n) + ' · +' + fmtCr(sp.bonus) + ' se riesce · soddisfazione ' + sp.sat + '%</small></div></div>').join('') + '</div>') +
-    '<h3 class="h2">Assetto</h3><div class="card suline"><div class="suv">' + SU_DEF.map(p => '<span><small>' + p.s + '</small><b class="mono">' + p.fmt(wsu(w)[p.k], suSteps(c)) + '</b></span>').join('') + '</div><small>' + (w.quali ? 'Parco chiuso: dopo la qualifica non si cambia.' : w.fp ? 'Si regola nelle prove libere.' : 'Lo trovi nelle prove libere.') + '</small></div>' +
+    '<h3 class="h2">Assetto</h3><div class="card suline"><div class="suv">' + SU_DEF.map(p => '<span><small>' + p.s + '</small><b class="mono">' + (w.suPro && w.suRange ? p.fmt(w.suRange[p.k][0], suSteps(c)) + '–' + p.fmt(w.suRange[p.k][1], suSteps(c)) : p.fmt(wsu(w)[p.k], suSteps(c))) + '</b></span>').join('') + '</div><small>' + (w.quali ? 'Parco chiuso: dopo la qualifica non si cambia.' : w.fp ? 'Si regola nelle prove libere.' : 'Lo trovi nelle prove libere.') + '</small></div>' +
     '<div class="card">' +
       '<div class="opt col"><span class="lab">Durata delle gare</span><span class="pills">' + Object.entries(RACE_LEN).map(([k, v]) => '<button data-laps="' + k + '" aria-pressed="' + (c.laps == k) + '">' + v + '</button>').join('') + '</span></div></div>' +
     '<h3 class="h2">Regolamento stagione ' + c.season + '</h3><div class="card rule"><span class="ico">' + rl.ico + '</span><b>' + rl.n + (c.revolution ? ' + rivoluzione tecnica' : '') + '</b><span>' + rl.d + (c.revolution ? ' Nuove regole aerodinamiche: le squadre sono più vicine.' : '') + '</span></div>';
