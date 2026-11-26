@@ -76,6 +76,14 @@ Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In
 - Le squadre rivali sviluppano la macchina durante la stagione.
 - Dopo ogni gara c'è una scelta (stampa, sponsor, ingegnere, social) che cambia morale, crediti o attributi.
 
+## Tutorial
+
+Il primo weekend è guidato da Marta, l'ingegnera di pista: un fumetto in basso spiega il prossimo passo e un bordo dorato pulsante indica cosa toccare. Ogni passo si chiude da solo quando lo fai (o se l'hai già fatto), e il tutorial si può saltare in ogni momento. Il fumetto lascia passare i tocchi e si sposta in alto se l'elemento indicato è in basso.
+
+1. Firma lo sponsor secondario (Finanze). 2. Avvia il primo progetto (Fabbrica). 3. Prove libere: giro di assetto, cambio di regolazione su consiglio del pilota, passo gara. 4. Qualifica: scelte per pilota e tempi in diretta. 5. Strategia e griglia. 6. Gara con il tutorial che c'era già (Come si corre, fumetti ATTACCA/DIFENDI, prima gara facilitata) più la presentazione del pulsante Radio. 7. Bilancio del GP. 8. Sfida del giorno, obiettivi e video premio.
+
+Dopo il tutorial, la prima volta che apri Squadra, Fabbrica e Finanze compare una spiegazione di due righe. Chi aveva già corso prima di questa versione non vede il tutorial.
+
 ## Serie e rivali
 
 - **Tre campionati a scalare**: Formula Regionale → Formula Cadetti → Campionato Mondiale. Si sale chiudendo tra i primi due costruttori. Ogni serie ha rivali, piloti e mercato propri; premi, sponsor e costi crescono salendo (×0,55 / ×0,75 / ×1 per i ricavi, ×0,6 / ×0,8 / ×1 per i costi). Dopo una promozione l'auto perde due livelli per parte e riparte dietro alle nuove rivali.
@@ -150,7 +158,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `video_center`, `help_buy`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `tutorial_step`, `tutorial_skip`, `tutorial_done`, `video_center`, `help_buy`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 
