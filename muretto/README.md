@@ -15,9 +15,9 @@ Ogni GP ha il nome di una località (GP Monza, GP Spa, GP Suzuka…) e un circui
 
 I punti dei tracciati a mano sono nella costante `HAND` di `index.html` (ordine dei punti = senso di marcia, `start` = punto sul rettilineo dei box). Prima di pubblicare l'app conviene una verifica legale: alcuni autodromi hanno registrato la sagoma della pista come marchio.
 
-1. **Prove libere** (facoltative): 3 giri da solo. Alzano la conoscenza della pista (qualche decimo in più) e rivelano l'assetto giusto: carico basso, bilanciato o alto.
-2. **Qualifica**: un giro secco con le morbide. Decide la griglia. Si può simulare, e con un video premio si può ripetere il giro.
-3. **Gara**: da pilota guidi sempre tu. Da manager scegli se guidare uno dei tuoi piloti o comandare dal muretto (ritmo, pit stop, ordini di scuderia).
+1. **Prove libere: l'assetto.** Tre regolazioni da 1 a 5: carico aerodinamico, sospensioni, rapporti. Ogni pista ha un assetto ideale nascosto (le piste veloci vogliono poco carico e rapporti lunghi, le cittadine il contrario). Hai 5 uscite: il **giro di assetto** dà il tempo e il parere del pilota ("sul dritto siamo lenti: togliamo carico"), più affidabile se il pilota è costante e lo stratega è bravo; il **passo gara** misura l'usura delle gomme su quella pista (da bassa ad alta). Un buon assetto vale fino a qualche decimo al giro. Dopo la qualifica l'assetto non si cambia più (parco chiuso).
+2. **Qualifica.** Per ogni pilota scegli quando esce (subito, oppure all'ultimo: pista più veloce ma 18% di rischio di traffico) e come guida (pulito, oppure al limite: più veloce ma 22% di errore). I tempi arrivano uno alla volta come in TV, con il migliore in viola. Con un video si ripete.
+3. **Strategia e via.** Prima della gara: pioggia, usura gomme (misurata o stimata), probabilità di safety car, set rimasti e piano gomme per ogni pilota. Senza il passo gara il piano può sbagliare i giri di sosta. Qui scegli anche se seguire un pilota da vicino o comandare dal muretto.
 
 ## In gara
 
@@ -35,9 +35,8 @@ La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e c
 - **Ingegnere discreto**: oltre ai momenti decisivi, solo brevi messaggi che spariscono da soli. Se lasci scadere una domanda vale la scelta consigliata. Il tempo sul giro compare piccolo sotto il contatore dei giri.
 - **Scia**: un unico flusso bianco morbido tra l'auto davanti e la tua. Spinge forte.
 - **Prima gara**: batteria piena, sorpassi più facili, nessun danno e un fumetto che indica quando premere ATTACCA e DIFENDI. I danni da contatto non ci sono mai nel primo giro.
+- **Traffico**: bandiere blu (chi sta per essere doppiato si sposta e lascia passare, senza duello), griglia più distanziata, una "giornata di forma" diversa per ogni auto rivale e scia più debole tra due rivali, così il gruppo si sgrana e le file si sciolgono.
 - **Zoom** con − e +, pizzico o rotellina, fino alla pista intera a pallini. La tua auto ha un cerchio dorato. Velocità ×1, ×2, ×4 e pausa.
-
-**Prove libere e qualifica** sono scelte rapide: "Fai le prove" o "Salta", "Giro sicuro" o "Al limite" (più veloce, 22% di rischio di errore).
 
 **Durata delle gare**: 8, 12 (predefinita) o 20 giri. I salvataggi con le vecchie durate passano a 12.
 
@@ -134,7 +133,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 
