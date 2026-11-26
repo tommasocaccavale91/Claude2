@@ -135,6 +135,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .warnc{color:var(--warn)}
 .setsrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:700;font-size:13px}
 .plan[disabled]{opacity:.4}
+.buyrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:linear-gradient(90deg,rgba(255,200,61,.12),transparent 70%),var(--surface)}.buyrow b{display:block;font-weight:800}.buyrow small{display:block;color:var(--muted);font-size:12px;line-height:1.35}.buyrow.done{background:var(--surface)}
+.radmenu .tbtns{justify-content:flex-start}.radmenu .tbtns .btn{text-align:center}
 .sudial{display:grid;grid-template-columns:auto repeat(5,1fr) auto;gap:6px;align-items:center}
 .sudial small{font-family:var(--f-label);font-size:13px;color:var(--muted);letter-spacing:.04em}
 .sudial button{min-height:42px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);font-family:var(--f-display);font-style:italic;font-weight:800;font-size:17px;transform:skewX(-8deg)}
@@ -1432,6 +1434,13 @@ const SU_DEF = [
   { k:'gear', n:'Rapporti del cambio', lo:'Corti', hi:'Lunghi', w:.1 }
 ];
 const FP_RUNS = 5;
+// Aiuti del weekend: si pagano in crediti (guadagnati o comprati) oppure con un video. Mai acquisti in euro a gara in corso.
+const helpCost = (c, base) => Math.max(30, Math.round(base * costMul(c) / 10) * 10);
+async function payHelp(c, base, how, tag) {
+  if (how === 'cr') { const x = helpCost(c, base); if (c.credits < x) { toast('Crediti insufficienti'); return false; } c.credits -= x; }
+  else { if (vidLeft() <= 0) { toast('Video finiti per oggi'); return false; } if (!(await rewarded(tag))) return false; S.vn++; }
+  track('help_buy', { tag, how }); return true;
+}
 function idealSU(gp) {
   const r = mulberry(hashStr(gp.n + 'assetto')), b = { veloce:{ aero:2, gear:4 }, misto:{ aero:3, gear:3 }, cittadino:{ aero:4, gear:2 } }[gp.style] || { aero:3, gear:3 };
   return { aero:clamp(b.aero + Math.round(r() * 2 - 1), 1, 5), susp:2 + Math.floor(r() * 3), gear:clamp(b.gear + Math.round(r() * 2 - 1), 1, 5) };
@@ -1467,6 +1476,8 @@ function renderFP() {
   app.innerHTML = '<div class="page" style="--team:' + mt.color + '"><header class="mast"><div class="wrap"><div><p class="kicker">GP ' + esc(gp.n) + ' · prove libere</p><h1>Assetto</h1><p class="sub">' + (left === 1 ? '1 uscita rimasta' : left + ' uscite rimaste') + ' · tester: ' + esc(tester.n) + '</p></div></div><div class="stripe"></div></header><div class="wrap sect">' +
     '<div class="card">' + SU_DEF.map(p => '<div class="opt col"><span class="lab">' + p.n + '</span><div class="sudial" role="group" aria-label="' + p.n + '"><small>' + p.lo + '</small>' + [1, 2, 3, 4, 5].map(v => '<button data-su="' + p.k + ':' + v + '" aria-pressed="' + (su[p.k] === v) + '">' + v + '</button>').join('') + '<small>' + p.hi + '</small></div></div>').join('') +
       (lastQ != null ? '<div class="meter"><span>Bilanciamento stimato dall’ingegnere: ' + Math.round(lastQ * 10) * 10 + '%</span><i style="--f:' + lastQ + '"></i></div>' : '') + '</div>' +
+    (w.suPro ? '<div class="card buyrow done"><div><b>Assetto dell’ingegnere capo</b><small>Montato: è l’assetto ideale per ' + esc(gp.n) + '.</small></div><span class="chip">Attivo</span></div>'
+      : '<div class="card buyrow"><div><b>Assetto dell’ingegnere capo</b><small>Monta subito l’assetto ideale di questa pista, senza tentativi.</small></div><span class="tbtns"><button class="btn sm gold" id="suCr"' + (c.credits < helpCost(c, 250) ? ' disabled' : '') + '>' + fmtCr(helpCost(c, 250)) + '</button><button class="btn sm" id="suVid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span></div>') +
     '<h3 class="h2">Programma</h3><div class="fpgo"><button class="btn go2" id="runSet"' + (left > 0 ? '' : ' disabled') + '>Giro di assetto<small>Tempo e parere del pilota</small></button><button class="btn" id="runLong"' + (left > 0 && !w.wearKnown ? '' : ' disabled') + '>Passo gara<small>' + (w.wearKnown ? 'Usura già misurata' : 'Misura l’usura delle gomme') + '</small></button></div>' +
     (w.fpRuns.length ? '<h3 class="h2">Uscite</h3><div class="card list">' + w.fpRuns.slice().reverse().map((r, i) => '<div class="lrow"><span class="ico">' + (w.fpRuns.length - i) + '</span><div><b>' + (r.t ? '<span class="mono ' + (r.t === best ? 'tbest' : '') + '">' + lapStr(r.t) + '</span>' + (r.d != null ? ' <span class="mono ' + (r.d < 0 ? 'tgood' : 'tbad') + '">' + (r.d < 0 ? '−' : '+') + Math.abs(r.d * TS).toFixed(3) + '</span>' : '') : 'Passo gara') + ' · <span class="sunote">' + r.su + '</span></b><small>' + esc(r.msg) + '</small></div></div>').join('') + '</div>' : '<div class="card"><p style="margin:0">Cambia l’assetto, fai un giro e ascolta il pilota: ti dice cosa non va. Ogni pista ha il suo assetto ideale. Il passo gara misura quanto durano qui le gomme, e la strategia diventa precisa.</p></div>') +
     '<p class="legal">Le prove usano un set di medie per auto. Dopo la qualifica l’assetto non si cambia più (parco chiuso).</p><div class="foot"></div></div>' +
@@ -1485,6 +1496,8 @@ function renderFP() {
     w.know = Math.min(100, Math.max(w.know || 0, baseKnow(c)) + 20); track('fp_run', { long:!!long }); save(); renderFP();
   };
   $('#runSet').onclick = () => run(false); $('#runLong').onclick = () => run(true);
+  const buySu = async how => { if (!(await payHelp(c, 250, how, 'setup'))) return; Object.assign(su, idealSU(gp)); w.suPro = true; if (!w.fpRuns.length) useSet(w, 'M'); w.fpRuns.push({ su:'A' + su.aero + ' S' + su.susp + ' R' + su.gear, q:1, msg:'L’ingegnere capo ha montato l’assetto ideale.' }); save(); renderFP(); };
+  if ($('#suCr')) { $('#suCr').onclick = () => buySu('cr'); $('#suVid').onclick = () => buySu('vid'); }
   $('#fpEnd').onclick = () => { if (w.fpRuns.length) { const ts = w.fpRuns.filter(r => r.t).map(r => r.t); w.fp = { best:ts.length ? Math.min(...ts) : 0, reveal:true }; track('fp_done', { runs:w.fpRuns.length }); } save(); renderBox(); };
 }
 // Qualifica: per ogni pilota scegli quando uscire e quanto rischiare, poi i tempi arrivano uno alla volta.
@@ -1496,10 +1509,15 @@ function renderQSetup() {
     ids.map(id => { const d = drvOf(id), o = w.qOpts[id];
       return '<div class="card"><div class="nm qnm"><span class="no">' + d.no + '</span><b>' + esc(d.n) + '</b></div>' +
         '<div class="opt col"><span class="lab">Quando esce</span><div class="seg"><button data-ql="' + id + ':0" aria-pressed="' + !o.late + '"><b>Subito</b><small>Pista libera, ma meno gommata</small></button><button data-ql="' + id + ':1" aria-pressed="' + o.late + '"><b>All’ultimo</b><small>Pista più veloce, rischio di traffico</small></button></div></div>' +
+        (o.perfect ? '<div class="opt"><span class="lab">Finestra perfetta<small>Esce nel momento migliore: pista al massimo, niente traffico.</small></span><span class="chip">Attiva</span></div>'
+          : '<div class="opt"><span class="lab">Finestra perfetta<small>Lo stratega lo manda fuori nel momento migliore: pista al massimo, niente traffico.</small></span><span class="tbtns"><button class="btn sm gold" data-qpc="' + id + '"' + (c.credits < helpCost(c, 120) ? ' disabled' : '') + '>' + fmtCr(helpCost(c, 120)) + '</button><button class="btn sm" data-qpv="' + id + '"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span></div>') +
         '<div class="opt col"><span class="lab">Il giro</span><div class="seg"><button data-qr="' + id + ':safe" aria-pressed="' + (o.risk === 'safe') + '"><b>Pulito</b><small>Quasi nessun errore</small></button><button data-qr="' + id + ':limit" aria-pressed="' + (o.risk === 'limit') + '"><b>Al limite</b><small>Più veloce, 22% di errore</small></button></div></div></div>'; }).join('') +
     '<div class="foot"></div></div><div class="go"><div class="wrap"><button class="btn primary wide" id="qGo2">In pista</button></div></div></div>';
   app.querySelectorAll('[data-ql]').forEach(b => b.onclick = () => { const [id, v] = b.dataset.ql.split(':'); w.qOpts[id].late = v === '1'; renderQSetup(); });
   app.querySelectorAll('[data-qr]').forEach(b => b.onclick = () => { const [id, v] = b.dataset.qr.split(':'); w.qOpts[id].risk = v; renderQSetup(); });
+  const buyQ = async (id, how) => { if (!(await payHelp(c, 120, how, 'quali_window'))) return; w.qOpts[id].perfect = true; w.qOpts[id].late = true; save(); renderQSetup(); };
+  app.querySelectorAll('[data-qpc]').forEach(b => b.onclick = () => buyQ(b.dataset.qpc, 'cr'));
+  app.querySelectorAll('[data-qpv]').forEach(b => b.onclick = () => buyQ(b.dataset.qpv, 'vid'));
   $('#qGo2').onclick = () => {
     if (!w.fp) { w.fp = { best:0, reveal:false }; w.know = Math.max(20, baseKnow(c)); }
     const qq = simQuali(null, null, w.qOpts); useSet(w, 'S'); save(); track('quali_run', {}); renderQReveal(qq, ids);
@@ -1707,8 +1725,8 @@ function simQuali(playerTime, risk, opts) {
     const o = opts && opts[d.id], rk = o ? o.risk : risk;
     const mineQ = rk && d.team === myTeamId() && (C().role === 'manager' || d.id === 'me');
     const errP = mineQ ? (rk === 'limit' ? .22 : .02) : (100 - d.cos) * .002, boostQ = mineQ && rk === 'limit' ? .995 : 1;
-    const err = Math.random() < errP, traffic = o && o.late && Math.random() < .18;
-    times[d.id] = refLap(f.power, f.corner, pace) * cal * boostQ * (o && o.late ? .9985 : 1) * (1 + rnd(-.006, .006) + (err ? .025 : 0) + (traffic ? .006 : 0));
+    const err = Math.random() < errP, traffic = o && o.late && !o.perfect && Math.random() < .18;
+    times[d.id] = refLap(f.power, f.corner, pace) * cal * boostQ * (o && o.perfect ? .998 : o && o.late ? .9985 : 1) * (1 + rnd(-.006, .006) + (err ? .025 : 0) + (traffic ? .006 : 0));
     if (o && (err || traffic)) ev[d.id] = err ? 'errore' : 'traffico';
   }
   if (playerTime) times[playerTime.id] = playerTime.t;
@@ -1774,7 +1792,7 @@ const drivenPace = c => Math.min(1, .956 + c.vel * .0005 + (c.mor - 70) * .0002)
 function aiPace(c) {
   const base = .95 + c.vel * .0005 + (c.mor - 70) * .0002;
   const fuelF = c.fuel <= 0 ? .78 : [.988, 1, 1.012][c.fmode ?? 1];   // magra / normale / grassa
-  return Math.min(1.01, base * [.985, 1, 1.012][c.mode]) * fuelF * (1 - .1 * (c.dmg || 0)) * (c.engPen || 1) * (1 + (c.form || 0)) + c.jit;
+  return Math.min(1.01, base * [.985, 1, 1.012][c.mode]) * fuelF * (1 - .1 * (c.dmg || 0)) * (c.engPen || 1) * (1 + (c.form || 0)) * (c.boostUntil && c.dist < c.boostUntil * T.L ? 1.012 : 1) + c.jit;
 }
 function wearPerLap(c) {
   if (R.kind !== 'race') return .08;
@@ -2119,8 +2137,20 @@ function renderRadio() {
   const el = $('#radMenu'); if (!el) return;
   const me = mePilot(), ord = R.ord || order(), ah = me ? ord[ord.indexOf(me) - 1] : null;
   el.innerHTML = !R.radOpen ? '' : '<div class="radmenu" role="menu"><small>Chiama il box</small>' +
-    ['Come sono messo?', 'Ritmo di chi ho davanti?', ah ? 'Undercut su ' + ah.code + '?' : 'Undercut?', me && me.pitReq ? 'Annulla il box' : 'Box questo giro', 'Meteo?'].map((t, k) => '<button data-r="' + k + '">' + t + '</button>').join('') + '</div>';
+    ['Come sono messo?', 'Ritmo di chi ho davanti?', ah ? 'Undercut su ' + ah.code + '?' : 'Undercut?', me && me.pitReq ? 'Annulla il box' : 'Box questo giro', 'Meteo?'].map((t, k) => '<button data-r="' + k + '">' + t + '</button>').join('') +
+    (R.ch || R.kind !== 'race' ? '' : R.boostUsed ? '<small>Mappa motore usata in questa gara</small>' : '<small>Mappa motore da qualifica · 2 giri</small><span class="tbtns"><button class="btn sm gold" data-bst="cr"' + (C().credits < helpCost(C(), 120) ? ' disabled' : '') + '>⚡ ' + fmtCr(helpCost(C(), 120)) + ' crediti</button><button class="btn sm" data-bst="vid"' + (vidLeft() > 0 ? '' : ' disabled') + '>▶ Video</button></span>') + '</div>';
   el.querySelectorAll('[data-r]').forEach(b => b.onclick = () => radioCall(+b.dataset.r));
+  el.querySelectorAll('[data-bst]').forEach(b => b.onclick = () => buyBoost(b.dataset.bst));
+}
+// Boost: per due giri la mappa motore da qualifica (circa mezzo secondo al giro). Una volta per gara, mai nella sfida del giorno.
+async function buyBoost(how) {
+  const me = mePilot(); if (!me || R.boostUsed || R.ch) return;
+  R.paused = true;
+  const ok = await payHelp(C(), 120, how, 'race_boost');
+  if (!R) return; R.paused = false; last = performance.now();
+  if (!ok) return;
+  R.boostUsed = true; me.boostUntil = me.dist / T.L + 2; R.radOpen = false; renderRadio(); const rb = $('#radB'); if (rb) rb.setAttribute('aria-expanded', 'false');
+  eng('Mappa motore da qualifica per due giri: spingi!', 'go'); buzz([20, 30, 20]); save();
 }
 /* =====================  Duelli: attacco, difesa, batteria  ===================== */
 // A ridosso di chi ti precede premi ATTACCA (costa una tacca di batteria): ti affianchi e passi, oppure ti chiude la porta.
@@ -2847,6 +2877,7 @@ function updateHud() {
     else if (R.flashT > 0 && R.flash === 'held') m = '<div class="mpill good">Posizione tenuta</div>';
     else if (R.sc) m = '<div class="mpill warn">Safety car · niente sorpassi</div>';
     else if (me.atk) m = '<div class="mpill gold big">Attacco!</div>';
+    else if (me.boostUntil && me.dist < me.boostUntil * T.L) m = '<div class="mpill gold">⚡ Mappa da qualifica · ' + Math.max(.1, me.boostUntil - me.dist / T.L).toFixed(1) + ' giri</div>';
     else if (me.drs) m = '<div class="mpill blue">DRS aperto</div>';
     else if (me.slip && me.slipOn) m = '<div class="mpill blue">In scia di ' + me.slipOn.code + '</div>';
     const me2 = $('#msg'); if (me2.dataset.k !== m) { me2.dataset.k = m; me2.innerHTML = m; }

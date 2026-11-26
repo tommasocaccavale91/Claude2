@@ -40,6 +40,16 @@ La macchina **guida da sola**: tu decidi quando attaccare, quando difenderti e c
 
 **Durata delle gare**: 8, 12 (predefinita) o 20 giri. I salvataggi con le vecchie durate passano a 12.
 
+## Aiuti a pagamento (crediti o video)
+
+Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In gara non si aprono mai acquisti in euro, e la sfida del giorno resta uguale per tutti.
+
+| Aiuto | Dove | Effetto | Prezzo (Mondiale; ×0,6 Regionale, ×0,8 Cadetti) |
+|---|---|---|---|
+| Assetto dell'ingegnere capo | Prove libere | Monta subito l'assetto ideale della pista | 250 crediti o un video |
+| Finestra perfetta | Qualifica, per pilota | Esce all'ultimo senza rischio di traffico, pista al massimo | 120 crediti o un video |
+| Mappa motore da qualifica | Gara, menu Radio | Circa mezzo secondo al giro per 2 giri, una volta per gara | 120 crediti o un video |
+
 ## Suono e vibrazione
 
 - **Motore sintetizzato** nel browser, senza file audio: segue la velocità della tua auto con 8 marce (9.000-15.000 giri) e alleggerisce il gas in frenata. Un secondo motore fa sentire l'auto più vicina, più forte quando ti è addosso.
@@ -133,7 +143,7 @@ Squadre, piloti e campionato sono inventati: niente marchi F1, FIA, team o pilot
 
 ## Eventi registrati
 
-`career_start`, `hub_tab`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
+`career_start`, `hub_tab`, `help_buy`, `fp_run`, `quali_run`, `sound`, `haptic`, `speedup`, `daily_start`, `daily_finish`, `weekly_claim`, `achievement`, `project_start`, `project_ok`, `project_fail`, `project_rush`, `engine_new`, `facility`, `next_car`, `staff_hire`, `sign_driver`, `scout`, `academy_join`, `sponsor_sign`, `renew`, `session_start`, `session_quit`, `fp_done`, `quali`, `race_finish`, `race_length`, `plan`, `radio`, `plan_stay`, `sc_stay`, `pit_call`, `pit_skip`, `pit`, `boost`, `pace_mode`, `team_order`, `press_choice`, `train`, `upgrade`, `focus`, `sign`, `season_end`, `shop_view`, `iap_click`, `iap_purchase`, `iap_cancel`, `ad_rewarded_request`, `ad_rewarded_complete`, `ad_interstitial`.
 
 ## Prossimi passi
 
