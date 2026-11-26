@@ -2167,45 +2167,73 @@ function mix(hex, t) { // t>0 schiarisce, t<0 scurisce
   return 'rgb(' + Math.round(r + (to - r) * k) + ',' + Math.round(g + (to - g) * k) + ',' + Math.round(b + (to - b) * k) + ')';
 }
 const SPRITES = {};
-function sprite(color) {
-  if (SPRITES[color]) return SPRITES[color];
-  const k = 12, c2 = document.createElement('canvas'); c2.width = 25 * k; c2.height = 12 * k;
+// Monoposto vista dall'alto, disegnata una volta per colore di livrea e mescola, poi riusata a ogni fotogramma.
+// Asse x verso il muso: ala anteriore, muso, halo, pance con taglio inferiore, cofano con pinna, ala posteriore con DRS.
+const TYRE_COL = { S:'#FF3B3B', M:'#FFD02E', H:'#EDEFF4', I:'#2EC26A' };
+function sprite(color, comp) {
+  const key = color + (comp || 'M'); if (SPRITES[key]) return SPRITES[key];
+  const k = 16, c2 = document.createElement('canvas'); c2.width = 25 * k; c2.height = 12 * k;
   const g = c2.getContext('2d'); g.scale(k, k); g.translate(12.5, 6);
   const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); g.fill(); };
-  const dark = '#15171c', carbon = '#23262d';
+  const poly = (pts, fill) => { g.fillStyle = fill; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); };
+  const mirror = pts => pts.concat(pts.slice().reverse().map(([x, y]) => [x, -y]));
   const n = parseInt(color.slice(1), 16), lum = ((n >> 16) * .3 + (n >> 8 & 255) * .59 + (n & 255) * .11);
-  const accent = lum < 110 ? '#F4F2EC' : mix(color, -.55);
-  // sospensioni
-  g.strokeStyle = '#30333a'; g.lineWidth = .35;
-  g.beginPath(); g.moveTo(6.2, -1); g.lineTo(6.2, -3.8); g.moveTo(6.2, 1); g.lineTo(6.2, 3.8); g.moveTo(-8, -2.4); g.lineTo(-8.5, -3.8); g.moveTo(-8, 2.4); g.lineTo(-8.5, 3.8); g.stroke();
-  // gomme: posteriori più larghe, anteriori più strette
-  g.fillStyle = dark; rr(-10.4, -5.6, 3.9, 2.2, .7); rr(-10.4, 3.4, 3.9, 2.2, .7); rr(4.8, -5.2, 3, 1.8, .6); rr(4.8, 3.4, 3, 1.8, .6);
-  g.fillStyle = 'rgba(255,255,255,.16)'; rr(-10, -5.4, 3.1, .45, .2); rr(-10, 3.55, 3.1, .45, .2); rr(5.1, -5.05, 2.4, .4, .2); rr(5.1, 3.55, 2.4, .4, .2);
-  // fondo vettura
-  g.fillStyle = carbon; g.beginPath(); g.moveTo(-9.8, -3.3); g.lineTo(-2, -3.4); g.lineTo(4, -2); g.lineTo(4, 2); g.lineTo(-2, 3.4); g.lineTo(-9.8, 3.3); g.closePath(); g.fill();
-  // carrozzeria: muso lungo, pance laterali, cofano motore
-  const body = g.createLinearGradient(0, -3.2, 0, 3.2);
-  body.addColorStop(0, mix(color, .35)); body.addColorStop(.5, color); body.addColorStop(1, mix(color, -.38));
-  g.fillStyle = body; g.beginPath();
-  g.moveTo(11, 0); g.quadraticCurveTo(8, -.55, 4.5, -.75); g.lineTo(2.6, -1.1); g.quadraticCurveTo(1.6, -2.9, -.8, -3); g.quadraticCurveTo(-4.6, -3, -6.4, -1.9); g.lineTo(-9.2, -.9);
-  g.lineTo(-9.2, .9); g.lineTo(-6.4, 1.9); g.quadraticCurveTo(-4.6, 3, -.8, 3); g.quadraticCurveTo(1.6, 2.9, 2.6, 1.1); g.lineTo(4.5, .75); g.quadraticCurveTo(8, .55, 11, 0); g.closePath(); g.fill();
-  // prese d'aria delle pance
-  g.fillStyle = 'rgba(0,0,0,.45)'; rr(1.2, -2.6, .7, 1.2, .3); rr(1.2, 1.4, .7, 1.2, .3);
-  // striscia della livrea
-  g.fillStyle = accent; g.beginPath(); g.moveTo(10.6, 0); g.lineTo(3, -.32); g.lineTo(-8.8, -.28); g.lineTo(-8.8, .28); g.lineTo(3, .32); g.closePath(); g.fill();
-  // abitacolo, casco, halo, pinna
-  g.fillStyle = '#08090c'; g.beginPath(); g.ellipse(-.9, 0, 1.9, 1.05, 0, 0, 7); g.fill();
-  g.fillStyle = accent; g.beginPath(); g.arc(-1.3, 0, .78, 0, 7); g.fill();
-  g.strokeStyle = '#1c1e23'; g.lineWidth = .42; g.beginPath(); g.moveTo(1.4, 0); g.lineTo(.6, 0); g.moveTo(.9, -1.2); g.quadraticCurveTo(-1.2, -1.5, -2.4, -1.15); g.moveTo(.9, 1.2); g.quadraticCurveTo(-1.2, 1.5, -2.4, 1.15); g.stroke();
-  g.strokeStyle = mix(color, -.45); g.lineWidth = .3; g.beginPath(); g.moveTo(-3.2, 0); g.lineTo(-9, 0); g.stroke();
-  // ala anteriore larga con derive colorate
-  g.fillStyle = dark; rr(9.6, -4.9, 1.5, 9.8, .3);
-  g.fillStyle = color; rr(9.6, -5, 1.5, .8, .2); rr(9.6, 4.2, 1.5, .8, .2); g.fillStyle = accent; rr(9.9, -3.6, .5, 7.2, .2);
-  // ala posteriore
-  g.fillStyle = dark; rr(-12.1, -4, 1.9, 8, .3);
-  g.fillStyle = color; rr(-12.1, -4.2, 1.9, .8, .2); rr(-12.1, 3.4, 1.9, .8, .2);
-  g.fillStyle = 'rgba(255,255,255,.18)'; rr(-11.7, -3.5, .45, 7, .2);
-  SPRITES[color] = c2; return c2;
+  const accent = lum < 110 ? '#F4F2EC' : lum > 200 ? '#151A24' : mix(color, -.6), carbon = '#1A1D24', rubber = '#121318', tc = TYRE_COL[comp] || TYRE_COL.M;
+  // ruote: battistrada, spalla con il colore della mescola, cerchio
+  const wheel = (x, y, w, h) => {
+    g.fillStyle = rubber; rr(x, y, w, h, .8);
+    g.fillStyle = 'rgba(255,255,255,.09)'; rr(x + .4, y + .25, w - .8, .35, .15);
+    g.fillStyle = tc; const outer = y < 0 ? y + .05 : y + h - .45; rr(x + .35, outer, w - .7, .4, .15);
+    g.fillStyle = '#3A3E47'; rr(x + w / 2 - .6, y + h / 2 - .35, 1.2, .7, .3);
+  };
+  // braccetti delle sospensioni
+  g.strokeStyle = '#2A2E36'; g.lineWidth = .32; g.beginPath();
+  for (const sy of [-1, 1]) { g.moveTo(4.2, sy * .9); g.lineTo(6.2, sy * 3.6); g.moveTo(6.6, sy * .7); g.lineTo(6.2, sy * 3.6); g.moveTo(-6.6, sy * 2.1); g.lineTo(-8.6, sy * 3.8); g.moveTo(-8.8, sy * 1.2); g.lineTo(-8.6, sy * 3.8); }
+  g.stroke();
+  wheel(-10.8, -5.95, 4.3, 2.5); wheel(-10.8, 3.45, 4.3, 2.5); wheel(4.6, -5.5, 3.4, 2); wheel(4.6, 3.5, 3.4, 2);
+  // fondo in carbonio con il bordo che si allarga verso il posteriore
+  poly(mirror([[-10, 0], [-10, 3.2], [-6.2, 3.55], [1.5, 3.3], [3.6, 1.6], [4.4, .9], [4.4, 0]]), carbon);
+  g.fillStyle = 'rgba(255,255,255,.07)'; rr(-6, 3.1, 7, .25, .1); rr(-6, -3.35, 7, .25, .1);
+  // carrozzeria con luce da sinistra in alto
+  const body = g.createLinearGradient(0, -3.4, 0, 3.4);
+  body.addColorStop(0, mix(color, .4)); body.addColorStop(.45, color); body.addColorStop(1, mix(color, -.4));
+  // pance con taglio inferiore e cofano motore che si stringe verso l'ala posteriore
+  poly(mirror([[-9.4, 0], [-9.4, .75], [-7.4, 1.05], [-5.2, 2.2], [-2.4, 3.05], [.8, 3.1], [2.3, 2.6], [2.9, 1.6], [3.4, .95], [4.6, .72], [4.6, 0]]), body);
+  g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(2.2, -2.2, .55, .9, -.4, 0, 7); g.ellipse(2.2, 2.2, .55, .9, .4, 0, 7); g.fill();   // bocche delle pance
+  // muso lungo e stretto
+  poly(mirror([[4.4, 0], [4.4, .8], [7.5, .62], [10.2, .42], [10.9, .18], [11.05, 0]]), body);
+  g.fillStyle = 'rgba(255,255,255,.35)'; rr(5.2, -.32, 4.6, .16, .08);
+  // livrea: freccia sul muso e banda lungo la spina
+  g.fillStyle = accent; g.beginPath(); g.moveTo(10.6, 0); g.lineTo(6.5, -.36); g.lineTo(-1.8, -.42); g.lineTo(-1.8, .42); g.lineTo(6.5, .36); g.closePath(); g.fill();
+  g.fillStyle = accent; poly(mirror([[-2.4, 1.2], [.6, 2.4], [1.4, 2.4], [-1.6, 1.0]]), accent);
+  // pinna del cofano
+  g.fillStyle = mix(color, -.5); rr(-9.4, -.16, 6.6, .32, .1);
+  g.fillStyle = 'rgba(255,255,255,.3)'; rr(-9, -.06, 5.8, .1, .05);
+  // abitacolo, casco, halo
+  g.fillStyle = '#07080B'; g.beginPath(); g.ellipse(-.8, 0, 2.15, 1.15, 0, 0, 7); g.fill();
+  const helm = g.createRadialGradient(-1.5, -.35, .1, -1.2, 0, .95); helm.addColorStop(0, '#FFFFFF'); helm.addColorStop(.35, accent === '#151A24' ? '#2B3140' : accent); helm.addColorStop(1, mix(color, -.2));
+  g.fillStyle = helm; g.beginPath(); g.arc(-1.2, 0, .85, 0, 7); g.fill();
+  g.fillStyle = '#0B0D12'; rr(-.75, -.55, .35, 1.1, .15);                                   // visiera
+  g.strokeStyle = '#0F1116'; g.lineWidth = .4; g.beginPath(); g.moveTo(1.6, 0); g.lineTo(.45, 0); g.moveTo(.45, 0); g.bezierCurveTo(.2, -1.45, -2.4, -1.45, -2.6, -.9); g.moveTo(.45, 0); g.bezierCurveTo(.2, 1.45, -2.4, 1.45, -2.6, .9); g.stroke();
+  // specchietti
+  g.fillStyle = mix(color, -.35); rr(1.3, -2.75, .7, .55, .15); rr(1.3, 2.2, .7, .55, .15);
+  g.fillStyle = '#C9D6E6'; rr(1.35, -2.7, .25, .45, .08); rr(1.35, 2.25, .25, .45, .08);
+  // ala anteriore: piano principale, due flap nel colore della livrea, paratie laterali
+  poly(mirror([[11.4, 0], [11.4, .6], [10.8, 2.6], [10.35, 5.3], [9.3, 5.65], [9.0, 4.9], [9.5, 2.5], [10.0, .55], [10.0, 0]]), carbon);
+  poly(mirror([[11.4, 0], [11.4, .55], [10.8, 2.5], [10.35, 5.25], [10.05, 5.25], [10.5, 2.4], [11.1, .45], [11.1, 0]]), color);
+  poly(mirror([[9.75, 1.0], [9.3, 4.7], [9.55, 4.75], [10.05, 1.05]]), mix(color, .3));
+  g.fillStyle = accent; rr(9.0, -5.8, 1.5, .32, .1); rr(9.0, 5.48, 1.5, .32, .1);
+  // ala posteriore con il flap del DRS e le paratie
+  g.fillStyle = carbon; rr(-12.45, -4.3, 2.1, 8.6, .35);
+  g.fillStyle = color; rr(-12.25, -3.9, .75, 7.8, .2);
+  g.fillStyle = 'rgba(255,255,255,.25)'; rr(-11.25, -3.7, .35, 7.4, .15);
+  g.fillStyle = accent; rr(-12.55, -4.45, 2.3, .45, .15); rr(-12.55, 4, 2.3, .45, .15);
+  g.fillStyle = '#FF2A2A'; rr(-12.6, -.32, .35, .64, .1);                                  // luce posteriore
+  // riflesso lucido sulla carrozzeria
+  const gloss = g.createRadialGradient(-2, -2.4, .2, -2, -2.4, 5);
+  gloss.addColorStop(0, 'rgba(255,255,255,.28)'); gloss.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gloss; poly(mirror([[-9.4, 0], [-9.4, .75], [-7.4, 1.05], [-5.2, 2.2], [-2.4, 3.05], [.8, 3.1], [2.3, 2.6], [2.9, 1.6], [3.4, .95], [4.6, .72], [4.6, 0]]), gloss);
+  SPRITES[key] = c2; return c2;
 }
 // Texture della pista, create una volta: erba tagliata a strisce, asfalto con grana, ghiaia.
 let ASPH = null, GRAV = null;
@@ -2330,7 +2358,8 @@ function drawCars() {
     ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(1.5, 1.6, 13.5, 6.6, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(1, 1.2, 11.5, 5, 0, 0, 7); ctx.fill();
     if (c.boostT > 0 || c.drs || c.slingT > 0) { ctx.fillStyle = c.slingT > 0 ? 'rgba(255,200,90,.6)' : 'rgba(90,180,255,.55)'; ctx.beginPath(); ctx.ellipse(-15, 0, 5, 1.8, 0, 0, 7); ctx.fill(); }
     if (c.driven) { ctx.fillStyle = 'rgba(255,200,61,.14)'; ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.fill(); ctx.strokeStyle = '#FFC83D'; ctx.lineWidth = 2.2; ctx.setLineDash([5, 3.5]); ctx.lineDashOffset = -R.t * 12; ctx.stroke(); ctx.setLineDash([]); }
-    ctx.drawImage(sprite(c.color), -12.5, -6, 25, 12);
+    ctx.drawImage(sprite(c.color, c.comp), -12.5, -6, 25, 12);
+    if (R.wet > .15 && (R.t * 4 | 0) % 2) { ctx.fillStyle = 'rgba(255,40,40,.9)'; ctx.beginPath(); ctx.arc(-12.6, 0, .9, 0, 7); ctx.fill(); }   // luce antipioggia
     if (c.inPit && c.pitPhase === 'stop') { ctx.strokeStyle = '#F2B84B'; ctx.lineWidth = 1.2; ctx.strokeRect(-12.5, -6.5, 25, 13); }
     ctx.restore();
     if (R.wet > .25 && c.v > 60) { ctx.fillStyle = 'rgba(225,232,242,' + (.07 + R.wet * .14) + ')'; ctx.beginPath(); ctx.ellipse(x - Math.cos(h) * 16, y - Math.sin(h) * 16, 11, 5, h, 0, 7); ctx.fill(); }
