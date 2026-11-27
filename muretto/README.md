@@ -54,6 +54,8 @@ Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In
 | Rapporto completo dello scout | Accademia | Potenziale esatto di un giovane invece della stima | 60 crediti o un video |
 | Rifai il progetto | Fabbrica, dopo un pezzo fallito | Riparte subito, pronto dopo un GP, con il 10% di riuscita in più | 150 crediti o un video |
 
+**Premi gara** (manager): (70 + 11 × punti) a pilota, moltiplicato per la serie (×0,55 Regionale, ×0,75 Cadetti, ×1 Mondiale). Nelle prove con il bot: premio medio circa 150 in Formula Regionale e 230 nel Mondiale; saldo del GP dopo i costi circa +150 e +30.
+
 **Video premio** (Finanze e negozio): 5 video al giorno con premi crescenti, proporzionati alla serie. Formula Regionale 55 / 85 / 110 / 140 / 220 (610 al giorno), Formula Cadetti 75 / 110 / 150 / 190 / 300 (825), Campionato Mondiale 100 / 150 / 200 / 250 / 400 (1.100). Sono separati dai 6 video al giorno per accelerare lavori e aiuti.
 
 ## Suono e vibrazione
@@ -82,7 +84,7 @@ Il primo weekend è guidato da Marta, l'ingegnera di pista: un fumetto in basso 
 
 1. Firma lo sponsor secondario (Finanze). 2. Avvia il primo progetto (Fabbrica). 3. Prove libere: giro di assetto, cambio di regolazione su consiglio del pilota, passo gara. 4. Qualifica: scelte per pilota e tempi in diretta. 5. Strategia e griglia. 6. Gara con il tutorial che c'era già (Come si corre, fumetti ATTACCA/DIFENDI, prima gara facilitata) più la presentazione del pulsante Radio. 7. Bilancio del GP. 8. Sfida del giorno, obiettivi e video premio.
 
-Dopo il tutorial, la prima volta che apri Squadra, Fabbrica e Finanze compare una spiegazione di due righe. Chi aveva già corso prima di questa versione non vede il tutorial.
+Dopo il tutorial, la prima volta che apri Squadra, Fabbrica e Finanze compare una spiegazione di due righe. Il tutorial parte una volta anche per chi aveva già giocato (salta da solo i passi già fatti), riparte a ogni nuova carriera e si può rivedere dal link "Rivedi il tutorial" in fondo alla scheda Weekend.
 
 ## Serie e rivali
 
