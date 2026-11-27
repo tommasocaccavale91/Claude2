@@ -56,6 +56,8 @@ Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In
 
 **Premi gara** (manager): (70 + 11 × punti) a pilota, moltiplicato per la serie (×0,55 Regionale, ×0,75 Cadetti, ×1 Mondiale). Nelle prove con il bot: premio medio circa 150 in Formula Regionale e 230 nel Mondiale; saldo del GP dopo i costi circa +150 e +30.
 
+**Simulazione di 20 stagioni** (12 GP, bot attento a sviluppo, staff e mercato): gratis si arriva nel Mondiale alla 7ª stagione e al primo titolo mondiale alla 13ª; con tutti i video possibili Mondiale alla 4ª e titolo alla 5ª.
+
 **Video premio** (Finanze e negozio): 5 video al giorno con premi crescenti, proporzionati alla serie. Formula Regionale 55 / 85 / 110 / 140 / 220 (610 al giorno), Formula Cadetti 75 / 110 / 150 / 190 / 300 (825), Campionato Mondiale 100 / 150 / 200 / 250 / 400 (1.100). Sono separati dai 6 video al giorno per accelerare lavori e aiuti.
 
 ## Suono e vibrazione
@@ -88,8 +90,9 @@ Dopo il tutorial, la prima volta che apri Squadra, Fabbrica e Finanze compare un
 
 ## Serie e rivali
 
-- **Tre campionati a scalare**: Formula Regionale → Formula Cadetti → Campionato Mondiale. Si sale chiudendo tra i primi due costruttori. Ogni serie ha rivali, piloti e mercato propri; premi, sponsor e costi crescono salendo (×0,55 / ×0,75 / ×1 per i ricavi, ×0,6 / ×0,8 / ×1 per i costi). Dopo una promozione l'auto perde due livelli per parte e riparte dietro alle nuove rivali.
+- **Tre campionati a scalare**: Formula Regionale → Formula Cadetti → Campionato Mondiale. Si sale vincendo il campionato costruttori. Ogni serie ha rivali, piloti e mercato propri; premi, sponsor e costi crescono salendo (×0,55 / ×0,75 / ×1 per i ricavi, ×0,6 / ×0,8 / ×1 per i costi). Dopo una promozione l'auto perde due livelli per parte e riparte dietro alle nuove rivali.
 - **Nessun livello di difficoltà**: la sfida sta nelle serie, nello sviluppo dell'auto, nello staff e nei piloti.
+- **Ogni stagione nuove regole**: le rivali si riavvicinano attorno al livello della serie (nel Mondiale partono più forti, e ancora di più se vinci titoli di fila) e i tuoi pezzi perdono un livello: lo sviluppo non finisce mai. Le rivali fanno anche loro le prove libere (assetto discreto e pista conosciuta), quindi un assetto sbagliato si paga.
 - **Rivali vive**: sviluppano di più quando sono dietro di te in classifica, a volte portano un grosso aggiornamento, ingaggiano svincolati migliori dei loro piloti e corteggiano i tuoi piloti in scadenza (rinnovi subito con un aumento o lo perdi a fine stagione).
 
 ## Gratis si arriva, con crediti e video si arriva prima

@@ -965,7 +965,7 @@ function makeSponsor(slot, tier) {
 function sponsorOffers(slot) { return ['safe', 'mid', 'bold'].map(t => makeSponsor(slot, t)); }
 function staffMember(lv) { return { n:pick(Math.random() < .5 ? NAMES_F : NAMES_M) + ' ' + pick(SURN), lv }; }
 function freshName() {
-  const c = C(), taken = new Set([...c.drivers, ...(c.free || []), ...(c.academy || []), ...((c.scout || []))].map(d => code(d.n)));
+  const c = C(), taken = new Set([...c.drivers, ...(c.free || []), ...(c.academy || []), ...((c.scout || [])), ...BASE_DRIVERS].map(d => code(d.n)));
   for (let k = 0; k < 60; k++) { const n = pick(Math.random() < .5 ? NAMES_F : NAMES_M) + ' ' + pick(SURN); if (!taken.has(code(n))) return n; }
   return 'Alex Nuovo' + Math.floor(Math.random() * 99);
 }
@@ -1025,7 +1025,7 @@ function settleGP(c, res, prize, info) {
   c.sponsors = c.sponsors.filter(sp => {
     if (sp.sat <= 0) { news.push(sp.n + ' ha rescisso il contratto: troppi obiettivi mancati.'); c.offers[sp.slot] = sponsorOffers(sp.slot); return false; }
     if (sp.gp <= 0) {
-      if (sp.sat >= 50) { sp.gp = 6; sp.fee = Math.round(sp.fee * 1.1 / 10) * 10; news.push(sp.n + ' rinnova per altri 6 GP, con la quota alzata a ' + fmtCr(sp.fee) + '.'); return true; }
+      if (sp.sat >= 50) { sp.gp = 6; const cap = Math.round(TIER[sp.tier].fee * (sp.slot ? .5 : 1) * ecoMul(c) * 1.5 / 10) * 10; sp.fee = Math.min(cap, Math.round(sp.fee * 1.1 / 10) * 10); news.push(sp.n + ' rinnova per altri 6 GP, con la quota alzata a ' + fmtCr(sp.fee) + '.'); return true; }
       news.push(sp.n + ' non rinnova: il contratto è finito.'); c.offers[sp.slot] = sponsorOffers(sp.slot); return false;
     }
     return true;
@@ -1184,6 +1184,13 @@ function signSponsor(slot, k) {
 }
 // fine stagione: età, crescita, contratti, mercato
 function seasonRollover(c) {
+  // nuove regole ogni anno: le auto rivali si riavvicinano attorno ai valori della serie e le tue parti perdono un livello
+  const riv = c.teams.filter(t => t.id !== 'aurora'), mp = riv.reduce((s, t) => s + t.power, 0) / riv.length, mc = riv.reduce((s, t) => s + t.corner, 0) / riv.length;
+  // nel Mondiale le rivali partono più forti; se vinci titoli di fila investono di più per batterti
+  const ctr = ({ 3:.996, 2:1, 1:1.01 }[tierOf(c)] || 1) + Math.min(.024, .008 * (c.streak || 0));
+  riv.forEach(t => { t.power = ctr + (t.power - mp) * .6; t.corner = ctr + (t.corner - mc) * .6; });
+  for (const k in c.parts) if (!(k === 'aero' && c.revolution)) c.parts[k] = Math.max(1, c.parts[k] - 1);   // nella rivoluzione l'aero ha già perso due livelli
+  c.news.push('Nuova stagione, nuove regole: le rivali hanno rifatto le auto e i tuoi pezzi perdono un livello. Si riparte con lo sviluppo.');
   c.drivers.forEach(d => {
     d.age = (d.age || 27) + 1;
     if (d.age <= 25) ['vel', 'cos', 'gom'].forEach(k => { d[k] = Math.min(d.pot + 2, d[k] + Math.round(rnd(0, 3))); });
@@ -1342,10 +1349,11 @@ function rivalTurn(c, res) {
   const news = [], D = DF(c), tStand = c.standings.t, myPts = tStand.aurora || 0;
   // sviluppo: chi ti sta dietro in classifica reagisce di più
   for (const t of c.teams) if (t.id !== 'aurora') {
-    const mul = D.dev * ((tStand[t.id] || 0) < myPts ? 1.4 : 1) * (hasRule('budget') ? .6 : 1);
+    const lead = myPts > Math.max(0, ...c.teams.filter(x => x.id !== 'aurora').map(x => tStand[x.id] || 0));
+    const mul = D.dev * ((tStand[t.id] || 0) < myPts ? 1.4 : 1) * (lead ? 1.5 : 1) * (hasRule('budget') ? .6 : 1);
     t.power += rnd(0, .0013) * mul; t.corner += rnd(0, .0013) * mul;
   }
-  if (Math.random() < .14) { const t = pick(c.teams.filter(x => x.id !== 'aurora')); t.power += .0025; t.corner += .0025; news.push(t.name + ' porta un grosso aggiornamento: in pista andrà più forte.'); }
+  if (Math.random() < (myPts > Math.max(0, ...c.teams.filter(x => x.id !== 'aurora').map(x => tStand[x.id] || 0)) ? .3 : .14)) { const t = pick(c.teams.filter(x => x.id !== 'aurora')); t.power += .0025; t.corner += .0025; news.push(t.name + ' porta un grosso aggiornamento: in pista andrà più forte.'); }
   // mercato: una rivale prende uno svincolato migliore del suo pilota più debole
   if (Math.random() < .15 && c.free.length) {
     const t = pick(c.teams.filter(x => x.id !== 'aurora')), theirs = c.drivers.filter(d => d.team === t.id).sort((a, b) => avgOf(a) - avgOf(b))[0], best = c.free.slice().sort((a, b) => avgOf(b) - avgOf(a))[0];
@@ -1849,7 +1857,7 @@ function doQuali(risk) {
 }
 function setupMul(teamId) {
   const w = weekend();
-  if (teamId !== myTeamId()) return { p:1, c:1 };
+  if (teamId !== myTeamId()) return { p:1.007, c:1.007 };   // le rivali fanno le loro prove: assetto discreto e pista conosciuta
   const su = wsu(w), q = suQ(su, idealSU(GP)), know = 1 + (w.know || 0) * .00006, f = 1 + (q - .7) * .02;
   return { p:f * know * (1 - (su.aero - .5) * .008), c:f * know * (1 + (su.aero - .5) * .008) };
 }
@@ -1939,6 +1947,7 @@ function startSession(kind, ch) {
     if (!ch) for (const id of (w.engPen || [])) { const i = grid.indexOf(id); if (i >= 0) { grid.splice(i, 1); grid.splice(Math.min(grid.length, i + 5), 0, id); } }
     const plans = plansFor(L0, ch ? 1 : wearFor(c, w, gp)), planOf = id => plans[(c.planBy || {})[id] || 0] || plans[0];
     cars = grid.map((id, p) => { const d = drvOf(id), car = makeCar(d, teamOf(d.team), p); car.grid = p + 1; car.d = p % 2 ? -10 : 10; if (!car.mine) car.form = rnd(-.014, .014); car.dist = -14 - p * 30; car.s = (car.dist % T.L + T.L) % T.L; if (car.mine) { const pl = planOf(car.id); car.comp = pl.st[0]; car.plan = { st:pl.st.slice(), box:pl.box.slice(), next:0 }; } else car.comp = Math.random() < .3 ? 'S' : Math.random() < .8 ? 'M' : 'H'; return car; });
+    const seen = new Set(); cars.forEach(x => { if (seen.has(x.code)) { const pr = x.n.split(' '); x.code = (pr[0][0] + pr[pr.length - 1].normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 2)).toUpperCase(); } seen.add(x.code); });
     if (mode === 'drive') cars.find(x => x.id === drivenId).driven = true;
   } else {
     const d = drvOf(drivenId), car = makeCar(d, teamOf(d.team), 0);
@@ -3246,8 +3255,9 @@ function renderSeasonEnd() {
   const tRows = c.teams.map(t => [t, c.standings.t[t.id] || 0]).sort((a, b) => b[1] - a[1]);
   const myPos = c.role === 'driver' ? dRows.findIndex(r => r[0].id === 'me') + 1 : tRows.findIndex(r => r[0].id === 'aurora') + 1;
   const bonus = c.role === 'manager' ? Math.round([3000, 2200, 1600, 1200, 900][myPos - 1] * ecoMul(c)) : [2500, 1800, 1300, 1000, 800, 600, 500, 400, 300, 200][myPos - 1];
-  if (c.mgr) c.promote = tierOf(c) > 1 && myPos <= 2;
-  if (!c.seasonPaid) { c.credits += bonus; c.seasonPaid = true; if (myPos === 1) c.titles.push(c.season); if (c.mgr && myPos === 1) { unlock('titleT'); if (tierOf(c) === 1) unlock('world'); } save(); track('season_end', { season:c.season, pos:myPos }); }
+  if (c.mgr) c.promote = tierOf(c) > 1 && myPos === 1;
+  if (!c.seasonPaid) { c.credits += bonus; c.seasonPaid = true; if (myPos === 1) c.titles.push(c.season); if (c.mgr) c.streak = myPos === 1 ? (c.streak || 0) + 1 : 0;
+    if (c.mgr && myPos === 1) { unlock('titleT'); if (tierOf(c) === 1) unlock('world'); } save(); track('season_end', { season:c.season, pos:myPos }); }
   let offers = '';
   if (c.role === 'driver') {
     const me = drvOf('me'), mate = c.drivers.find(d => d.team === me.team && d.id !== 'me');
@@ -3262,7 +3272,7 @@ function renderSeasonEnd() {
   }
   if (c.mgr) {
     const exp = mineDrivers().filter(d => d.con <= 1 && !d.leaving);
-    offers = (c.promote ? '<div class="card promo"><b>Promozione in ' + SERIES[tierOf(c) - 1].n + '!</b><p style="margin:4px 0 0">Chiudi tra i primi due costruttori: la prossima stagione corri nella serie superiore. Rivali più forti, premi e sponsor più ricchi, costi più alti. La tua auto perde due livelli per parte e riparte dietro: è l’inizio di una nuova sfida.</p></div>' : tierOf(c) > 1 ? '<div class="card"><b>' + SER(c).n + '</b><p class="legal" style="margin:4px 0 0">Per salire in ' + SERIES[tierOf(c) - 1].n + ' devi chiudere tra i primi due costruttori.</p></div>' : '') + mineDrivers().filter(d => d.leaving).map(d => '<div class="card news"><b>' + esc(d.n) + ' va in ' + esc(teamOf(d.leaving) ? teamOf(d.leaving).name : 'un’altra squadra') + '</b><p class="legal" style="margin:4px 0 0">Al suo posto arriva il miglior svincolato, se non scegli tu dalla scheda Squadra nella prossima stagione.</p></div>').join('') + '<h3 class="h2">Contratti in scadenza</h3><div class="card list">' + (exp.length ? exp.map(d => '<div class="lrow"><span class="ico">' + d.no + '</span><div><b>' + esc(d.n) + '</b><small>' + driverLine(d) + (d.mor < 45 ? ' · scontento: chiede il 40% in più' : '') + '</small></div><span style="display:flex;flex-direction:column;gap:6px"><button class="btn sm go2" data-renew="' + d.id + '">Rinnova · ' + fmtCr(renewCost(d)) + '</button><button class="btn sm" data-repl="' + d.id + '">Sostituisci</button></span></div>').join('') + '<p class="legal" style="margin:8px 0 0">Se non decidi, il contratto si rinnova da solo (2 stagioni).</p>'
+    offers = (c.promote ? '<div class="card promo"><b>Promozione in ' + SERIES[tierOf(c) - 1].n + '!</b><p style="margin:4px 0 0">Campioni tra i costruttori: la prossima stagione corri nella serie superiore. Rivali più forti, premi e sponsor più ricchi, costi più alti. La tua auto perde due livelli per parte e riparte dietro: è l’inizio di una nuova sfida.</p></div>' : tierOf(c) > 1 ? '<div class="card"><b>' + SER(c).n + '</b><p class="legal" style="margin:4px 0 0">Per salire in ' + SERIES[tierOf(c) - 1].n + ' devi vincere il campionato costruttori.</p></div>' : '') + mineDrivers().filter(d => d.leaving).map(d => '<div class="card news"><b>' + esc(d.n) + ' va in ' + esc(teamOf(d.leaving) ? teamOf(d.leaving).name : 'un’altra squadra') + '</b><p class="legal" style="margin:4px 0 0">Al suo posto arriva il miglior svincolato, se non scegli tu dalla scheda Squadra nella prossima stagione.</p></div>').join('') + '<h3 class="h2">Contratti in scadenza</h3><div class="card list">' + (exp.length ? exp.map(d => '<div class="lrow"><span class="ico">' + d.no + '</span><div><b>' + esc(d.n) + '</b><small>' + driverLine(d) + (d.mor < 45 ? ' · scontento: chiede il 40% in più' : '') + '</small></div><span style="display:flex;flex-direction:column;gap:6px"><button class="btn sm go2" data-renew="' + d.id + '">Rinnova · ' + fmtCr(renewCost(d)) + '</button><button class="btn sm" data-repl="' + d.id + '">Sostituisci</button></span></div>').join('') + '<p class="legal" style="margin:8px 0 0">Se non decidi, il contratto si rinnova da solo (2 stagioni).</p>'
       : '<p style="margin:0">Nessun contratto in scadenza. Il mercato è nella scheda Squadra.</p>') + '</div>';
   }
   app.innerHTML = '<div class="page" style="--team:' + mt.color + '"><header class="mast"><div class="wrap"><div><p class="kicker">Fine stagione ' + c.season + '</p><h1>' + (myPos === 1 ? (c.mgr && tierOf(c) > 1 ? 'Campioni di ' + SER(c).n + '!' : 'Campioni del mondo!') : (c.role === 'driver' ? 'Chiudi ' + myPos + '°' : 'Squadra ' + myPos + 'ª')) + '</h1><p class="sub">Campione piloti: ' + esc(dRows[0][0].n) + ' · Costruttori: ' + esc(tRows[0][0].name) + '</p></div></div><div class="stripe"></div></header>' +
@@ -3296,7 +3306,7 @@ function startNextSeason() {
     mineDrivers().forEach(d => { if (d.con <= 1) { d.sal = renewCost(d); d.con = 3; c.news.push(first(d.n) + ' ha rinnovato per 2 stagioni a ' + fmtCr(d.sal) + ' a GP.'); } });
     c.drivers.forEach(d => { d.mor = 70; });
     newSeasonRules();
-    if (c.promote) { const nt = tierOf(c) - 1; buildTier(c, nt, false); c.promote = false; unlock(nt === 2 ? 'promo2' : 'promo1'); c.news.push('Benvenuti in ' + SERIES[nt].n + '! Rivali più forti: servono piloti migliori e sviluppo.'); }
+    if (c.promote) { const nt = tierOf(c) - 1; buildTier(c, nt, false); c.promote = false; c.streak = 0; unlock(nt === 2 ? 'promo2' : 'promo1'); c.news.push('Benvenuti in ' + SERIES[nt].n + '! Rivali più forti: servono piloti migliori e sviluppo.'); }
     seasonRollover(c); if (S.pro) c.freeScout = true;
   } else {
     c.drivers.forEach(d => { if (d.id !== 'me') d.vel = clamp(d.vel + Math.round(rnd(-1, 2)), 70, 96); d.mor = 70; });
