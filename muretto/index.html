@@ -1469,7 +1469,7 @@ function fpSim(c, w, alt) {
   loadTrack(gpOf(c.round)); const cal = calibration(), su = wsu(w), keep = Object.assign({}, su);
   if (alt) Object.assign(su, alt);
   const q = {}, r = {};
-  for (const d of c.drivers) { const f = carFactors(teamOf(d.team)), pace = .954 + d.vel * .0005 + ((d.mor || 70) - 70) * .0002, t = refLap(f.power, f.corner, pace) * cal; q[d.id] = t; r[d.id] = t * (1 - (d.cos - 75) * .0004 - (d.gom - 75) * .0003); }
+  for (const d of c.drivers) { const f = carFactors(teamOf(d.team)), pace = .954 + d.vel * .0005 + ((d.mor || 70) - 70) * .0002, t = lapTime(gpOf(c.round), f.power, f.corner, pace); q[d.id] = t; r[d.id] = t * (1 - (d.cos - 75) * .0004 - (d.gom - 75) * .0003); }
   Object.assign(su, keep);
   const rank = m => Object.keys(m).sort((a, b) => m[a] - m[b]), qr = rank(q), rr = rank(r), out = {};
   myIds(c).forEach(id => { out[id] = { q:qr.indexOf(id) + 1, r:rr.indexOf(id) + 1 }; });
@@ -1522,7 +1522,7 @@ const myIds = c => c.role === 'driver' ? ['me'] : mineDrivers().map(d => d.id);
 // Tempo sul giro della tua auto con l'assetto attuale: lo stesso calcolo della qualifica, senza errori.
 function fpLap(c, w, id) {
   loadTrack(gpOf(c.round)); const d = drvOf(id), f = carFactors(teamOf(d.team)), pace = .954 + d.vel * .0005 + ((d.mor || 70) - 70) * .0002;
-  return refLap(f.power, f.corner, pace) * calibration() * (1 + rnd(-.0015, .0015));
+  return lapTime(gpOf(c.round), f.power, f.corner, pace) * (1 + rnd(-.0015, .0015));
 }
 function fpFeedback(c, w, d) {
   const N = suSteps(c), id = idealSU(gpOf(c.round)), su = wsu(w), rel = clamp(.5 + (d.cos - 60) * .015 + (c.mgr ? .03 * c.staff.strat.lv : 0), .5, .95);
@@ -1862,7 +1862,7 @@ function carFactors(t) {
 }
 // Tempo vero di un'auto perfetta con il motore di gara, una volta per pista: rende realistici i tempi simulati.
 function calibration() {
-  const tc = TRACK_CACHE[GP.n]; if (tc.cal) return tc.cal;
+  const tc = TRACK_CACHE[GP.n]; if (tc.cal && tc.cal > .85 && tc.cal < 1.15) return tc.cal;
   const saved = R;
   const car = makeCar({ id:'cal', n:'Auto Riferimento', vel:100, cos:100, gom:100, mor:70 }, { id:'cal', color:'#000', power:1, corner:1 }, 0);
   car.comp = 'S'; car.dist = -260; car.s = T.L - 260; car.v = 150; car.d = IDEAL[idx(car.s)];
@@ -1889,6 +1889,15 @@ function driveCal(me) {
   const ai = refLap(me.power, me.corner, drivenPace(me)) * cal * Math.sqrt(1 / COMP[me.comp].grip);
   return (tc.dcals[key] = clamp(car.best / ai, .85, 1.1));
 }
+// Tempo sul giro simulato con controllo di plausibilità: se esce fuori scala rispetto a un'auto di riferimento
+// sulla stessa pista, si ricarica la pista e si rifà il calcolo; in ultima istanza si riporta in scala.
+function lapTime(gp, power, corner, pace) {
+  loadTrack(gp);
+  const once = () => { const ref = refLap(1, 1, 1) * calibration(), t = refLap(power, corner, pace) * calibration(); return { ref, t }; };
+  let r = once();
+  if (!(r.t > r.ref * .9 && r.t < r.ref * 1.12)) { TRACK_CACHE[gp.n].cal = 0; loadTrack(gp); r = once(); track('lap_guard', { gp:gp.n }); }
+  return clamp(r.t, r.ref * .9, r.ref * 1.12);
+}
 function simQuali(playerTime, risk, opts) {
   const c = C(), w = weekend(); loadTrack(gpOf(c.round));
   const times = {}, ev = {}, cal = calibration();
@@ -1898,7 +1907,7 @@ function simQuali(playerTime, risk, opts) {
     const mineQ = rk && d.team === myTeamId() && (C().role === 'manager' || d.id === 'me');
     const errP = mineQ ? (rk === 'limit' ? .22 : .02) : (100 - d.cos) * .002, boostQ = mineQ && rk === 'limit' ? .995 : 1;
     const err = Math.random() < errP, traffic = o && o.late && !o.perfect && Math.random() < .18;
-    times[d.id] = refLap(f.power, f.corner, pace) * cal * boostQ * (o && o.perfect ? .998 : o && o.late ? .9985 : 1) * (1 + rnd(-.006, .006) + (err ? .025 : 0) + (traffic ? .006 : 0));
+    times[d.id] = lapTime(gpOf(c.round), f.power, f.corner, pace) * boostQ * (o && o.perfect ? .998 : o && o.late ? .9985 : 1) * (1 + rnd(-.006, .006) + (err ? .025 : 0) + (traffic ? .006 : 0));
     if (o && (err || traffic)) ev[d.id] = err ? 'errore' : 'traffico';
   }
   if (playerTime) times[playerTime.id] = playerTime.t;
