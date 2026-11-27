@@ -56,7 +56,7 @@ Ogni aiuto si paga con i crediti (guadagnati o comprati) oppure con un video. In
 
 **Premi gara** (manager): (70 + 11 × punti) a pilota, moltiplicato per la serie (×0,55 Regionale, ×0,75 Cadetti, ×1 Mondiale). Nelle prove con il bot: premio medio circa 150 in Formula Regionale e 230 nel Mondiale; saldo del GP dopo i costi circa +150 e +30.
 
-**Simulazione di 20 stagioni** (12 GP, bot attento a sviluppo, staff e mercato): gratis si arriva nel Mondiale alla 7ª stagione e al primo titolo mondiale alla 13ª; con tutti i video possibili Mondiale alla 4ª e titolo alla 5ª.
+**Simulazione di 20 stagioni** (12 GP, bot attento a sviluppo, staff, strutture e mercato): gratis si arriva nel Mondiale all'8ª stagione e al primo titolo mondiale alla 12ª; con tutti i video possibili Mondiale alla 4ª e titolo alla 5ª. Nessun errore, distacchi in qualifica sempre sotto l'8%. Spese della fase avanzata: strutture fino al livello 5 (9.000 e 15.000 crediti, 8 e 10 GP di lavori), livree da collezione (da 4.000 a 25.000 crediti, valgono in tutte le carriere), stipendi +20% per i piloti e +10% per lo staff dopo ogni titolo.
 
 **Video premio** (Finanze e negozio): 5 video al giorno con premi crescenti, proporzionati alla serie. Formula Regionale 55 / 85 / 110 / 140 / 220 (610 al giorno), Formula Cadetti 75 / 110 / 150 / 190 / 300 (825), Campionato Mondiale 100 / 150 / 200 / 250 / 400 (1.100). Sono separati dai 6 video al giorno per accelerare lavori e aiuti.
 
@@ -135,7 +135,7 @@ Il box del manager ha quattro schede: **Weekend**, **Squadra**, **Fabbrica**, **
 - **Progetti di sviluppo** al posto degli acquisti immediati: 1-2 GP, probabilità di riuscita (se fallisce recuperi il 40%), si può accelerare pagando il 50%. Progetti in parallelo secondo il livello della fabbrica.
 - **Motori contati** (circa uno ogni 4 GP). L'usura sale a ogni gara, di più con la modalità Grassa; oltre il 70% può arrivare un guasto (perdita di potenza). Oltre il limite stagionale un motore nuovo costa 5 posizioni in griglia.
 - **Auto della stagione successiva**: dalla metà stagione puoi investire sull'anno dopo invece che sull'auto attuale. Con 1.500 investiti la rivoluzione tecnica toglie un solo livello di aerodinamica.
-- **Strutture** (galleria del vento, simulatore, fabbrica) su 3 livelli, con lavori di 3-4 GP e manutenzione a ogni GP.
+- **Strutture** (galleria del vento, simulatore, fabbrica) su 5 livelli, con lavori da 4 a 10 GP e manutenzione a ogni GP.
 - Con il regolamento "Tetto di spesa", sviluppo e auto nuova hanno un limite stagionale.
 
 **Finanze**

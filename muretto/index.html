@@ -193,6 +193,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .livery{display:flex;gap:10px;flex-wrap:wrap}
 .livery button{position:relative;width:40px;height:40px;border-radius:10px;border:3px solid transparent;background:var(--c);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
 .livery button[aria-pressed="true"]{border-color:var(--ink)}
+.livery button.locked.cr::after{content:"◆";color:var(--cyan)}
+.livprev{height:70px;border-radius:12px;margin:8px 0 12px;background:linear-gradient(105deg,var(--c) 0 60%,#fff 60% 63%,var(--c) 63%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
 .livery button.locked::after{content:"★";position:absolute;right:-6px;top:-8px;font-size:13px;color:var(--gold);text-shadow:0 0 2px #000}
 .field{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:700}
 .tabs{display:flex;gap:6px;margin-bottom:10px}
@@ -726,14 +728,15 @@ function trackSvg(gp) {
 // giro di un'auto perfetta: base per i tempi simulati
 function refLap(power, corner, pace) {
   let s = -T.L, v = 120, t = 0; const dt = 1 / 60, vt = VTOP * power;   // un giro di lancio, poi si misura
-  while (s < T.L) { if (s < 0 && s + v * dt >= 0) t = 0; const i = idx(s), tg = Math.min(PROFI[i] * Math.sqrt(corner) * pace, vt); if (v < tg) v = Math.min(tg, v + ACC * power * Math.max(.05, 1 - v / (vt * 1.02)) * dt); else v = Math.max(tg, v - BRAKE * dt); s += v * dt; t += dt; }
+  while (s < T.L) { const i = idx(s), tg = Math.min(PROFI[i] * Math.sqrt(corner) * pace, vt); if (v < tg) v = Math.min(tg, v + ACC * power * Math.max(.05, 1 - v / (vt * 1.02)) * dt); else v = Math.max(tg, v - BRAKE * dt); const prev = s; s += v * dt; t += dt; if (prev < 0 && s >= 0) t = s / v; }   // il cronometro parte quando si passa davvero il traguardo
   return t;
 }
 
 /* =====================  Squadre, piloti, regole  ===================== */
 const LIVERIES = [
   { c:'#E8502A' }, { c:'#7B4DE0' }, { c:'#F2B705' }, { c:'#12A4B5' }, { c:'#E0457B' }, { c:'#2D3142' },
-  { c:'#C9A227', p:1, n:'Oro' }, { c:'#0B6E4F', p:1, n:'Verde corsa' }, { c:'#8A1C2B', p:1, n:'Rubino' }, { c:'#5BC0EB', p:1, n:'Ghiaccio' }
+  { c:'#C9A227', p:1, n:'Oro' }, { c:'#0B6E4F', p:1, n:'Verde corsa' }, { c:'#8A1C2B', p:1, n:'Rubino' }, { c:'#5BC0EB', p:1, n:'Ghiaccio' },
+  { c:'#111827', cr:4000, n:'Carbonio' }, { c:'#B8C2CF', cr:6000, n:'Argento' }, { c:'#FF2E88', cr:8000, n:'Neon' }, { c:'#3B2F8F', cr:10000, n:'Notte' }, { c:'#E7C9A0', cr:15000, n:'Champagne' }, { c:'#00A38C', cr:25000, n:'Smeraldo' }
 ];
 const BASE_TEAMS = [
   { id:'falco', name:'Falco Motorsport', color:'#D7263D', power:1.0,  corner:1.0  },
@@ -915,7 +918,7 @@ const STAFF = {
   mech: { n:'Capo meccanico',    ico:'🔧', d:'Pit stop più rapidi, meno guasti, ricambi meno cari' },
   coach:{ n:'Preparatore',       ico:'♥', d:'Morale dei piloti e crescita dei giovani' }
 };
-const staffSal = lv => Math.round((10 + lv * 12) * costMul(C()));
+const staffSal = lv => Math.round((10 + lv * 12) * costMul(C()) * (1 + .1 * Math.min(5, (C() && C().staffBonus) || 0)));
 const hireFee = lv => Math.round(200 * lv * costMul(C()) / 10) * 10;
 const facCost = lv => Math.round(FAC_COST[lv] * costMul(C()) / 50) * 50;
 const scoutCost = () => Math.round(400 * costMul(C()) / 10) * 10;
@@ -924,9 +927,9 @@ const acadMax = () => S.pro ? 3 : 2;
 const FAC = {
   wind:{ n:'Galleria del vento', d:lv => 'Progetti aerodinamici riusciti +' + (lv - 1) * 6 + '%' + (lv >= 3 ? ', un GP più rapidi' : '') },
   sim: { n:'Simulatore',          d:lv => 'Conoscenza pista di partenza +' + (lv - 1) * 15 + '%, giovani più rapidi' },
-  fact:{ n:'Fabbrica',            d:lv => lv + (lv > 1 ? ' progetti' : ' progetto') + ' alla volta, ricambi −' + (lv - 1) * 15 + '%' }
+  fact:{ n:'Fabbrica',            d:lv => Math.min(3, lv) + (lv > 1 ? ' progetti' : ' progetto') + ' alla volta, ricambi −' + (lv - 1) * 15 + '%' }
 };
-const FAC_COST = [0, 0, 2500, 5000], FAC_TIME = [0, 0, 4, 6];
+const FAC_COST = [0, 0, 2500, 5000, 9000, 15000], FAC_TIME = [0, 0, 4, 6, 8, 10], FAC_MAX = 5;
 const SPONSORS = [['Lumen Energy','LE'],['Vela Telecom','VT'],['Orsa Assicurazioni','OA'],['Brillo Bevande','BB'],['Ferro Logistica','FL'],['Nimbus Cloud','NC'],['Corallo Moda','CM'],['Pietra Banca','PB'],['Astro Orologi','AO'],['Maestrale Nautica','MN']];
 const TIER = {
   safe:{ n:'Sicuro',      fee:300, bonus:150, miss:6 },
@@ -982,6 +985,7 @@ const engOf = id => { const c = C(); c.engines[id] = c.engines[id] || { n:1, w:0
 const mineDrivers = () => C().drivers.filter(d => d.team === 'aurora');
 const devCap = c => hasRule('budget') ? c.seasonLen * 400 : Infinity;
 const canSpendDev = (c, x) => c.credits >= x && c.fin.dev + x <= devCap(c);
+const projOddsCap = .97;
 const projOdds = (c, part) => clamp(.6 + .06 * c.staff.td.lv + (part === 'aero' ? .06 * (c.fac.wind.lv - 1) : 0) - (part === 'engine' && hasRule('motori') ? .05 : 0), .4, .96);
 const projTime = (c, part) => part === 'crew' ? 2 : part === 'aero' && c.fac.wind.lv >= 3 ? 2 : 3;
 function ensureMgr(c) {
@@ -1057,7 +1061,7 @@ function finishProject(c, p) {
   if (Math.random() < p.odds) { c.parts[p.part] = Math.min(5, c.parts[p.part] + 1); progress('proj'); track('project_ok', { part:p.part }); return P.n + ': il nuovo pezzo funziona. Livello ' + c.parts[p.part] + '.'; }
   const back = Math.round(p.cost * .4); c.credits += back; c.failed = { part:p.part, cost:p.cost, odds:p.odds }; track('project_fail', { part:p.part }); return P.n + ': il pezzo non ha reso in pista. Recuperati ' + fmtCr(back) + ' crediti. In Fabbrica puoi rifarlo subito.';
 }
-function finishFac(c, k) { const f = c.fac[k]; f.b = 0; f.lv++; if (f.lv >= 3) unlock('facmax'); return FAC[k].n + ' pronta: livello ' + f.lv + '.'; }
+function finishFac(c, k) { const f = c.fac[k]; f.b = 0; f.lv++; if (f.lv >= FAC_MAX) unlock('facmax'); return FAC[k].n + ' pronta: livello ' + f.lv + '.'; }
 // Acceleratori: con i crediti o con un video si taglia un GP di attesa. Gratis si arriva comunque, solo più piano.
 const VID_MAX = 6;
 function vidLeft() { const d = dayKey(); if (S.vday !== d) { S.vday = d; S.vn = 0; } return VID_MAX - S.vn; }
@@ -1107,7 +1111,7 @@ function newEngine(id) {
   track('engine_new', { n:e.n }); save(); renderBox();
 }
 function buildFac(k) {
-  const c = C(), f = c.fac[k], cost = facCost(f.lv + 1); if (f.lv >= 3 || f.b) return;
+  const c = C(), f = c.fac[k], cost = facCost(f.lv + 1); if (f.lv >= FAC_MAX || f.b) return;
   if (c.credits < cost) { toast('Crediti insufficienti'); return; }
   c.credits -= cost; f.b = FAC_TIME[f.lv + 1]; track('facility', { k, lv:f.lv + 1 }); save(); toast(FAC[k].n + ': lavori iniziati'); renderBox();
 }
@@ -1205,6 +1209,7 @@ function seasonRollover(c) {
   const tm = c.teams.find(t => t.id === 'aurora'), b = nextCarBonus(c);
   if (b) { tm.power += b; tm.corner += b; c.news.push('L’auto nuova è nata dal progetto dell’anno scorso: +' + Math.round(b / .003) + ' passi di prestazione.'); }
   c.nextCar = 0;
+  if (c.streak > 0) { mineDrivers().forEach(d => { d.sal = Math.round(d.sal * 1.2 / 5) * 5; }); c.staffBonus = (c.staffBonus || 0) + 1; c.news.push('Da campioni si paga di più: stipendi dei piloti +20%, staff +10%.'); }
 }
 function renewCost(d) { const c = C(), pts = c.standings.d[d.id] || 0, base = salaryFor(d) + Math.round(pts / Math.max(1, c.seasonLen) * 4); return Math.round(base * (d.mor < 45 ? 1.4 : 1) / 5) * 5; }
 
@@ -1255,8 +1260,8 @@ function tabFabbrica(c) {
     : '<p style="margin:0">Dalla seconda metà della stagione puoi spostare il lavoro sull’auto dell’anno prossimo.</p>') + '</div>';
   h += '<h3 class="h2">Strutture</h3><div class="card list">' + Object.entries(FAC).map(([k, f]) => {
     const x = c.fac[k];
-    return '<div class="lrow"><span class="ico">' + x.lv + '</span><div><b>' + f.n + ' ' + stars(x.lv, 3) + '</b><small>' + (x.lv === 1 ? 'Base' : f.d(x.lv)) + (x.lv < 3 ? ' · al livello ' + (x.lv + 1) + ': ' + f.d(x.lv + 1) : '') + (x.b ? ' · lavori: mancano ' + x.b + ' GP' : '') + '</small></div>' +
-      (x.b ? speedBtns('fac', k, facStepCost(c, k)) : x.lv >= 3 ? '<span class="chip">Massimo</span>' : '<button class="btn sm" data-fac="' + k + '"' + (c.credits < facCost(x.lv + 1) ? ' disabled' : '') + '>' + fmtCr(facCost(x.lv + 1)) + '</button>') + '</div>';
+    return '<div class="lrow"><span class="ico">' + x.lv + '</span><div><b>' + f.n + ' ' + stars(x.lv, FAC_MAX) + '</b><small>' + (x.lv === 1 ? 'Base' : f.d(x.lv)) + (x.lv < FAC_MAX ? ' · al livello ' + (x.lv + 1) + ': ' + f.d(x.lv + 1) : '') + (x.b ? ' · lavori: mancano ' + x.b + ' GP' : '') + '</small></div>' +
+      (x.b ? speedBtns('fac', k, facStepCost(c, k)) : x.lv >= FAC_MAX ? '<span class="chip">Massimo</span>' : '<button class="btn sm" data-fac="' + k + '"' + (c.credits < facCost(x.lv + 1) ? ' disabled' : '') + '>' + fmtCr(facCost(x.lv + 1)) + '</button>') + '</div>';
   }).join('') + '<p class="legal" style="margin:8px 0 0">Ogni livello costa ' + Math.round(15 * costMul(c)) + ' crediti a GP di manutenzione.</p></div>';
   return h;
 }
@@ -1798,7 +1803,7 @@ function renderBox() {
       '<h3 class="h2">La tua squadra</h3><div class="card"><div class="opt"><span class="lab">' + esc(mt.name) + '<small>Monoposto ' + (rank + 1) + 'ª su ' + c.teams.length + ' per prestazioni</small></span><span class="sw" style="--c:' + mt.color + ';height:26px;width:10px"></span></div>' +
       '<p class="legal" style="margin:0">A fine stagione i team guardano la classifica e il confronto con il compagno. Più in alto arrivi, migliori sono le offerte.</p></div>';
   } else {
-    const livrea = '<h3 class="h2">Livrea</h3><div class="card"><div class="livery" role="group" aria-label="Colore livrea">' + LIVERIES.map(l => '<button data-liv="' + l.c + '" class="' + (l.p && !S.unlocked.includes(l.c) ? 'locked' : '') + '" style="--c:' + l.c + '" aria-pressed="' + (mt.color === l.c) + '" aria-label="' + (l.n || 'Colore') + (l.p ? ' (pass stagionale)' : '') + '"></button>').join('') + '</div><p class="legal" style="margin:10px 0 0">★ Livree esclusive del pass stagionale.</p></div>';
+    const livrea = '<h3 class="h2">Livrea</h3><div class="card"><div class="livery" role="group" aria-label="Colore livrea">' + LIVERIES.map(l => '<button data-liv="' + l.c + '" class="' + ((l.p || l.cr) && !S.unlocked.includes(l.c) ? (l.cr ? 'locked cr' : 'locked') : '') + '" style="--c:' + l.c + '" aria-pressed="' + (mt.color === l.c) + '" aria-label="' + (l.n || 'Colore') + (l.p ? ' (pass stagionale)' : l.cr ? ' (' + fmtCr(l.cr) + ' crediti)' : '') + '"></button>').join('') + '</div><p class="legal" style="margin:10px 0 0">★ Livree del pass stagionale · ◆ Livree da collezione, da 4.000 a 25.000 crediti.</p></div>';
     h += c.tab === 's' ? tabSquadra(c) + livrea : c.tab === 'f' ? tabFabbrica(c) : c.tab === 'e' ? tabFinanze(c) : wk;
   }
   h += (isDrv || c.tab === 'w' ? '<h3 class="h2">Classifiche</h3><div class="card"><div class="tabs"><button data-tab="d" aria-pressed="' + (standTab === 'd') + '">Piloti</button><button data-tab="t" aria-pressed="' + (standTab === 't') + '">Costruttori</button></div><table class="std"><tbody>' + stTable() + '</tbody></table></div>' +
@@ -1816,7 +1821,9 @@ function renderBox() {
   app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { standTab = b.dataset.tab; renderBox(); });
   app.querySelectorAll('[data-train]').forEach(b => b.onclick = () => { const k = b.dataset.train, cost = 150 + Math.max(0, me[k] - 70) * 25; if (c.credits < cost) return; c.credits -= cost; me[k]++; track('train', { attr:k, value:me[k] }); save(); toast('Allenamento fatto: ' + me[k]); renderBox(); });
   app.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const k = b.dataset.up, cost = +b.dataset.cost; if (c.credits < cost) return; c.credits -= cost; c.parts[k]++; track('upgrade', { part:k, level:c.parts[k] }); save(); toast(PARTS.find(p => p.k === k).n + ' al livello ' + c.parts[k]); renderBox(); });
-  app.querySelectorAll('[data-liv]').forEach(b => b.onclick = () => { const l = LIVERIES.find(x => x.c === b.dataset.liv); if (l.p && !S.unlocked.includes(l.c)) { openShop('livery'); return; } mt.color = l.c; save(); renderBox(); });
+  app.querySelectorAll('[data-liv]').forEach(b => b.onclick = () => { const l = LIVERIES.find(x => x.c === b.dataset.liv); if (l.p && !S.unlocked.includes(l.c)) { openShop('livery'); return; }
+    if (l.cr && !S.unlocked.includes(l.c)) { openSheet('<h2>Livrea ' + l.n + '</h2><div class="livprev" style="--c:' + l.c + '"></div><p>Da collezione: resta tua in tutte le carriere.</p><button class="btn primary wide" id="livBuy"' + (c.credits < l.cr ? ' disabled' : '') + '>Compra · ' + fmtCr(l.cr) + ' crediti</button>'); $('#livBuy').onclick = () => { if (c.credits < l.cr) return; c.credits -= l.cr; S.unlocked.push(l.c); mt.color = l.c; track('livery_buy', { n:l.n }); save(); closeSheet(); toast('Livrea ' + l.n + ' montata'); renderBox(); }; return; }
+    mt.color = l.c; save(); renderBox(); });
   const fg = $('#fpGo'); if (fg) fg.onclick = () => renderFP();
   const fs = $('#fpSim'); if (fs) fs.onclick = () => { w.fp = { best:0, reveal:false }; w.know = Math.max(20, baseKnow(c)); save(); renderBox(); };
   const qg = $('#qGo'); if (qg) qg.onclick = () => renderQSetup();
