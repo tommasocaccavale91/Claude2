@@ -140,6 +140,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .tut small{display:block;font-family:var(--f-label);font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#5B6479}
 .tut p{margin:2px 0 8px;font-size:15px;line-height:1.4;font-weight:600}
 .tut{pointer-events:none}.tut button{pointer-events:auto}
+.tut-on .foot{height:260px!important}
+.tut.min{left:auto;right:max(12px,env(safe-area-inset-right,0px));width:auto;display:block;padding:0;background:none;box-shadow:none;animation:none}
+.tut .tmin{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border:0;border-radius:999px;background:#F6F7FB;color:#0E1424;font-weight:800;box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 0 2px var(--gold)}
+.tut .tmin .tav{width:34px;height:34px;font-size:17px}
 .tut.top{bottom:auto;top:calc(12px + env(safe-area-inset-top,0px))}
 .tut .tbt{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.tut .linkbtn{color:#5B6479;padding:4px 0}
 .tut-hl{position:relative;z-index:2;animation:tuthl 1.1s ease-in-out infinite;outline:3px solid var(--gold);outline-offset:3px}
@@ -1704,11 +1708,16 @@ function tutInit() {
 }
 function tutBubble(txt, btn, onBtn, skip) {
   let el = $('#tutb');
-  const key = txt + '|' + btn;
+  document.body.classList.add('tut-on');
+  const min = !!S.tutMin, key = txt + '|' + btn + '|' + min;
   if (!el) { el = document.createElement('div'); el.id = 'tutb'; el.className = 'tut'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
   if (el.dataset.k === key) return;
   el.dataset.k = key;
-  el.innerHTML = '<span class="tav" aria-hidden="true">M</span><div><small>Marta · ingegnera</small><p>' + txt + '</p><div class="tbt">' + (btn ? '<button class="btn sm gold" id="tutOk">' + btn + '</button>' : '') + (skip ? '<button class="linkbtn" id="tutSkip">Salta il tutorial</button>' : '') + '</div></div>';
+  el.classList.toggle('min', min);
+  el.innerHTML = min ? '<button class="tmin" id="tutOpen" aria-label="Apri il consiglio di Marta"><span class="tav" aria-hidden="true">M</span>Marta</button>'
+    : '<span class="tav" aria-hidden="true">M</span><div><small>Marta · ingegnera</small><p>' + txt + '</p><div class="tbt">' + (btn ? '<button class="btn sm gold" id="tutOk">' + btn + '</button>' : '') + '<button class="linkbtn" id="tutHide">Riduci</button>' + (skip ? '<button class="linkbtn" id="tutSkip">Salta il tutorial</button>' : '') + '</div></div>';
+  const hd = $('#tutHide'); if (hd) hd.onclick = () => { S.tutMin = true; save(); tutTick(); };
+  const op = $('#tutOpen'); if (op) op.onclick = () => { S.tutMin = false; save(); tutTick(); };
   const ok = $('#tutOk'); if (ok) ok.onclick = onBtn;
   const sk = $('#tutSkip'); if (sk) sk.onclick = () => { S.tut.done = true; track('tutorial_skip', { step:S.tut.step }); save(); tutClear(); };
 }
@@ -1718,7 +1727,7 @@ function tutPlace() {
   const r = t ? t.getBoundingClientRect() : null, low = r && r.bottom > window.innerHeight - el.offsetHeight - 110 && !t.closest('.go');
   el.classList.toggle('top', !!low);
 }
-function tutClear() { const el = $('#tutb'); if (el) el.remove(); document.querySelectorAll('.tut-hl').forEach(x => x.classList.remove('tut-hl')); }
+function tutClear() { document.body.classList.remove('tut-on'); const el = $('#tutb'); if (el) el.remove(); document.querySelectorAll('.tut-hl').forEach(x => x.classList.remove('tut-hl')); }
 function tutHL(sel) {
   const t = sel ? document.querySelector(sel) : null;
   document.querySelectorAll('.tut-hl').forEach(x => { if (x !== t) x.classList.remove('tut-hl'); });
@@ -1728,7 +1737,7 @@ function tutTick() {
   const c = S && S.career;
   if (!c || c.role !== 'manager' || !S.tut || $('#scrim') || screen === 'race' || screen === 'start') { tutClear(); return; }
   if (!S.tut.done) {
-    while (S.tut.step < TUT.length && TUT[S.tut.step].done()) { S.tut.step++; track('tutorial_step', { step:S.tut.step }); save(); }
+    while (S.tut.step < TUT.length && TUT[S.tut.step].done()) { S.tut.step++; S.tutMin = false; track('tutorial_step', { step:S.tut.step }); save(); }
     const st = TUT[S.tut.step];
     if (!st) { S.tut.done = true; save(); tutClear(); return; }
     if (!st.on()) { tutClear(); return; }
